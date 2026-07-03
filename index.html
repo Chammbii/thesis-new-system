@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<!-- <html lang="en"> -->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>QuizLand</title>
+
+      <!-- Favicon / Tab Logo -->
+  <link rel="icon" type="image/png" class = logo  href="logo.png">
+
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+</head>
+
+<body>
+
+    <!-- ===================================================== -->
+    <!-- HOME SCREEN -->
+    <!-- ===================================================== -->
+
+    <section id="homeScreen" class="screen active">
+
+        <div class="home-container">
+
+
+
+            <p class="subtitle">
+                Learn • Play • Earn Stars 
+            </p>
+
+            <div class="button-group">
+
+                <button id="startBtn" class="main-btn">
+                    <i class="fa-solid fa-play"></i>
+                    Start Learning
+                </button>
+
+                <button id="teacherBtn" class="main-btn">
+                    <i class="fa-solid fa-user-tie"></i>
+                    Teacher Login
+                </button>
+
+                <button id="settingsBtn" class="main-btn">
+                    <i class="fa-solid fa-gear"></i>
+                    Settings
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ===================================================== -->
+    <!-- STUDENT PROFILE -->
+    <!-- ===================================================== -->
+
+    <section id="profileScreen" class="screen">
+
+        <div class="profile-container">
+
+            <h2>Student Profile</h2>
+
+            <p>
+                Enter your name and choose your favorite avatar.
+            </p>
+
+            <input
+                type="text"
+                id="studentName"
+                placeholder="Enter your name">
+
+            <h3>Select Avatar</h3>
+
+            <div class="avatar-grid">
+
+                <div class="avatar-card">
+                    <img src="images/avatar1.png">
+                </div>
+
+                <div class="avatar-card">
+                    <img src="images/avatar2.png">
+                </div>
+
+                <div class="avatar-card">
+                    <img src="images/avatar3.png">
+                </div>
+
+                <div class="avatar-card">
+                    <img src="images/avatar4.png">
+                </div>
+
+            </div>
+
+            <button id="continueBtn" class="main-btn">
+                Continue
+            </button>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ===================================================== -->
+    <!-- LEARNING MENU -->
+    <!-- ===================================================== -->
+
+    <section id="menuScreen" class="screen">
+
+        <div class="menu-container">
+
+            <h2>Choose What You Want To Learn</h2>
+
+            <div class="lesson-grid">
+
+                <!-- Alphabet -->
+
+                <div class="lesson-card">
+
+                    <img src="images/alphabet.png">
+
+                    <h3>Alphabet</h3>
+
+                    <button class="lesson-btn">
+                        Start
+                    </button>
+
+                </div>
+
+                <!-- Numbers -->
+
+                <div class="lesson-card">
+
+                    <img src="images/numbers.png">
+
+                    <h3>Numbers</h3>
+
+                    <button class="lesson-btn">
+                        Start
+                    </button>
+
+                </div>
+
+                <!-- Colors -->
+
+                <div class="lesson-card">
+
+                    <img src="images/colors.png">
+
+                    <h3>Colors</h3>
+
+                    <button class="lesson-btn">
+                        Start
+                    </button>
+
+                </div>
+
+                <!-- Shapes -->
+
+                <div class="lesson-card">
+
+                    <img src="images/shapes.png">
+
+                    <h3>Shapes</h3>
+
+                    <button class="lesson-btn">
+                        Start
+                    </button>
+
+                </div>
+
+            </div>
+
+            <button id="backHome" class="back-btn">
+                ← Back to Home
+            </button>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ===================================================== -->
+    <!-- SETTINGS POPUP -->
+    <!-- ===================================================== -->
+
+    <div id="settingsModal" class="modal">
+
+        <div class="modal-content">
+
+            <span class="close">&times;</span>
+
+            <h2>Settings</h2>
+
+            <div class="setting-item">
+
+                <label>Background Music</label>
+
+                <input type="checkbox" checked>
+
+            </div>
+
+            <div class="setting-item">
+
+                <label>Sound Effects</label>
+
+                <input type="checkbox" checked>
+
+            </div>
+
+            <div class="setting-item">
+
+                <label>Voice Narration</label>
+
+                <input type="checkbox" checked>
+
+            </div>
+
+            <div class="setting-item">
+
+                <label for="fullscreenToggle">Fullscreen</label>
+
+                <input id="fullscreenToggle" type="checkbox">
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ===================================================== -->
+    <!-- FOOTER -->
+    <!-- ===================================================== -->
+
+    <footer>
+
+        <p>
+            © 2026 QuizLand Adventure
+        </p>
+
+    </footer>
+
+    <!-- ===================================================== -->
+<!-- LESSON SCREEN -->
+<!-- ===================================================== -->
+
+<section id="lessonScreen" class="screen">
+
+    <div class="lesson-container">
+
+        <!-- Progress -->
+
+        <div class="lesson-progress">
+
+            <div id="progressFill" class="progress-fill"></div>
+
+        </div>
+
+        <!-- Lesson Title -->
+
+        <h2 id="lessonTitle">
+
+            Alphabet Lesson
+
+        </h2>
+
+        <!-- Lesson Image -->
+
+        <div class="lesson-image">
+
+            <img
+                id="lessonImage"
+                src="images/alphabet/apple.png"
+                alt="Lesson Image">
+
+        </div>
+
+        <!-- Letter / Number -->
+
+        <h1 id="lessonLetter">
+
+            A
+
+        </h1>
+
+        <!-- Word -->
+
+        <h2 id="lessonWord">
+
+            Apple
+
+        </h2>
+
+        <p id="lessonFeedback" class="lesson-feedback">
+            Lesson 1 of 26 — Apple.
+        </p>
+
+        <!-- Voice Button -->
+
+        <button id="voiceBtn" class="voice-btn">
+
+            🔊 Listen
+
+        </button>
+
+        <!-- Navigation -->
+
+        <div class="lesson-navigation">
+
+            <button id="previousLesson" class="lesson-nav-btn">
+
+                ⬅ Previous
+
+            </button>
+
+            <button id="nextLesson" class="lesson-nav-btn">
+
+                Next ➜
+
+            </button>
+
+        </div>
+
+        <!-- Home -->
+
+        <button id="lessonHomeBtn" class="back-btn">
+
+            🏠 Back to Menu
+
+        </button>
+
+    </div>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- QUIZ SCREEN -->
+<!-- ===================================================== -->
+
+<section id="quizScreen" class="screen">
+
+    <div class="quiz-container">
+
+        <!-- Progress -->
+
+        <div class="quiz-progress">
+
+            <div id="quizProgressFill" class="progress-fill"></div>
+
+        </div>
+
+        <!-- Quiz Title -->
+
+        <h2 id="quizTitle">
+
+            Alphabet Quiz
+
+        </h2>
+
+        <!-- Score -->
+
+        <div class="quiz-score">
+
+            Score:
+            <span id="currentScore">0</span>
+
+        </div>
+
+        <!-- Question Number -->
+
+        <p id="questionNumber">
+
+            Question 1 of 10
+
+        </p>
+
+        <!-- Question -->
+
+        <h1 id="quizQuestion">
+
+            Which one is Apple?
+
+        </h1>
+
+        <!-- Voice -->
+
+        <button id="quizVoiceBtn" class="voice-btn">
+
+            🔊 Read Question
+
+        </button>
+
+        <!-- Answer Cards -->
+
+        <div class="answer-grid">
+
+            <button class="answer-card" id="answer1">
+
+                Apple
+
+            </button>
+
+            <button class="answer-card" id="answer2">
+
+                Ball
+
+            </button>
+
+            <button class="answer-card" id="answer3">
+
+                Cat
+
+            </button>
+
+            <button class="answer-card" id="answer4">
+
+                Dog
+
+            </button>
+
+        </div>
+
+        <!-- Feedback -->
+
+        <h3 id="quizFeedback">
+
+        </h3>
+
+        <!-- Navigation -->
+
+        <div class="quiz-buttons">
+
+            <button id="nextQuestionBtn" class="lesson-nav-btn">
+
+                Next Question ➜
+
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+<div id="notificationBox" class="notification-box"></div>
+
+</body>
+
+ <script src="script.js"></script>
+
+</html>
