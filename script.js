@@ -39,12 +39,18 @@ const teacherStudentProgressTable = document.getElementById("teacherStudentProgr
 
 const settingsBtn = document.getElementById("settingsBtn");
 const settingsModal = document.getElementById("settingsModal");
-const closeModal = document.querySelector(".close");
+const closeModal = document.getElementById("settingsCloseBtn") || document.querySelector("#settingsModal .close");
+const settingsDoneBtn = document.getElementById("settingsDoneBtn");
+const floatingSettingsBtn = document.getElementById("floatingSettingsBtn");
+const quizStarScoreEl = document.getElementById("quizStarScore");
+const quizStarCountEl = document.getElementById("quizStarCount");
 const fullscreenToggle = document.getElementById("fullscreenToggle");
 const bgMusicToggle = document.getElementById("bgMusicToggle");
 const bgMusicVolume = document.getElementById("bgMusicVolume");
+const bgMusicVolumeValue = document.getElementById("bgMusicVolumeValue");
 const sfxToggle = document.getElementById("sfxToggle");
 const sfxVolume = document.getElementById("sfxVolume");
+const sfxVolumeValue = document.getElementById("sfxVolumeValue");
 const voiceNarrationToggle = document.getElementById("voiceNarrationToggle");
 const notificationBox = document.getElementById("notificationBox");
 const bgMusicElement = document.getElementById("bgMusic");
@@ -76,6 +82,7 @@ const langTlBtn = document.getElementById("langTlBtn");
 const langCancelBtn = document.getElementById("langCancelBtn");
 
 let selectedAvatar = null;
+let quizStars = 0;
 
 // ======================================================
 // SCREEN NAVIGATION
@@ -96,7 +103,47 @@ function showScreen(screen) {
     hideAllScreens();
 
     screen.classList.add("active");
+    updateStudentHud();
 
+}
+
+function hasStudentProfile() {
+    return !!(localStorage.getItem("studentName") && localStorage.getItem("avatar"));
+}
+
+function getStudentStarsKey() {
+    const student = localStorage.getItem("studentName") || "Unknown";
+    return getNamespacedKey(`totalStars_${encodeURIComponent(student)}`);
+}
+
+function loadStudentStars() {
+    quizStars = Number(localStorage.getItem(getStudentStarsKey())) || 0;
+    updateQuizStarDisplay(false);
+}
+
+function saveStudentStars() {
+    localStorage.setItem(getStudentStarsKey(), String(quizStars));
+}
+
+function updateStudentHud() {
+    const active = document.querySelector(".screen.active");
+    const showStars = active === menuScreen || active === lessonScreen || active === quizScreen;
+    const showSettings = hasStudentProfile()
+        && active !== teacherScreen
+        && active !== teacherDashboard
+        && active !== homeScreen
+        && active !== profileScreen;
+
+    if (quizStarScoreEl) {
+        quizStarScoreEl.classList.toggle("is-visible", showStars);
+        quizStarScoreEl.hidden = !showStars;
+        if (showStars) loadStudentStars();
+    }
+
+    if (floatingSettingsBtn) {
+        floatingSettingsBtn.classList.toggle("is-visible", showSettings);
+        floatingSettingsBtn.hidden = !showSettings;
+    }
 }
 
 // ======================================================
@@ -361,6 +408,8 @@ function updateCurrentStudentRecord() {
         ? Math.round((lastQuizScore / lastQuizTotal) * 100)
         : 0;
 
+    const starsKey = getNamespacedKey(`totalStars_${encodeURIComponent(student)}`);
+    const stars = Number(localStorage.getItem(starsKey)) || 0;
 
     const records = getStudentRecords();
     let record = records.find(r => r.name === student);
@@ -373,6 +422,7 @@ function updateCurrentStudentRecord() {
             categoriesDone,
             progressPercent,
             accuracy,
+            stars,
             updatedAt: Date.now()
         };
         records.push(record);
@@ -382,6 +432,7 @@ function updateCurrentStudentRecord() {
         record.categoriesDone = categoriesDone;
         record.progressPercent = progressPercent;
         record.accuracy = accuracy;
+        record.stars = stars;
         record.updatedAt = Date.now();
     }
 
@@ -416,6 +467,9 @@ function renderTeacherStudentProgress() {
         const accuracyTd = document.createElement("td");
         accuracyTd.textContent = `${record.accuracy}%`;
 
+        const starsTd = document.createElement("td");
+        starsTd.textContent = String(record.stars || 0);
+
         const actionsTd = document.createElement("td");
         const removeBtn = document.createElement("button");
         removeBtn.textContent = "Remove";
@@ -431,6 +485,7 @@ function renderTeacherStudentProgress() {
         row.appendChild(avatarTd);
         row.appendChild(progressTd);
         row.appendChild(accuracyTd);
+        row.appendChild(starsTd);
         row.appendChild(actionsTd);
         tbody.appendChild(row);
     });
@@ -516,24 +571,39 @@ backHome.addEventListener("click", () => {
 // SETTINGS
 // ======================================================
 
-settingsBtn.addEventListener("click", () => {
+function closeSettingsModal() {
+    if (settingsModal) settingsModal.style.display = "none";
+}
 
-    settingsModal.style.display = "flex";
+function updateVolumeLabel(input, label) {
+    if (!input || !label) return;
+    label.textContent = `${input.value}%`;
+}
 
-});
+function openSettingsModal() {
+    updateVolumeLabel(bgMusicVolume, bgMusicVolumeValue);
+    updateVolumeLabel(sfxVolume, sfxVolumeValue);
+    if (settingsModal) settingsModal.style.display = "flex";
+}
 
-closeModal.addEventListener("click", () => {
+settingsBtn.addEventListener("click", openSettingsModal);
 
-    settingsModal.style.display = "none";
+if (floatingSettingsBtn) {
+    floatingSettingsBtn.addEventListener("click", openSettingsModal);
+}
 
-});
+if (closeModal) {
+    closeModal.addEventListener("click", closeSettingsModal);
+}
+
+if (settingsDoneBtn) {
+    settingsDoneBtn.addEventListener("click", closeSettingsModal);
+}
 
 window.addEventListener("click", (e) => {
 
     if (e.target === settingsModal) {
-
-        settingsModal.style.display = "none";
-
+        closeSettingsModal();
     }
 
 });
@@ -684,7 +754,10 @@ if (bgMusicToggle) {
 }
 
 if (bgMusicVolume) {
-    bgMusicVolume.addEventListener("input", updateBgMusic);
+    bgMusicVolume.addEventListener("input", () => {
+        updateVolumeLabel(bgMusicVolume, bgMusicVolumeValue);
+        updateBgMusic();
+    });
 }
 
 if (sfxToggle) {
@@ -692,7 +765,10 @@ if (sfxToggle) {
 }
 
 if (sfxVolume) {
-    sfxVolume.addEventListener("input", updateSfxVolume);
+    sfxVolume.addEventListener("input", () => {
+        updateVolumeLabel(sfxVolume, sfxVolumeValue);
+        updateSfxVolume();
+    });
 }
 
 function showNotification(message, duration = 2800) {
@@ -781,6 +857,9 @@ window.onload = () => {
 
     updateBgMusic();
     updateSfxVolume();
+    updateVolumeLabel(bgMusicVolume, bgMusicVolumeValue);
+    updateVolumeLabel(sfxVolume, sfxVolumeValue);
+    updateStudentHud();
     document.addEventListener("click", () => {
         updateBgMusic();
         playPopSound();
@@ -1013,12 +1092,14 @@ function getLessonSpeechText() {
                     ? `Tingnan! Ito ang letrang ${letter}. Masasabi mo ba ang "${letter}"?`
                     : `Ito ang letrang ${letter}. Sabihin natin ang "${letter}" nang magkasama!`;
             }
-            case "numbers":
-                return `Ang numerong ito ay ${localizedWord}.`;
+            case "numbers": {
+                const digit = currentLesson + 1;
+                return `Ito ang numerong ${digit}. Masasabi mo ba, "${localizedWord}"?`;
+            }
             case "colors":
-                return `Ang kulay na ito ay ${localizedWord}.`;
+                return `Tingnan! Ang kulay na ito ay ${localizedWord}. Masasabi mo ba, "${localizedWord}"?`;
             case "shapes":
-                return `Ang hugis na ito ay ${localizedWord}.`;
+                return `Tingnan! Ang hugis na ito ay ${localizedWord}. Masasabi mo ba, "${localizedWord}"?`;
             default:
                 return localizedWord;
         }
@@ -1031,12 +1112,14 @@ function getLessonSpeechText() {
                 ? `Look! It's the letter ${letter}. Can you say "${letter}"?`
                 : `This is the letter ${letter}. Let's say "${letter}" together!`;
         }
-        case "numbers":
-            return `This number is ${lesson.word}.`;
+        case "numbers": {
+            const digit = currentLesson + 1;
+            return `This is the number ${digit}. Can you say, "${lesson.word}"?`;
+        }
         case "colors":
-            return `This color is ${lesson.word}.`;
+            return `Look! This color is ${lesson.word}. Can you say, "${lesson.word}"?`;
         case "shapes":
-            return `This shape is a ${lesson.word}.`;
+            return `Look! This shape is ${lesson.word}. Can you say, "${lesson.word}"?`;
         default:
             return lesson.word;
     }
@@ -1411,6 +1494,12 @@ const quizProgressFillEl = document.getElementById("quizProgressFill");
 const quizVoiceBtn = document.getElementById("quizVoiceBtn");
 const answerButtons = document.querySelectorAll(".answer-card");
 
+const STAR_REWARDS = {
+    easy: 1,
+    medium: 2,
+    hard: 5
+};
+
 // Difficulty UI
 const difficultyButtons = document.querySelectorAll(".difficulty-btn");
 const QUIZ_DIFFICULTY = {
@@ -1444,6 +1533,39 @@ let quizScore = 0;
 let quizAnswered = false;
 let quizComplete = false;
 let selectedQuizChoice = null;
+
+function updateQuizStarDisplay(animate = false, gained = 0) {
+    if (quizStarCountEl) {
+        quizStarCountEl.textContent = String(quizStars);
+    }
+
+    if (!animate || !quizStarScoreEl || gained <= 0) return;
+
+    quizStarScoreEl.classList.remove("pop");
+    // Force reflow so the animation can replay
+    void quizStarScoreEl.offsetWidth;
+    quizStarScoreEl.classList.add("pop");
+
+    if (quizStarScoreEl) {
+        const floater = document.createElement("div");
+        floater.className = "quiz-star-float";
+        floater.textContent = `+${gained} ★`;
+        quizStarScoreEl.appendChild(floater);
+        floater.addEventListener("animationend", () => floater.remove());
+    }
+
+    setTimeout(() => {
+        quizStarScoreEl.classList.remove("pop");
+    }, 600);
+}
+
+function awardQuizStars() {
+    const gained = STAR_REWARDS[quizDifficulty] || STAR_REWARDS.easy;
+    quizStars += gained;
+    saveStudentStars();
+    updateQuizStarDisplay(true, gained);
+    return gained;
+}
 
 
 // -------------------------------
@@ -1540,11 +1662,13 @@ function initializeQuiz(){
 
     quizCategory = currentCategory;
     quizScore = 0;
+    loadStudentStars();
     currentQuizIndex = 0;
     quizAnswered = false;
     quizComplete = false;
     selectedQuizChoice = null;
     quizProgressFillEl.style.width = "0%";
+    updateQuizStarDisplay(false);
 
     quizTitle.textContent =
         selectedLanguage === 'tl'
@@ -1671,30 +1795,48 @@ function generateQuizQuestions(category, difficulty){
         .slice(0, questionCount);
 
     return shuffled.map((item, idx) => {
-        // For Alphabet quiz, prompt should reference the LETTER directly (with alternating templates)
+        const isAlt = idx % 2 === 1;
+        const localizedWord = translateWord(item.word);
+        let enPrompt;
+        let tlPrompt;
+
         if (category === 'alphabet') {
             const letter = item.letter;
-            const isAlt = idx % 2 === 1;
-
-            const enPrompt = isAlt
+            enPrompt = isAlt
                 ? `The letter ${letter} needs your help! Can you find the letter ${letter}?`
                 : `Where is the letter ${letter}? Let's find it together!`;
-
-            const tlPrompt = isAlt
+            tlPrompt = isAlt
                 ? `Kailangan ng tulong ang letrang ${letter}! Maaari mo bang hanapin ang letrang ${letter}?`
                 : `Nasaan ang letrang ${letter}? Hanapin natin ito nang magkasama!`;
-
-            return {
-                prompt: selectedLanguage === 'tl' ? tlPrompt : enPrompt,
-                correct: item.word,
-                choices: buildQuizChoices(item.word, items, difficulty)
-            };
+        } else if (category === 'numbers') {
+            const digit = items.findIndex(entry => entry.word === item.word) + 1;
+            enPrompt = isAlt
+                ? `The number ${digit} needs your help! Can you find the number ${digit}?`
+                : `Where is the number ${digit}? Let's find it together!`;
+            tlPrompt = isAlt
+                ? `Kailangan ng tulong ang numerong ${digit}! Maaari mo bang hanapin ang numerong ${digit}?`
+                : `Nasaan ang numerong ${digit}? Hanapin natin ito nang magkasama!`;
+        } else if (category === 'colors') {
+            enPrompt = isAlt
+                ? `The color ${item.word} needs your help! Can you find the color ${item.word}?`
+                : `Where is the color ${item.word}? Let's find it together!`;
+            tlPrompt = isAlt
+                ? `Kailangan ng tulong ang kulay ${localizedWord}! Maaari mo bang hanapin ang kulay ${localizedWord}?`
+                : `Nasaan ang kulay ${localizedWord}? Hanapin natin ito nang magkasama!`;
+        } else if (category === 'shapes') {
+            enPrompt = isAlt
+                ? `The shape ${item.word} needs your help! Can you find the shape ${item.word}?`
+                : `Where is the shape ${item.word}? Let's find it together!`;
+            tlPrompt = isAlt
+                ? `Kailangan ng tulong ang hugis ${localizedWord}! Maaari mo bang hanapin ang hugis ${localizedWord}?`
+                : `Nasaan ang hugis ${localizedWord}? Hanapin natin ito nang magkasama!`;
+        } else {
+            enPrompt = `Which one is ${item.word}?`;
+            tlPrompt = `Alin sa mga ito ang ${localizedWord}?`;
         }
 
         return {
-            prompt: selectedLanguage === 'tl'
-                ? `Alin sa mga ito ang ${translateWord(item.word)}?`
-                : `Which one is ${item.word}?`,
+            prompt: selectedLanguage === 'tl' ? tlPrompt : enPrompt,
             correct: item.word,
             choices: buildQuizChoices(item.word, items, difficulty)
         };
@@ -1859,6 +2001,7 @@ function confirmQuizAnswer(){
 
     if (isCorrect) {
         quizScore++;
+        awardQuizStars();
 
         quizCorrectFeedbackToggle = (quizCorrectFeedbackToggle + 1) % 2;
         const isEven = quizCorrectFeedbackToggle === 0;
@@ -1967,10 +2110,11 @@ function finishQuiz(){
         ? `Pinal na Iskor: ${quizScore} / ${quizQuestions.length}`
         : `Final Score: ${quizScore} / ${quizQuestions.length}`;
     const finishMessage = selectedLanguage === 'tl'
-        ? `Magaling, ${localStorage.getItem("studentName") || "Estudyante"}!`
-        : `Great work, ${localStorage.getItem("studentName") || "Student"}!`;
+        ? `Magaling, ${localStorage.getItem("studentName") || "Estudyante"}! Nakakuha ka ng ${quizStars} bituin!`
+        : `Great work, ${localStorage.getItem("studentName") || "Student"}! You earned ${quizStars} stars!`;
     showNotification(finishMessage);
     currentScoreEl.textContent = String(quizScore);
+    updateQuizStarDisplay(true, 0);
     answerButtons.forEach(btn => {
         btn.disabled = true;
         btn.classList.remove("correct", "wrong");
