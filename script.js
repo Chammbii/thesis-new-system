@@ -35,12 +35,21 @@ const teacherCompletedLessons = document.getElementById("teacherCompletedLessons
 const teacherProgressCategories = document.getElementById("teacherProgressCategories");
 const teacherLogoutBtn = document.getElementById("teacherLogoutBtn");
 const teacherDashboardHomeBtn = document.getElementById("teacherDashboardHomeBtn");
+const teacherStudentProgressTable = document.getElementById("teacherStudentProgressTable");
 
 const settingsBtn = document.getElementById("settingsBtn");
 const settingsModal = document.getElementById("settingsModal");
 const closeModal = document.querySelector(".close");
 const fullscreenToggle = document.getElementById("fullscreenToggle");
+const bgMusicToggle = document.getElementById("bgMusicToggle");
+const bgMusicVolume = document.getElementById("bgMusicVolume");
+const sfxToggle = document.getElementById("sfxToggle");
+const sfxVolume = document.getElementById("sfxVolume");
+const voiceNarrationToggle = document.getElementById("voiceNarrationToggle");
 const notificationBox = document.getElementById("notificationBox");
+const bgMusicElement = document.getElementById("bgMusic");
+const popSound = document.getElementById("popSound");
+const bgAudio = bgMusicElement || null;
 
 // ---------- STUDENT ----------
 const studentName = document.getElementById("studentName");
@@ -61,6 +70,10 @@ const voiceBtn = document.getElementById("voiceBtn");
 const previousLesson = document.getElementById("previousLesson");
 const nextLesson = document.getElementById("nextLesson");
 const lessonHomeBtn = document.getElementById("lessonHomeBtn");
+const languageModal = document.getElementById("languageModal");
+const langEnBtn = document.getElementById("langEnBtn");
+const langTlBtn = document.getElementById("langTlBtn");
+const langCancelBtn = document.getElementById("langCancelBtn");
 
 let selectedAvatar = null;
 
@@ -105,6 +118,12 @@ let currentTeacherUsername = "Teacher";
 
 teacherBtn.addEventListener("click", () => {
 
+    const sessionEmail = getTeacherSession();
+    if (sessionEmail) {
+        restoreTeacherSession();
+        return;
+    }
+
     setTeacherMode("login");
     showScreen(teacherScreen);
     clearTeacherError();
@@ -142,6 +161,7 @@ teacherLoginForm.addEventListener("submit", (event) => {
 teacherLogoutBtn.addEventListener("click", () => {
 
     currentTeacherUsername = "Teacher";
+    clearTeacherSession();
     showScreen(homeScreen);
     showNotification("Teacher logged out successfully.");
 
@@ -149,9 +169,8 @@ teacherLogoutBtn.addEventListener("click", () => {
 
 teacherDashboardHomeBtn.addEventListener("click", () => {
 
-    currentTeacherUsername = "Teacher";
     showScreen(homeScreen);
-    showNotification("Returned to home.");
+    showNotification("You are still logged in. Use Logout to end your session.");
 
 });
 
@@ -191,6 +210,36 @@ function getTeacherUsers(){
 
 function saveTeacherUsers(users){
     localStorage.setItem("teacherUsers", JSON.stringify(users));
+}
+
+function saveTeacherSession(email){
+    localStorage.setItem("teacherSession", email);
+}
+
+function clearTeacherSession(){
+    localStorage.removeItem("teacherSession");
+}
+
+function getTeacherSession(){
+    return localStorage.getItem("teacherSession");
+}
+
+function restoreTeacherSession(){
+    const email = getTeacherSession();
+    if (!email) {
+        return false;
+    }
+
+    const users = getTeacherUsers();
+    const user = users[email];
+    if (!user) {
+        clearTeacherSession();
+        return false;
+    }
+
+    currentTeacherUsername = user.fullName || user.email;
+    showTeacherDashboard();
+    return true;
 }
 
 function handleTeacherRegister(){
@@ -252,6 +301,7 @@ function handleTeacherLogin(){
     }
 
     currentTeacherUsername = user.fullName || user.email;
+    saveTeacherSession(email);
     showTeacherDashboard();
     showNotification("Welcome back, " + currentTeacherUsername + "!");
 }
@@ -262,14 +312,146 @@ function setTeacherError(message){
     }
 }
 
+function getTeacherSessionEmail() {
+    return getTeacherSession();
+}
+
+function getProgressNamespace() {
+    const email = getTeacherSessionEmail();
+    return email ? `teacher:${email}` : "anonymous";
+}
+
+function getNamespacedKey(suffix) {
+    return `studentProgress_${getProgressNamespace()}_${suffix}`;
+}
+
+function getStudentRecords() {
+    const key = getNamespacedKey("studentRecords");
+    return JSON.parse(localStorage.getItem(key)) || [];
+}
+
+function saveStudentRecords(records) {
+    const key = getNamespacedKey("studentRecords");
+    localStorage.setItem(key, JSON.stringify(records));
+}
+
+function updateCurrentStudentRecord() {
+    const student = localStorage.getItem("studentName") || "Unknown";
+
+    if (!student) return;
+
+    const avatarIndex = Number(localStorage.getItem("avatar")) || 1;
+    const completedLessons = Number(localStorage.getItem(getNamespacedKey("completedLessons"))) || 0;
+    const lessonProgress = JSON.parse(localStorage.getItem(getNamespacedKey("lessonProgress"))) || {};
+    const categoriesDone = Object.keys(lessonProgress).length;
+    const totalCategories = Object.keys(lessons).length;
+    const progressPercent = totalCategories > 0
+        ? Math.round((categoriesDone / totalCategories) * 100)
+        : 0;
+
+// Per-student quiz summary (prevents everyone showing same accuracy)
+    const lastQuizScoreKey = getNamespacedKey(`lastQuizScore_${encodeURIComponent(student)}`);
+    const lastQuizTotalKey = getNamespacedKey(`lastQuizTotal_${encodeURIComponent(student)}`);
+
+
+    const lastQuizScore = Number(localStorage.getItem(lastQuizScoreKey)) || 0;
+    const lastQuizTotal = Number(localStorage.getItem(lastQuizTotalKey)) || 0;
+
+    const accuracy = lastQuizTotal > 0
+        ? Math.round((lastQuizScore / lastQuizTotal) * 100)
+        : 0;
+
+
+    const records = getStudentRecords();
+    let record = records.find(r => r.name === student);
+
+    if (!record) {
+        record = {
+            name: student,
+            avatar: avatarIndex,
+            completedLessons,
+            categoriesDone,
+            progressPercent,
+            accuracy,
+            updatedAt: Date.now()
+        };
+        records.push(record);
+    } else {
+        record.avatar = avatarIndex;
+        record.completedLessons = completedLessons;
+        record.categoriesDone = categoriesDone;
+        record.progressPercent = progressPercent;
+        record.accuracy = accuracy;
+        record.updatedAt = Date.now();
+    }
+
+    saveStudentRecords(records);
+}
+
+function renderTeacherStudentProgress() {
+    if (!teacherStudentProgressTable) return;
+    const tbody = teacherStudentProgressTable.querySelector("tbody");
+    tbody.innerHTML = "";
+    const records = getStudentRecords();
+    const totalCategories = Object.keys(lessons).length;
+
+    records.sort((a, b) => b.updatedAt - a.updatedAt);
+
+    records.forEach(record => {
+        const row = document.createElement("tr");
+
+        const nameTd = document.createElement("td");
+        nameTd.textContent = record.name;
+
+        const avatarTd = document.createElement("td");
+        const img = document.createElement("img");
+        img.src = `avatar00${record.avatar}.png`;
+        img.alt = `Avatar ${record.avatar}`;
+        img.className = "student-avatar-cell";
+        avatarTd.appendChild(img);
+
+        const progressTd = document.createElement("td");
+        progressTd.textContent = `${record.categoriesDone}/${totalCategories} (${record.progressPercent}%)`;
+
+        const accuracyTd = document.createElement("td");
+        accuracyTd.textContent = `${record.accuracy}%`;
+
+        const actionsTd = document.createElement("td");
+        const removeBtn = document.createElement("button");
+        removeBtn.textContent = "Remove";
+        removeBtn.className = "remove-btn";
+        removeBtn.type = "button";
+        removeBtn.addEventListener("click", () => {
+            removeStudentRecord(record.name);
+            renderTeacherStudentProgress();
+            showNotification(`${record.name} has been removed.`);
+        });
+        actionsTd.appendChild(removeBtn);
+        row.appendChild(nameTd);
+        row.appendChild(avatarTd);
+        row.appendChild(progressTd);
+        row.appendChild(accuracyTd);
+        row.appendChild(actionsTd);
+        tbody.appendChild(row);
+    });
+}
+
+function removeStudentRecord(studentName) {
+    const records = getStudentRecords().filter(record => record.name !== studentName);
+    saveStudentRecords(records);
+}
+
 function showTeacherDashboard(){
     showScreen(teacherDashboard);
     teacherNameDisplay.textContent = currentTeacherUsername;
-    teacherCompletedLessons.textContent =
-        Number(localStorage.getItem("completedLessons")) || 0;
-    const progress = JSON.parse(localStorage.getItem("lessonProgress")) || {};
-    teacherProgressCategories.textContent =
-        Object.keys(progress).length;
+
+    const completed = Number(localStorage.getItem(getNamespacedKey("completedLessons"))) || 0;
+    teacherCompletedLessons.textContent = completed;
+
+    const progress = JSON.parse(localStorage.getItem(getNamespacedKey("lessonProgress"))) || {};
+    teacherProgressCategories.textContent = Object.keys(progress).length;
+
+    renderTeacherStudentProgress();
 }
 
 // ======================================================
@@ -282,7 +464,9 @@ continueBtn.addEventListener("click", () => {
 
     if (name === "") {
 
-        alert("Please enter your name.");
+        const msg = "Please enter your name.";
+        showNotification(msg);
+        speakText(msg);
 
         studentName.focus();
 
@@ -292,19 +476,29 @@ continueBtn.addEventListener("click", () => {
 
     localStorage.setItem("studentName", name);
 
-    if (selectedAvatar !== null) {
+    if (selectedAvatar === null) {
 
-        localStorage.setItem("avatar", selectedAvatar);
+        const msg = "Please select an avatar.";
+        showNotification(msg);
+        speakText(msg);
+        return;
 
     }
+
+    localStorage.setItem("avatar", selectedAvatar);
+
+    updateCurrentStudentRecord();
 
     showScreen(menuScreen);
 
     setTimeout(() => {
 
-        showNotification("Welcome, " + name + "! Let's start learning!");
+        const msg = `Welcome, ${name}! Let's start learning!`;
+        showNotification(msg);
+        speakText(msg);
 
     }, 300);
+
 
 });
 
@@ -410,6 +604,97 @@ if (fullscreenToggle) {
 
 window.addEventListener("fullscreenchange", updateFullscreenCheckbox);
 
+function isSfxEnabled() {
+    return sfxToggle ? sfxToggle.checked : false;
+}
+
+function updateSfxVolume() {
+    if (!popSound || !sfxVolume) return;
+    popSound.volume = Number(sfxVolume.value) / 100;
+}
+
+function isVoiceNarrationEnabled() {
+    return voiceNarrationToggle ? voiceNarrationToggle.checked : true;
+}
+
+function speakText(text) {
+    return new Promise(resolve => {
+        if (!isVoiceNarrationEnabled()) {
+            resolve();
+            return;
+        }
+        speechSynthesis.cancel();
+        const speech = new SpeechSynthesisUtterance(text);
+        speech.rate = 0.95;
+        speech.pitch = 1.1;
+        speech.volume = 1;
+        speech.onend = resolve;
+        speech.onerror = resolve;
+        speechSynthesis.speak(speech);
+    });
+}
+
+function speakQuizQuestion() {
+    if (!quizQuestions.length) return;
+    const prefix = selectedLanguage === 'tl'
+        ? `Tanong ${currentQuizIndex + 1}. `
+        : `Question ${currentQuizIndex + 1}. `;
+    const text = prefix + quizQuestions[currentQuizIndex].prompt;
+    speakText(text);
+}
+
+function speakQuizFeedback(isCorrect, correctAnswer) {
+    const translatedAnswer = selectedLanguage === 'tl' ? translateWord(correctAnswer) : correctAnswer;
+    return speakText(
+        isCorrect
+            ? (selectedLanguage === 'tl' ? "Tama! Mahusay." : "Correct! Great job.")
+            : (selectedLanguage === 'tl'
+                ? `Ayaw! Ang tamang sagot ay ${translatedAnswer}.`
+                : `Oops, that's wrong. The correct answer is ${correctAnswer}.`)
+    );
+}
+
+function playPopSound() {
+    if (!popSound || !isSfxEnabled()) return;
+    popSound.currentTime = 0;
+    popSound.play().catch(() => {
+        // button sound blocked until user interaction is allowed
+    });
+}
+
+function updateBgMusic() {
+    if (!bgAudio) return;
+    const enabled = bgMusicToggle ? bgMusicToggle.checked : false;
+    const volume = bgMusicVolume ? Number(bgMusicVolume.value) / 100 : 0.6;
+
+    bgAudio.volume = volume;
+
+    if (!enabled) {
+        bgAudio.pause();
+        return;
+    }
+
+    bgAudio.play().catch(() => {
+        // autoplay may be blocked until user interacts with the page
+    });
+}
+
+if (bgMusicToggle) {
+    bgMusicToggle.addEventListener("change", updateBgMusic);
+}
+
+if (bgMusicVolume) {
+    bgMusicVolume.addEventListener("input", updateBgMusic);
+}
+
+if (sfxToggle) {
+    sfxToggle.addEventListener("change", playPopSound);
+}
+
+if (sfxVolume) {
+    sfxVolume.addEventListener("input", updateSfxVolume);
+}
+
 function showNotification(message, duration = 2800) {
 
     if (!notificationBox) return;
@@ -482,15 +767,9 @@ window.onload = () => {
 
     }
 
-    const savedAvatar = localStorage.getItem("avatar");
+    // Do not auto-restore avatar selection; user must re-select an avatar each session.
+    // const savedAvatar = localStorage.getItem("avatar");
 
-    if (savedAvatar) {
-
-        avatars[savedAvatar - 1].style.border = "4px solid #ffb703";
-
-        selectedAvatar = savedAvatar;
-
-    }
 
     const savedFullscreen = localStorage.getItem("fullscreenEnabled") === "true";
 
@@ -500,6 +779,12 @@ window.onload = () => {
 
     }
 
+    updateBgMusic();
+    updateSfxVolume();
+    document.addEventListener("click", () => {
+        updateBgMusic();
+        playPopSound();
+    }, { once: true });
 };
 
 // ======================================================
@@ -530,6 +815,10 @@ buttons.forEach(button => {
 
 });
 
+document.addEventListener("click", () => {
+    playPopSound();
+});
+
 // ======================================================
 // END OF PART 1
 // ======================================================
@@ -546,32 +835,32 @@ buttons.forEach(button => {
 const lessons = {
 
     alphabet: [
-        {title:"Alphabet Lesson",letter:"A",word:"Apple",image:"images/alphabet/apple.png"},
-        {title:"Alphabet Lesson",letter:"B",word:"Ball",image:"images/alphabet/ball.png"},
-        {title:"Alphabet Lesson",letter:"C",word:"Cat",image:"images/alphabet/cat.png"},
-        {title:"Alphabet Lesson",letter:"D",word:"Dog",image:"images/alphabet/dog.png"},
-        {title:"Alphabet Lesson",letter:"E",word:"Elephant",image:"images/alphabet/elephant.png"},
-        {title:"Alphabet Lesson",letter:"F",word:"Fish",image:"images/alphabet/fish.png"},
-        {title:"Alphabet Lesson",letter:"G",word:"Grapes",image:"images/alphabet/grapes.png"},
-        {title:"Alphabet Lesson",letter:"H",word:"Hat",image:"images/alphabet/hat.png"},
-        {title:"Alphabet Lesson",letter:"I",word:"Ice Cream",image:"images/alphabet/icecream.png"},
-        {title:"Alphabet Lesson",letter:"J",word:"Juice",image:"images/alphabet/juice.png"},
-        {title:"Alphabet Lesson",letter:"K",word:"Kite",image:"images/alphabet/kite.png"},
-        {title:"Alphabet Lesson",letter:"L",word:"Lion",image:"images/alphabet/lion.png"},
-        {title:"Alphabet Lesson",letter:"M",word:"Monkey",image:"images/alphabet/monkey.png"},
-        {title:"Alphabet Lesson",letter:"N",word:"Nest",image:"images/alphabet/nest.png"},
-        {title:"Alphabet Lesson",letter:"O",word:"Orange",image:"images/alphabet/orange.png"},
-        {title:"Alphabet Lesson",letter:"P",word:"Pig",image:"images/alphabet/pig.png"},
-        {title:"Alphabet Lesson",letter:"Q",word:"Queen",image:"images/alphabet/queen.png"},
-        {title:"Alphabet Lesson",letter:"R",word:"Rabbit",image:"images/alphabet/rabbit.png"},
-        {title:"Alphabet Lesson",letter:"S",word:"Sun",image:"images/alphabet/sun.png"},
-        {title:"Alphabet Lesson",letter:"T",word:"Tiger",image:"images/alphabet/tiger.png"},
-        {title:"Alphabet Lesson",letter:"U",word:"Umbrella",image:"images/alphabet/umbrella.png"},
-        {title:"Alphabet Lesson",letter:"V",word:"Van",image:"images/alphabet/van.png"},
-        {title:"Alphabet Lesson",letter:"W",word:"Whale",image:"images/alphabet/whale.png"},
-        {title:"Alphabet Lesson",letter:"X",word:"Xylophone",image:"images/alphabet/xylophone.png"},
-        {title:"Alphabet Lesson",letter:"Y",word:"Yo-Yo",image:"images/alphabet/yoyo.png"},
-        {title:"Alphabet Lesson",letter:"Z",word:"Zebra",image:"images/alphabet/zebra.png"}
+        {title:"Alphabet Lesson",letter:"A",word:"Apple",image:"alpha001.png"},
+        {title:"Alphabet Lesson",letter:"B",word:"Ball",image:"alpha002.png"},
+        {title:"Alphabet Lesson",letter:"C",word:"Cat",image:"alpha003.png"},
+        {title:"Alphabet Lesson",letter:"D",word:"Dog",image:"alpha004.png"},
+        {title:"Alphabet Lesson",letter:"E",word:"Elephant",image:"alpha005.png"},
+        {title:"Alphabet Lesson",letter:"F",word:"Fish",image:"alpha006.png"},
+        {title:"Alphabet Lesson",letter:"G",word:"Grapes",image:"alpha007.png"},
+        {title:"Alphabet Lesson",letter:"H",word:"Hat",image:"alpha008.png"},
+        {title:"Alphabet Lesson",letter:"I",word:"Ice Cream",image:"alpha009.png"},
+        {title:"Alphabet Lesson",letter:"J",word:"Juice",image:"alpha010.png"},
+        {title:"Alphabet Lesson",letter:"K",word:"Kite",image:"alpha011.png"},
+        {title:"Alphabet Lesson",letter:"L",word:"Lion",image:"alpha012.png"},
+        {title:"Alphabet Lesson",letter:"M",word:"Monkey",image:"alpha013.png"},
+        {title:"Alphabet Lesson",letter:"N",word:"Nest",image:"alpha014.png"},
+        {title:"Alphabet Lesson",letter:"O",word:"Orange",image:"alpha015.png"},
+        {title:"Alphabet Lesson",letter:"P",word:"Pig",image:"alpha016.png"},
+        {title:"Alphabet Lesson",letter:"Q",word:"Queen",image:"alpha017.png"},
+        {title:"Alphabet Lesson",letter:"R",word:"Rabbit",image:"alpha018.png"},
+        {title:"Alphabet Lesson",letter:"S",word:"Sun",image:"alpha019.png"},
+        {title:"Alphabet Lesson",letter:"T",word:"Tiger",image:"alpha020.png"},
+        {title:"Alphabet Lesson",letter:"U",word:"Umbrella",image:"alpha021.png"},
+        {title:"Alphabet Lesson",letter:"V",word:"Van",image:"alpha022.png"},
+        {title:"Alphabet Lesson",letter:"W",word:"Whale",image:"alpha023.png"},
+        {title:"Alphabet Lesson",letter:"X",word:"Xylophone",image:"alpha024.png"},
+        {title:"Alphabet Lesson",letter:"Y",word:"Yo-Yo",image:"alpha025.png"},
+        {title:"Alphabet Lesson",letter:"Z",word:"Zebra",image:"alpha026.png"}
     ],
 
     numbers: [
@@ -615,19 +904,133 @@ const lessons = {
 
 };
 
-// -------------------------------
-// ENGINE
-// -------------------------------
+const translationMap = {
+    Apple: "Mansanas",
+    Ball: "Bola",
+    Cat: "Pusa",
+    Dog: "Aso",
+    Elephant: "Elepante",
+    Fish: "Isda",
+    Grapes: "Ubas",
+    Hat: "Sumbrero",
+    "Ice Cream": "Sorbetes",
+    Juice: "Katas",
+    Kite: "Saranggola",
+    Lion: "Leon",
+    Monkey: "Unggoy",
+    Nest: "Pugad",
+    Orange: "Kahel",
+    Pig: "Baboy",
+    Queen: "Reyna",
+    Rabbit: "Kuneho",
+    Sun: "Araw",
+    Tiger: "Tigre",
+    Umbrella: "Payong",
+    Van: "Banyahan",
+    Whale: "Balyena",
+    Xylophone: "Silipono",
+    "Yo-Yo": "Yo-Yo",
+    Zebra: "Zebra",
+    One: "Isa",
+    Two: "Dalawa",
+    Three: "Tatlo",
+    Four: "Apat",
+    Five: "Lima",
+    Six: "Anim",
+    Seven: "Pito",
+    Eight: "Walo",
+    Nine: "Siyam",
+    Ten: "Sampu",
+    Red: "Pula",
+    Blue: "Asul",
+    Yellow: "Dilaw",
+    Green: "Berde",
+    Orange: "Kahel",
+    Purple: "Ube",
+    Black: "Itim",
+    White: "Puti",
+    Brown: "Kayumanggi",
+    Pink: "Rosas",
+    Circle: "Bilog",
+    Square: "Parisukat",
+    Triangle: "Tatsulok",
+    Rectangle: "Parihaba",
+    Star: "Bituin",
+    Heart: "Puso",
+    Pentagon: "Pentagon",
+    Hexagon: "Heksagon",
+    Diamond: "Diyamante",
+    Oval: "Obalo"
+};
+
+const titleTranslations = {
+    alphabet: "Aral ng Alpabeto",
+    numbers: "Aral ng Numero",
+    colors: "Aral ng Kulay",
+    shapes: "Aral ng Hugis"
+};
+
+const quizTitleTranslations = {
+    alphabet: "Pagsusulit ng Alpabeto",
+    numbers: "Pagsusulit ng Numero",
+    colors: "Pagsusulit ng Kulay",
+    shapes: "Pagsusulit ng Hugis"
+};
+
+function translateWord(word) {
+    if (selectedLanguage === 'tl') {
+        return translationMap[word] || word;
+    }
+    return word;
+}
+
+function translateLessonTitle(category) {
+    if (selectedLanguage === 'tl') {
+        return titleTranslations[category] || lessons[category][0].title;
+    }
+    return lessons[category][0].title;
+}
+
+function translateLessonProgress(count, total) {
+    if (selectedLanguage === 'tl') {
+        return `Aralin ${count} ng ${total}`;
+    }
+    return `Lesson ${count} of ${total}`;
+}
 
 let currentCategory = "alphabet";
 let currentLesson = 0;
 
 function getLessonSpeechText() {
     const lesson = lessons[currentCategory][currentLesson];
+    const localizedWord = translateWord(lesson.word);
+
+    if (selectedLanguage === 'tl') {
+        switch (currentCategory) {
+            case "alphabet": {
+                const letter = lesson.letter;
+                return currentLesson % 2 === 0
+                    ? `Tingnan! Ito ang letrang ${letter}. Masasabi mo ba ang "${letter}"?`
+                    : `Ito ang letrang ${letter}. Sabihin natin ang "${letter}" nang magkasama!`;
+            }
+            case "numbers":
+                return `Ang numerong ito ay ${localizedWord}.`;
+            case "colors":
+                return `Ang kulay na ito ay ${localizedWord}.`;
+            case "shapes":
+                return `Ang hugis na ito ay ${localizedWord}.`;
+            default:
+                return localizedWord;
+        }
+    }
 
     switch (currentCategory) {
-        case "alphabet":
-            return `${lesson.letter} is for ${lesson.word}.`;
+        case "alphabet": {
+            const letter = lesson.letter;
+            return currentLesson % 2 === 0
+                ? `Look! It's the letter ${letter}. Can you say "${letter}"?`
+                : `This is the letter ${letter}. Let's say "${letter}" together!`;
+        }
         case "numbers":
             return `This number is ${lesson.word}.`;
         case "colors":
@@ -643,7 +1046,7 @@ function updateLessonSubtitle() {
     if (!lessonFeedback) return;
 
     lessonFeedback.innerHTML =
-        `<span class="lesson-info">Lesson ${currentLesson + 1} of ${lessons[currentCategory].length}</span>`;
+        `<span class="lesson-info">${translateLessonProgress(currentLesson + 1, lessons[currentCategory].length)}</span>`;
 }
 
 function speakLessonText() {
@@ -664,10 +1067,21 @@ function loadLesson() {
 
     const lesson = lessons[currentCategory][currentLesson];
 
-    lessonTitle.textContent = lesson.title;
-    lessonLetter.textContent = lesson.letter;
-    lessonWord.textContent = lesson.word;
+    lessonTitle.textContent = translateLessonTitle(currentCategory);
     lessonImage.src = lesson.image;
+
+    if (currentCategory === "alphabet") {
+        // Show alternating letter prompts instead of plain "A" / "Apple"
+        lessonLetter.textContent = getLessonSpeechText();
+        lessonLetter.classList.add("lesson-prompt-text");
+        lessonWord.textContent = "";
+        lessonWord.hidden = true;
+    } else {
+        lessonLetter.textContent = lesson.letter;
+        lessonLetter.classList.remove("lesson-prompt-text");
+        lessonWord.textContent = translateWord(lesson.word);
+        lessonWord.hidden = false;
+    }
 
     const progress =
         ((currentLesson + 1) /
@@ -684,8 +1098,47 @@ function openLesson(category){
     currentCategory = category;
     currentLesson = 0;
 
-    loadLesson();
+    // ask language before starting lessons
+    pendingLessonCategory = category;
+    if (languageModal) languageModal.style.display = "flex";
+}
 
+// Handle language modal actions
+let pendingLessonCategory = null;
+let selectedLanguage = localStorage.getItem('lessonLanguage') || 'en';
+
+if (langEnBtn) langEnBtn.addEventListener('click', () => {
+    selectedLanguage = 'en';
+    localStorage.setItem('lessonLanguage', selectedLanguage);
+    if (languageModal) languageModal.style.display = 'none';
+    if (pendingLessonCategory) {
+        openLessonContinue(pendingLessonCategory);
+        pendingLessonCategory = null;
+    }
+});
+
+if (langTlBtn) langTlBtn.addEventListener('click', () => {
+    selectedLanguage = 'tl';
+    localStorage.setItem('lessonLanguage', selectedLanguage);
+    if (languageModal) languageModal.style.display = 'none';
+    if (pendingLessonCategory) {
+        openLessonContinue(pendingLessonCategory);
+        pendingLessonCategory = null;
+    }
+});
+
+if (langCancelBtn) langCancelBtn.addEventListener('click', () => {
+    if (languageModal) languageModal.style.display = 'none';
+    pendingLessonCategory = null;
+});
+
+// note: modal close X removed; modal can be closed via Cancel button only
+
+function openLessonContinue(category){
+    currentCategory = category;
+    currentLesson = 0;
+    // store category and language selection
+    loadLesson();
     showScreen(lessonScreen);
 }
 
@@ -785,6 +1238,8 @@ function updateLessonButtons() {
 
 }
 
+
+
 // -------------------------------
 // Improve loadLesson()
 // -------------------------------
@@ -837,49 +1292,7 @@ voiceBtn.onclick = () => {
 
     speechSynthesis.cancel();
 
-    const lesson = lessons[currentCategory][currentLesson];
-
-    let sentence = "";
-
-    switch (currentCategory) {
-
-        case "alphabet":
-
-            sentence =
-                lesson.letter +
-                " is for " +
-                lesson.word;
-
-            break;
-
-        case "numbers":
-
-            sentence =
-                "Number " +
-                lesson.letter +
-                ". " +
-                lesson.word;
-
-            break;
-
-        case "colors":
-
-            sentence =
-                "This color is " +
-                lesson.word;
-
-            break;
-
-        case "shapes":
-
-            sentence =
-                "This shape is a " +
-                lesson.word;
-
-            break;
-
-    }
-
+    const sentence = getLessonSpeechText();
     const speech = new SpeechSynthesisUtterance(sentence);
 
     speech.rate = 0.8;
@@ -932,11 +1345,11 @@ function welcomeLessonVoice() {
 
     speechSynthesis.cancel();
 
-    const speech = new SpeechSynthesisUtterance(
+    const message = selectedLanguage === 'tl'
+        ? "Maligayang pagdating! Magsisimula na tayo sa pag-aaral."
+        : "Welcome! Let's start learning.";
 
-        "Welcome! Let's start learning."
-
-    );
+    const speech = new SpeechSynthesisUtterance(message);
 
     speech.rate = 0.9;
     speech.pitch = 1.2;
@@ -994,11 +1407,34 @@ const quizTitle = document.getElementById("quizTitle");
 const currentScoreEl = document.getElementById("currentScore");
 const questionNumberEl = document.getElementById("questionNumber");
 const quizQuestionEl = document.getElementById("quizQuestion");
-const quizFeedbackEl = document.getElementById("quizFeedback");
 const quizProgressFillEl = document.getElementById("quizProgressFill");
 const quizVoiceBtn = document.getElementById("quizVoiceBtn");
-const nextQuestionBtn = document.getElementById("nextQuestionBtn");
 const answerButtons = document.querySelectorAll(".answer-card");
+
+// Difficulty UI
+const difficultyButtons = document.querySelectorAll(".difficulty-btn");
+const QUIZ_DIFFICULTY = {
+    easy: { questionCount: 5 },
+    medium: { questionCount: 10 },
+    hard: { questionCount: 15 }
+};
+
+let quizDifficulty = localStorage.getItem("quizDifficulty") || "easy";
+
+function applyQuizDifficultyUI() {
+    difficultyButtons.forEach(btn => {
+        const isActive = btn.dataset.difficulty === quizDifficulty;
+        btn.classList.toggle("active", isActive);
+        btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+    });
+}
+
+difficultyButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+        // Difficulty buttons are display-only; quiz difficulty is automatic.
+    });
+});
+
 
 // Current category for quiz
 let quizCategory = "";
@@ -1007,7 +1443,8 @@ let currentQuizIndex = 0;
 let quizScore = 0;
 let quizAnswered = false;
 let quizComplete = false;
-const QUIZ_QUESTION_COUNT = 8;
+let selectedQuizChoice = null;
+
 
 // -------------------------------
 // Save Lesson Progress
@@ -1015,12 +1452,12 @@ const QUIZ_QUESTION_COUNT = 8;
 
 function saveLessonProgress() {
 
-    let progress = JSON.parse(localStorage.getItem("lessonProgress")) || {};
+    let progress = JSON.parse(localStorage.getItem(getNamespacedKey("lessonProgress"))) || {};
 
     progress[currentCategory] = true;
 
     localStorage.setItem(
-        "lessonProgress",
+        getNamespacedKey("lessonProgress"),
         JSON.stringify(progress)
     );
 
@@ -1033,12 +1470,12 @@ function saveLessonProgress() {
 function saveStudentProgress() {
 
     let completed =
-        Number(localStorage.getItem("completedLessons")) || 0;
+        Number(localStorage.getItem(getNamespacedKey("completedLessons"))) || 0;
 
     completed++;
 
     localStorage.setItem(
-        "completedLessons",
+        getNamespacedKey("completedLessons"),
         completed
     );
 
@@ -1055,6 +1492,8 @@ function finishLesson() {
     saveLessonProgress();
 
     saveStudentProgress();
+
+    updateCurrentStudentRecord();
 
     quizCategory = currentCategory;
 
@@ -1094,30 +1533,136 @@ nextLesson.onclick = () => {
 
 function initializeQuiz(){
 
+    // Always start at Easy for a new quiz session
+    quizDifficulty = 'easy';
+
+    applyQuizDifficultyUI();
+
     quizCategory = currentCategory;
     quizScore = 0;
     currentQuizIndex = 0;
     quizAnswered = false;
     quizComplete = false;
-    quizQuestions = generateQuizQuestions(quizCategory);
+    selectedQuizChoice = null;
+    quizProgressFillEl.style.width = "0%";
 
     quizTitle.textContent =
-        quizCategory.charAt(0).toUpperCase() +
-        quizCategory.slice(1) +
-        " Quiz";
+        selectedLanguage === 'tl'
+            ? quizTitleTranslations[quizCategory] || (quizCategory.charAt(0).toUpperCase() + quizCategory.slice(1) + " Quiz")
+            : (quizCategory.charAt(0).toUpperCase() + quizCategory.slice(1) + " Quiz");
 
-    currentScoreEl.textContent = "0";
-    quizFeedbackEl.textContent = "";
-    quizProgressFillEl.style.width = "0%";
+    // Sequential stage progression: Easy -> Medium -> Hard
+    // Each stage is exactly 5 questions.
+    const stageConfig = [
+        { difficulty: 'easy', questionCount: 5 },
+        { difficulty: 'medium', questionCount: 5 },
+        { difficulty: 'hard', questionCount: 5 }
+    ];
+
+    quizStageState = {
+        stageIndex: 0,
+        stageConfig,
+        quizDifficulty: quizDifficulty
+    };
+
+    // First stage questions
+    quizQuestions = generateQuizQuestions(
+        quizCategory,
+        quizStageState.stageConfig[0].difficulty,
+        quizStageState.stageConfig[0].questionCount
+    );
+
+    quizDifficulty = quizStageState.stageConfig[0].difficulty;
 
     loadQuizQuestion();
 }
 
-function generateQuizQuestions(category){
+
+
+// -------------------------------
+// CUSTOM QUIZ QUESTION BANK (CODE-BASED CUSTOMIZATION)
+// -------------------------------
+// Teacher can edit QUESTION_BANK to fully customize prompts and correct answers per:
+// category: alphabet | numbers | colors | shapes
+// difficulty: easy | medium | hard
+//
+// Each question entry supports:
+// - id: unique string
+// - promptEN / promptTL: prompt shown based on language
+// - correct: the lesson item 'word' that is correct (also maps to images)
+// - choices: optional explicit array of choice words (WITHOUT the correct is not allowed).
+//             If not provided, choices will be auto-generated via buildQuizChoices().
+// - letterTemplate (optional): if category==='alphabet', you can reference item letter in custom prompts by
+//                               using placeholder {letter} and {word}.
+const QUESTION_BANK = {
+    alphabet: {
+        easy: [
+            {
+                id: "alpha-easy-A-1",
+                promptEN: "Which one is Apple?",
+                promptTL: "Alin sa mga ito ang Mansanas?",
+                correct: "Apple",
+                // explicit choices example; edit freely.
+                choices: ["Apple", "Ball", "Cat"]
+            },
+            {
+                id: "alpha-easy-B-1",
+                promptEN: "Where is the letter B?",
+                promptTL: "Nasaan ang letrang B?",
+                correct: "Ball",
+                choices: ["Ball", "Dog", "Fish"]
+            }
+        ],
+        medium: [],
+        hard: []
+    },
+    numbers: {
+        easy: [
+            {
+                id: "num-easy-One-1",
+                promptEN: "Which one is One?",
+                promptTL: "Alin sa mga ito ang Isa?",
+                correct: "One",
+                choices: ["One", "Two", "Three"]
+            }
+        ],
+        medium: [],
+        hard: []
+    },
+    colors: {
+        easy: [
+            {
+                id: "col-easy-Red-1",
+                promptEN: "Which one is Red?",
+                promptTL: "Alin sa mga ito ang Pula?",
+                correct: "Red",
+                choices: ["Red", "Blue", "Green"]
+            }
+        ],
+        medium: [],
+        hard: []
+    },
+    shapes: {
+        easy: [
+            {
+                id: "sha-easy-Circle-1",
+                promptEN: "Which one is Circle?",
+                promptTL: "Alin sa mga ito ang Bilog?",
+                correct: "Circle",
+                choices: ["Circle", "Square", "Triangle"]
+            }
+        ],
+        medium: [],
+        hard: []
+    }
+};
+
+function generateQuizQuestions(category, difficulty){
 
     const items = lessons[category];
     const pool = [...items];
-    const questionCount = Math.min(QUIZ_QUESTION_COUNT, pool.length);
+    const cfg = QUIZ_DIFFICULTY[difficulty] || QUIZ_DIFFICULTY.easy;
+    const questionCount = Math.min(cfg.questionCount, pool.length);
 
     const shuffled = pool
         .map(item => ({item, sort: Math.random()}))
@@ -1125,145 +1670,349 @@ function generateQuizQuestions(category){
         .map(entry => entry.item)
         .slice(0, questionCount);
 
-    return shuffled.map(item => ({
-        prompt: `Which one is ${item.word}?`,
-        correct: item.word,
-        choices: buildQuizChoices(item.word, items)
-    }));
+    return shuffled.map((item, idx) => {
+        // For Alphabet quiz, prompt should reference the LETTER directly (with alternating templates)
+        if (category === 'alphabet') {
+            const letter = item.letter;
+            const isAlt = idx % 2 === 1;
+
+            const enPrompt = isAlt
+                ? `The letter ${letter} needs your help! Can you find the letter ${letter}?`
+                : `Where is the letter ${letter}? Let's find it together!`;
+
+            const tlPrompt = isAlt
+                ? `Kailangan ng tulong ang letrang ${letter}! Maaari mo bang hanapin ang letrang ${letter}?`
+                : `Nasaan ang letrang ${letter}? Hanapin natin ito nang magkasama!`;
+
+            return {
+                prompt: selectedLanguage === 'tl' ? tlPrompt : enPrompt,
+                correct: item.word,
+                choices: buildQuizChoices(item.word, items, difficulty)
+            };
+        }
+
+        return {
+            prompt: selectedLanguage === 'tl'
+                ? `Alin sa mga ito ang ${translateWord(item.word)}?`
+                : `Which one is ${item.word}?`,
+            correct: item.word,
+            choices: buildQuizChoices(item.word, items, difficulty)
+        };
+    });
 }
 
-function buildQuizChoices(correctWord, items){
+function buildQuizChoices(correctWord, items, difficulty){
 
-    const distractors = items
-        .map(item => item.word)
-        .filter(word => word !== correctWord);
+    const allWords = items.map(item => item.word);
+    const distractorsAll = allWords.filter(word => word !== correctWord);
+
+    // Required choice counts per difficulty:
+    // easy => 3, medium => 6, hard => 10
+    const choiceTargetByDifficulty = {
+        easy: 3,
+        medium: 6,
+        hard: 10
+    };
+
+    const requiredChoiceCount = choiceTargetByDifficulty[difficulty] || choiceTargetByDifficulty.easy;
+
+    // Use a larger distractor sample on harder difficulties
+    const fraction = difficulty === 'easy' ? 0.55 : (difficulty === 'medium' ? 0.75 : 1);
+    const sampleCount = Math.min(
+        distractorsAll.length,
+        Math.max(requiredChoiceCount - 1, Math.floor(distractorsAll.length * fraction))
+    );
+
+    const sampledDistractors = distractorsAll
+        .map(word => ({word, sort: Math.random()}))
+        .sort((a,b) => a.sort - b.sort)
+        .slice(0, sampleCount)
+        .map(x => x.word);
 
     const choices = [correctWord];
-    const shuffled = distractors
+
+    const shuffled = sampledDistractors
         .map(word => ({word, sort: Math.random()}))
         .sort((a,b) => a.sort - b.sort)
         .map(entry => entry.word);
 
-    while(choices.length < 4 && shuffled.length){
-        choices.push(shuffled.shift());
+    while (choices.length < requiredChoiceCount && shuffled.length) {
+        const next = shuffled.shift();
+        if (!choices.includes(next)) choices.push(next);
     }
 
-    return choices
-        .sort(() => Math.random() - 0.5);
+    // Fallback: fill remaining (without duplicates)
+    while (choices.length < requiredChoiceCount && distractorsAll.length) {
+        const fallback = distractorsAll[Math.floor(Math.random() * distractorsAll.length)];
+        if (!choices.includes(fallback)) choices.push(fallback);
+        else {
+            // If duplicate, try another random one
+            // (loop will eventually find a new value)
+        }
+    }
+
+    return choices.sort(() => Math.random() - 0.5);
 }
+
+
 
 function loadQuizQuestion(){
 
     const question = quizQuestions[currentQuizIndex];
 
     quizQuestionEl.textContent = question.prompt;
-    questionNumberEl.textContent =
-        `Question ${currentQuizIndex + 1} of ${quizQuestions.length}`;
+
+    // Display fixed 1-15 slot progression (even if quiz ends early)
+    const displayIndex = currentQuizIndex + 1;
+    questionNumberEl.textContent = `Question ${displayIndex} of 15`;
+
+
     currentScoreEl.textContent = String(quizScore);
     quizProgressFillEl.style.width =
         `${Math.round((currentQuizIndex / quizQuestions.length) * 100)}%`;
-    quizFeedbackEl.textContent = "";
-    nextQuestionBtn.disabled = true;
-    nextQuestionBtn.textContent =
-        currentQuizIndex === quizQuestions.length - 1
-            ? "Finish Quiz"
-            : "Next Question ➜";
+
+    const quizAnswerGrid = document.getElementById("quizAnswerGrid");
+    if (quizAnswerGrid) {
+        quizAnswerGrid.dataset.quizChoiceLayout = quizDifficulty;
+    }
+
+    // Enable only the required number of choice buttons per difficulty
+    const requiredChoiceCountByDifficulty = {
+        easy: 3,
+        medium: 6,
+        hard: 10
+    };
+
+    const requiredChoiceCount = requiredChoiceCountByDifficulty[quizDifficulty] || requiredChoiceCountByDifficulty.easy;
 
     answerButtons.forEach((button, index) => {
-        button.disabled = false;
-        button.classList.remove("correct", "wrong");
-        button.textContent = question.choices[index] || "";
-        button.dataset.choice = question.choices[index] || "";
+        const isUsed = index < requiredChoiceCount;
+
+        button.disabled = !isUsed;
+        button.hidden = !isUsed;
+        button.classList.toggle("unused", !isUsed);
+        button.classList.remove("correct", "wrong", "selected");
+
+        const answerWord = isUsed ? (question.choices[index] || "") : "";
+        button.dataset.choice = answerWord;
+
+        const answerItem = answerWord
+            ? lessons[currentCategory].find(item => item.word === answerWord)
+            : null;
+        const imageDiv = button.querySelector(".answer-image");
+
+        if (imageDiv) {
+            if (isUsed && answerItem && answerItem.image) {
+                imageDiv.style.backgroundImage = `url('${answerItem.image}')`;
+                imageDiv.style.backgroundSize = "cover";
+                imageDiv.style.backgroundPosition = "center";
+            } else {
+                imageDiv.style.backgroundImage = "none";
+            }
+        }
     });
 
+    selectedQuizChoice = null;
+
+    speakQuizQuestion();
 }
 
 function selectQuizAnswer(button){
 
     if (quizAnswered || quizComplete) return;
+    if (button.hidden || button.classList.contains("unused") || !button.dataset.choice) return;
+
+    selectedQuizChoice = button.dataset.choice;
+
+    answerButtons.forEach(btn => {
+        btn.classList.toggle("selected", btn === button);
+    });
+
+    confirmQuizAnswer();
+}
+
+function confirmQuizAnswer(){
+    if (quizAnswered || quizComplete || !selectedQuizChoice) return;
 
     quizAnswered = true;
-
-    const selected = button.dataset.choice;
+    const selected = selectedQuizChoice;
     const correct = quizQuestions[currentQuizIndex].correct;
     const isCorrect = selected === correct;
 
+    // Alternate correct feedback prompts so it feels more interactive
+    if (typeof quizCorrectFeedbackToggle === 'undefined') {
+        quizCorrectFeedbackToggle = 0;
+    }
+    if (typeof quizWrongFeedbackToggle === 'undefined') {
+        quizWrongFeedbackToggle = 0;
+    }
+
+    answerButtons.forEach(btn => {
+        if (btn.dataset.choice === selected) {
+            btn.classList.add(isCorrect ? "correct" : "wrong");
+        }
+        if (!isCorrect && btn.dataset.choice === correct) {
+            btn.classList.add("correct");
+        }
+        btn.disabled = true;
+    });
+
     if (isCorrect) {
-        button.classList.add("correct");
-        quizFeedbackEl.textContent = "Correct!";
         quizScore++;
+
+        quizCorrectFeedbackToggle = (quizCorrectFeedbackToggle + 1) % 2;
+        const isEven = quizCorrectFeedbackToggle === 0;
+
+        const message = selectedLanguage === 'tl'
+            ? (isEven ? "Mahusay! Mas gumaganda ka araw-araw!" : "Awesome! Tama yan!")
+            : (isEven ? "Nice work! You're getting better every time!" : "Awesome! That's the correct answer!");
+
+        showNotification(message);
+        speakText(message).then(() => {
+            advanceQuiz();
+        });
+
     } else {
-        button.classList.add("wrong");
-        quizFeedbackEl.textContent = `Oops! The correct answer is ${correct}.`;
-        answerButtons.forEach(btn => {
-            if (btn.dataset.choice === correct) {
-                btn.classList.add("correct");
-            }
+        quizWrongFeedbackToggle = (quizWrongFeedbackToggle + 1) % 2;
+        const isFirstWrongMessage = quizWrongFeedbackToggle === 0;
+
+        const message = selectedLanguage === 'tl'
+            ? "Nagagawa mo ito! Magpatuloy ka!"
+            : (isFirstWrongMessage
+                ? "Nice Try! it's okay to make mistakes!"
+                : "You're doing great! Keep trying!");
+
+        showNotification(message);
+        speakText(message).then(() => {
+            advanceQuiz();
         });
     }
 
-    answerButtons.forEach(btn => btn.disabled = true);
     currentScoreEl.textContent = String(quizScore);
-    nextQuestionBtn.disabled = false;
+
+    const advanceQuiz = () => {
+        if (quizComplete) return;
+        if (currentQuizIndex < quizQuestions.length - 1) {
+            currentQuizIndex++;
+            quizAnswered = false;
+            loadQuizQuestion();
+        } else {
+            finishQuiz();
+        }
+    };
+
+    return;
+}
+
+function getExpectedQuestionCountForDifficulty(difficulty) {
+    const cfg = QUIZ_DIFFICULTY[difficulty] || QUIZ_DIFFICULTY.easy;
+    return cfg.questionCount;
+}
+
+function getNextDifficultyAfterCompletion(currentDifficulty, score) {
+    // Spec:
+    // Easy passed with exactly 5/5 correct -> starts Medium
+    // Medium passed with exactly 10/10 correct -> starts Hard
+    // Otherwise -> ends quiz and returns to menu (and resets to Easy)
+
+    if (currentDifficulty === 'easy' && score === 5) {
+        return 'medium';
+    }
+
+    if (currentDifficulty === 'medium' && score === 10) {
+        return 'hard';
+    }
+
+    return 'end';
 }
 
 function finishQuiz(){
 
+    // If there are more stages (easy -> medium -> hard), load the next stage.
+    if (quizStageState && quizStageState.stageIndex < quizStageState.stageConfig.length - 1) {
+
+        quizStageState.stageIndex++;
+
+        quizDifficulty = quizStageState.stageConfig[quizStageState.stageIndex].difficulty;
+
+        applyQuizDifficultyUI();
+
+        quizAnswered = false;
+        quizComplete = false;
+        selectedQuizChoice = null;
+
+        currentQuizIndex = 0;
+        quizProgressFillEl.style.width = "0%";
+
+        quizQuestions = generateQuizQuestions(
+            quizCategory,
+            quizDifficulty,
+            quizStageState.stageConfig[quizStageState.stageIndex].questionCount
+        );
+
+    // Update question number display to restart at 1 for each stage.
+        questionNumberEl.textContent = selectedLanguage === 'tl' ? `Tanong 1 ng 5` : `Question 1 of 5`;
+
+
+        loadQuizQuestion();
+        return;
+
+    }
+
+    // No more stages: finish entire quiz session
     quizComplete = true;
     quizProgressFillEl.style.width = "100%";
-    quizQuestionEl.textContent = "Quiz Complete!";
-    questionNumberEl.textContent =
-        `Final Score: ${quizScore} / ${quizQuestions.length}`;
-    quizFeedbackEl.textContent =
-        `Great work, ${localStorage.getItem("studentName") || "Student"}!`;
+    quizQuestionEl.textContent = selectedLanguage === 'tl' ? "Tapos na ang Pagsusulit!" : "Quiz Complete!";
+    questionNumberEl.textContent = selectedLanguage === 'tl'
+        ? `Pinal na Iskor: ${quizScore} / ${quizQuestions.length}`
+        : `Final Score: ${quizScore} / ${quizQuestions.length}`;
+    const finishMessage = selectedLanguage === 'tl'
+        ? `Magaling, ${localStorage.getItem("studentName") || "Estudyante"}!`
+        : `Great work, ${localStorage.getItem("studentName") || "Student"}!`;
+    showNotification(finishMessage);
     currentScoreEl.textContent = String(quizScore);
-    nextQuestionBtn.textContent = "Back to Menu";
-    nextQuestionBtn.disabled = false;
     answerButtons.forEach(btn => {
         btn.disabled = true;
         btn.classList.remove("correct", "wrong");
     });
+
+    // Persist summary for teacher dashboard
+    saveQuizSummary();
+
+    // Reset stored difficulty
+    localStorage.setItem('quizDifficulty', 'easy');
+
+    setTimeout(() => {
+        showScreen(menuScreen);
+    }, 1800);
 }
 
+
+
+
+function saveQuizSummary() {
+    const student = localStorage.getItem("studentName") || "Unknown";
+
+    // Per-student quiz summary (teacher dashboard reads from these keys)
+    const lastQuizScoreKey = getNamespacedKey(`lastQuizScore_${encodeURIComponent(student)}`);
+    const lastQuizTotalKey = getNamespacedKey(`lastQuizTotal_${encodeURIComponent(student)}`);
+
+    localStorage.setItem(lastQuizScoreKey, String(quizScore));
+    localStorage.setItem(lastQuizTotalKey, String(quizQuestions.length));
+
+    updateCurrentStudentRecord();
+}
+
+
 quizVoiceBtn.onclick = () => {
-    if (!quizQuestions.length) return;
-
-    const text = `Question ${currentQuizIndex + 1}. ${quizQuestions[currentQuizIndex].prompt}`;
-    speechSynthesis.cancel();
-
-    const speech = new SpeechSynthesisUtterance(text);
-    speech.rate = 0.9;
-    speech.pitch = 1.1;
-    speech.volume = 1;
-
-    speechSynthesis.speak(speech);
+    speakQuizQuestion();
 };
 
-nextQuestionBtn.onclick = () => {
-
-    if (quizComplete) {
-        showScreen(menuScreen);
-        return;
-    }
-
-    if (!quizAnswered) {
-        showNotification("Please select an answer before continuing.");
-        return;
-    }
-
-    if (currentQuizIndex < quizQuestions.length - 1) {
-        currentQuizIndex++;
-        quizAnswered = false;
-        loadQuizQuestion();
-        return;
-    }
-
-    finishQuiz();
-};
 
 answerButtons.forEach(button => {
     button.addEventListener("click", () => selectQuizAnswer(button));
 });
+
 
 // -------------------------------
 // Congratulation Voice
@@ -1313,7 +2062,7 @@ function showProgress(){
 
     const progress =
         JSON.parse(
-            localStorage.getItem("lessonProgress")
+            localStorage.getItem(getNamespacedKey("lessonProgress"))
         ) || {};
 
     console.log(progress);
@@ -1330,7 +2079,7 @@ function completedCategories(){
 
     const progress =
         JSON.parse(
-            localStorage.getItem("lessonProgress")
+            localStorage.getItem(getNamespacedKey("lessonProgress"))
         ) || {};
 
     return Object.keys(progress).length;
@@ -1359,6 +2108,11 @@ window.addEventListener("load",()=>{
 // ======================================================
 // END OF PART 2
 // ======================================================
+
+
+
+
+
 
 
 
