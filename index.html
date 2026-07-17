@@ -228,6 +228,7 @@
                                     <th>Avatar</th>
                                     <th>Progress</th>
                                     <th>Accuracy</th>
+                                    <th>Stars</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -329,60 +330,112 @@
 
     <div id="settingsModal" class="modal">
 
-        <div class="modal-content">
+        <div class="modal-content settings-panel">
 
-            <span class="close">&times;</span>
+            <button type="button" class="settings-close" id="settingsCloseBtn" aria-label="Close settings">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
 
-            <h2>Settings</h2>
+            <header class="settings-header">
+                <div class="settings-header-icon" aria-hidden="true">
+                    <i class="fa-solid fa-sliders"></i>
+                </div>
+                <div class="settings-header-text">
+                    <h2>Settings</h2>
+                    <p>Tune sound, voice, and display for your adventure.</p>
+                </div>
+            </header>
 
-            <div class="setting-item">
+            <div class="settings-body">
 
-                <label for="bgMusicToggle">Background Music</label>
+                <section class="settings-section" aria-labelledby="settingsSoundTitle">
+                    <h3 id="settingsSoundTitle" class="settings-section-title">
+                        <i class="fa-solid fa-music"></i>
+                        Sound
+                    </h3>
 
-                <input id="bgMusicToggle" type="checkbox" checked>
+                    <div class="setting-row">
+                        <div class="setting-copy">
+                            <span class="setting-label">Background Music</span>
+                            <span class="setting-hint">Play soft music while learning</span>
+                        </div>
+                        <label class="switch" for="bgMusicToggle">
+                            <input id="bgMusicToggle" type="checkbox" checked>
+                            <span class="switch-track" aria-hidden="true"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-row setting-row--stack">
+                        <div class="setting-copy setting-copy--inline">
+                            <span class="setting-label">Music Volume</span>
+                            <span class="setting-value" id="bgMusicVolumeValue">60%</span>
+                        </div>
+                        <input id="bgMusicVolume" class="setting-range" type="range" min="0" max="100" value="60">
+                    </div>
+
+                    <div class="setting-row">
+                        <div class="setting-copy">
+                            <span class="setting-label">Sound Effects</span>
+                            <span class="setting-hint">Clicks and playful feedback sounds</span>
+                        </div>
+                        <label class="switch" for="sfxToggle">
+                            <input id="sfxToggle" type="checkbox" checked>
+                            <span class="switch-track" aria-hidden="true"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-row setting-row--stack">
+                        <div class="setting-copy setting-copy--inline">
+                            <span class="setting-label">Effects Volume</span>
+                            <span class="setting-value" id="sfxVolumeValue">80%</span>
+                        </div>
+                        <input id="sfxVolume" class="setting-range" type="range" min="0" max="100" value="80">
+                    </div>
+                </section>
+
+                <section class="settings-section" aria-labelledby="settingsLearningTitle">
+                    <h3 id="settingsLearningTitle" class="settings-section-title">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        Learning
+                    </h3>
+
+                    <div class="setting-row">
+                        <div class="setting-copy">
+                            <span class="setting-label">Voice Narration</span>
+                            <span class="setting-hint">Hear lesson and quiz prompts aloud</span>
+                        </div>
+                        <label class="switch" for="voiceNarrationToggle">
+                            <input id="voiceNarrationToggle" type="checkbox" checked>
+                            <span class="switch-track" aria-hidden="true"></span>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="settings-section" aria-labelledby="settingsDisplayTitle">
+                    <h3 id="settingsDisplayTitle" class="settings-section-title">
+                        <i class="fa-solid fa-display"></i>
+                        Display
+                    </h3>
+
+                    <div class="setting-row">
+                        <div class="setting-copy">
+                            <span class="setting-label">Fullscreen</span>
+                            <span class="setting-hint">Fill the whole screen for focus mode</span>
+                        </div>
+                        <label class="switch" for="fullscreenToggle">
+                            <input id="fullscreenToggle" type="checkbox">
+                            <span class="switch-track" aria-hidden="true"></span>
+                        </label>
+                    </div>
+                </section>
 
             </div>
 
-            <div class="setting-item">
-
-                <label for="bgMusicVolume">Music Volume</label>
-
-                <input id="bgMusicVolume" type="range" min="0" max="100" value="60">
-
-            </div>
-
-            
-            <div class="setting-item">
-
-                <label for="sfxToggle">Sound Effects</label>
-
-                <input id="sfxToggle" type="checkbox" checked>
-
-            </div>
-
-            <div class="setting-item">
-
-                <label for="sfxVolume">Effects Volume</label>
-
-                <input id="sfxVolume" type="range" min="0" max="100" value="80">
-
-            </div>
-
-            <div class="setting-item">
-
-                <label for="voiceNarrationToggle">Voice Narration</label>
-
-                <input id="voiceNarrationToggle" type="checkbox" checked>
-
-            </div>
-
-            <div class="setting-item">
-
-                <label for="fullscreenToggle">Fullscreen</label>
-
-                <input id="fullscreenToggle" type="checkbox">
-
-            </div>
+            <footer class="settings-footer">
+                <button type="button" class="settings-done-btn" id="settingsDoneBtn">
+                    Done
+                </button>
+            </footer>
 
         </div>
 
@@ -627,6 +680,17 @@
 </section>
 
 <div id="notificationBox" class="notification-box"></div>
+
+<!-- Global student HUD (stars + settings) -->
+<div id="quizStarScore" class="quiz-star-score" aria-live="polite" hidden>
+    <span class="quiz-star-icon" aria-hidden="true">★</span>
+    <span id="quizStarCount" class="quiz-star-count">0</span>
+    <span class="quiz-star-label">Stars</span>
+</div>
+
+<button type="button" id="floatingSettingsBtn" class="floating-settings-btn" aria-label="Open settings" hidden>
+    <i class="fa-solid fa-gear"></i>
+</button>
 
 </body>
 
