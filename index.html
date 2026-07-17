@@ -20,6 +20,15 @@
     <!-- Font Awesome -->
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+
+
+        <audio id="popSound" src="popclick.mp3" preload="auto"></audio>
+<!-- bg audio -->
+<audio id="bgMusicc" loop preload="auto" src="bgMusic.mp3"></audio>
+
+
+
 </head>
 
 <body>
@@ -64,6 +73,29 @@
 
 
     <!-- ===================================================== -->
+    <!-- LANGUAGE SELECTOR -->
+
+        <div id="languageModal" class="modal">
+
+            <div class="modal-content">
+
+                <h2>Select Language</h2>
+
+                <p>Choose language for lesson narration:</p>
+
+                <div class="language-options">
+                    <button id="langEnBtn" class="main-btn">English</button>
+                    <button id="langTlBtn" class="main-btn">Tagalog</button>
+                </div>
+                <div class="language-cancel">
+                    <button id="langCancelBtn" class="back-btn">Cancel</button>
+                </div>
+
+            </div>
+
+        </div>
+
+    <!-- LESSON SCREEN -->
     <!-- STUDENT PROFILE -->
     <!-- ===================================================== -->
 
@@ -143,7 +175,7 @@
 
                     <p class="teacher-switch">
                         <span id="teacherSwitchText">Don't have an account?</span>
-                        <button type="button" id="teacherToggleMode" class="teacher-toggle-btn">Register</button>
+                        <button type="button" id="teacherToggleMode" class="main-btn">Register</button>
                     </p>
 
                     <button type="button" id="teacherBackHome" class="back-btn">← Back to Home</button>
@@ -184,6 +216,24 @@
                 <div class="teacher-actions">
                     <button id="teacherDashboardHomeBtn" class="back-btn">Back to Home</button>
                     <button id="teacherLogoutBtn" class="back-btn">Logout</button>
+                </div>
+
+                <div class="teacher-progress-panel">
+                    <h3>Student Progress Tracker</h3>
+                    <div class="teacher-progress-table">
+                        <table id="teacherStudentProgressTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Avatar</th>
+                                    <th>Progress</th>
+                                    <th>Accuracy</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
 
             </div>
@@ -287,25 +337,42 @@
 
             <div class="setting-item">
 
-                <label>Background Music</label>
+                <label for="bgMusicToggle">Background Music</label>
 
-                <input type="checkbox" checked>
-
-            </div>
-
-            <div class="setting-item">
-
-                <label>Sound Effects</label>
-
-                <input type="checkbox" checked>
+                <input id="bgMusicToggle" type="checkbox" checked>
 
             </div>
 
             <div class="setting-item">
 
-                <label>Voice Narration</label>
+                <label for="bgMusicVolume">Music Volume</label>
 
-                <input type="checkbox" checked>
+                <input id="bgMusicVolume" type="range" min="0" max="100" value="60">
+
+            </div>
+
+            
+            <div class="setting-item">
+
+                <label for="sfxToggle">Sound Effects</label>
+
+                <input id="sfxToggle" type="checkbox" checked>
+
+            </div>
+
+            <div class="setting-item">
+
+                <label for="sfxVolume">Effects Volume</label>
+
+                <input id="sfxVolume" type="range" min="0" max="100" value="80">
+
+            </div>
+
+            <div class="setting-item">
+
+                <label for="voiceNarrationToggle">Voice Narration</label>
+
+                <input id="voiceNarrationToggle" type="checkbox" checked>
 
             </div>
 
@@ -374,14 +441,10 @@
 
         <!-- Word -->
 
-        <h2 id="lessonWord">
-
-            Apple
-
-        </h2>
+        <h2 id="lessonWord"></h2>
 
         <p id="lessonFeedback" class="lesson-feedback">
-            Lesson 1 of 26 — Apple.
+            Lesson 1 of 26
         </p>
 
         <!-- Voice Button -->
@@ -446,9 +509,23 @@
 
         </h2>
 
+        <!-- Difficulty -->
+
+        <div class="quiz-difficulty">
+            <div class="quiz-difficulty-label">Difficulty</div>
+            <div class="quiz-difficulty-buttons" role="group" aria-label="Quiz difficulty">
+                <button type="button" class="difficulty-btn" data-difficulty="easy" disabled>Easy</button>
+                <button type="button" class="difficulty-btn" data-difficulty="medium" disabled>Medium</button>
+                <button type="button" class="difficulty-btn" data-difficulty="hard" disabled>Hard</button>
+
+
+            </div>
+        </div>
+
         <!-- Score -->
 
         <div class="quiz-score">
+
 
             Score:
             <span id="currentScore">0</span>
@@ -481,47 +558,65 @@
 
         <!-- Answer Cards -->
 
-        <div class="answer-grid">
+        <div class="answer-grid" id="quizAnswerGrid">
 
             <button class="answer-card" id="answer1">
 
-                Apple
+                <div class="answer-image"></div>
 
             </button>
 
             <button class="answer-card" id="answer2">
 
-                Ball
+                <div class="answer-image"></div>
 
             </button>
 
             <button class="answer-card" id="answer3">
 
-                Cat
+                <div class="answer-image"></div>
 
             </button>
 
             <button class="answer-card" id="answer4">
 
-                Dog
+                <div class="answer-image"></div>
 
             </button>
 
-        </div>
+            <button class="answer-card" id="answer5">
 
-        <!-- Feedback -->
+                <div class="answer-image"></div>
+                
+            </button>
 
-        <h3 id="quizFeedback">
+            <button class="answer-card" id="answer6">
 
-        </h3>
+                <div class="answer-image"></div>
 
-        <!-- Navigation -->
+            </button>
 
-        <div class="quiz-buttons">
+            <button class="answer-card" id="answer7">
 
-            <button id="nextQuestionBtn" class="lesson-nav-btn">
+                <div class="answer-image"></div>
 
-                Next Question ➜
+            </button>
+
+            <button class="answer-card" id="answer8">
+
+                <div class="answer-image"></div>
+
+            </button>
+
+            <button class="answer-card" id="answer9">
+
+                <div class="answer-image"></div>
+
+            </button>
+
+            <button class="answer-card" id="answer10">
+
+                <div class="answer-image"></div>
 
             </button>
 
@@ -539,3 +634,8 @@
  <script src="script.js"></script>
 
 </html>
+
+
+
+
+
