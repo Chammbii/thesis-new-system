@@ -83,6 +83,8 @@ const lessonLetter = document.getElementById("lessonLetter");
 const lessonWord = document.getElementById("lessonWord");
 const lessonFeedback = document.getElementById("lessonFeedback");
 const voiceBtn = document.getElementById("voiceBtn");
+const lessonSpeakBtn = document.getElementById("lessonSpeakBtn");
+const lessonVoiceStatus = document.getElementById("lessonVoiceStatus");
 const previousLesson = document.getElementById("previousLesson");
 const nextLesson = document.getElementById("nextLesson");
 const lessonHomeBtn = document.getElementById("lessonHomeBtn");
@@ -1001,23 +1003,235 @@ function updateSfxVolume() {
 }
 
 function isVoiceNarrationEnabled() {
-    return voiceNarrationToggle ? voiceNarrationToggle.checked : true;
+    if (voiceNarrationToggle) return !!voiceNarrationToggle.checked;
+    const saved = localStorage.getItem("voiceNarrationEnabled");
+    return saved === null ? true : saved === "true";
 }
 
-function speakText(text) {
+function applyVoiceNarrationSetting(enabled) {
+    if (voiceNarrationToggle) {
+        voiceNarrationToggle.checked = enabled;
+    }
+    localStorage.setItem("voiceNarrationEnabled", enabled ? "true" : "false");
+    if (!enabled) {
+        speechSynthesis.cancel();
+    }
+}
+
+// Female kid voice for all app narration (Web Speech API)
+const KID_VOICE_DEFAULTS = {
+    rate: 0.95,
+    pitch: 1.55,
+    volume: 1
+};
+
+let cachedSpeechVoices = [];
+
+function refreshSpeechVoices() {
+    if (!window.speechSynthesis) return;
+    cachedSpeechVoices = speechSynthesis.getVoices() || [];
+}
+
+function scoreKidFemaleVoice(voice, langPref) {
+    const name = (voice.name || "").toLowerCase();
+    const lang = (voice.lang || "").toLowerCase();
+    let score = 0;
+
+    // Prefer matching language (en / fil / tl)
+    if (langPref === "fil" || langPref === "tl") {
+        if (lang.startsWith("fil") || lang.startsWith("tl") || lang.includes("ph")) score += 40;
+        else if (lang.startsWith("en")) score += 15;
+    } else if (lang.startsWith("en")) {
+        score += 40;
+    }
+
+    // Strong female / child voice name hints
+    const kidHints = ["girl", "child", "kid", "junior", "little", "young"];
+    const femaleHints = [
+        "female", "zira", "samantha", "victoria", "karen", "moira", "fiona",
+        "tessa", "veena", "aria", "jenny", "sara", "susan", "hazel", "catherine",
+        "helen", "linda", "michelle", "natasha", "allison", "ava", "emma",
+        "google uk english female", "google us english"
+    ];
+    const maleHints = ["male", "david", "mark", "james", "thomas", "daniel", "george", "ravi", "fred"];
+
+    if (kidHints.some(h => name.includes(h))) score += 50;
+    if (femaleHints.some(h => name.includes(h))) score += 35;
+    if (maleHints.some(h => name.includes(h))) score -= 60;
+    if (name.includes("natural") || name.includes("neural")) score += 8;
+    if (voice.localService) score += 5;
+
+    return score;
+}
+
+function getKidFemaleVoice(lang) {
+    refreshSpeechVoices();
+    if (!cachedSpeechVoices.length) return null;
+
+    const langPref = (lang || "en-US").toLowerCase().startsWith("fil") ||
+        (lang || "").toLowerCase().startsWith("tl")
+        ? "fil"
+        : "en";
+
+    let best = null;
+    let bestScore = -Infinity;
+
+    for (const voice of cachedSpeechVoices) {
+        const score = scoreKidFemaleVoice(voice, langPref);
+        if (score > bestScore) {
+            bestScore = score;
+            best = voice;
+        }
+    }
+
+    // Require at least a mild female/english match; otherwise still return best
+    return best;
+}
+
+function applyKidFemaleVoice(utterance, options = {}) {
+    const lang = options.lang || (selectedLanguage === "tl" ? "fil-PH" : "en-US");
+    utterance.lang = lang;
+    utterance.rate = options.rate ?? KID_VOICE_DEFAULTS.rate;
+    utterance.pitch = options.pitch ?? KID_VOICE_DEFAULTS.pitch;
+    utterance.volume = options.volume ?? KID_VOICE_DEFAULTS.volume;
+
+    const voice = getKidFemaleVoice(lang);
+    if (voice) {
+        utterance.voice = voice;
+        // Keep utterance.lang aligned with the chosen voice when possible
+        if (voice.lang) utterance.lang = voice.lang;
+    }
+    return utterance;
+}
+
+if (window.speechSynthesis) {
+    refreshSpeechVoices();
+    speechSynthesis.onvoiceschanged = refreshSpeechVoices;
+}
+
+function speakText(text, options = {}) {
     return new Promise(resolve => {
-        if (!isVoiceNarrationEnabled()) {
+        if (!text || !isVoiceNarrationEnabled()) {
             resolve();
             return;
         }
         speechSynthesis.cancel();
         const speech = new SpeechSynthesisUtterance(text);
-        speech.rate = 0.95;
-        speech.pitch = 1.1;
-        speech.volume = 1;
+        applyKidFemaleVoice(speech, {
+            rate: options.rate ?? KID_VOICE_DEFAULTS.rate,
+            pitch: options.pitch ?? KID_VOICE_DEFAULTS.pitch,
+            volume: options.volume ?? KID_VOICE_DEFAULTS.volume,
+            lang: options.lang
+        });
         speech.onend = resolve;
         speech.onerror = resolve;
         speechSynthesis.speak(speech);
+    });
+}
+
+// ======================================================
+// MICROPHONE PERMISSION (request early while using the site)
+// ======================================================
+// Browsers cannot silently grant the mic without the user clicking Allow once.
+// We request it on first interaction so Speak Answer works immediately after.
+
+let micPermissionState = "unknown";
+let micPermissionRequestInFlight = null;
+
+async function checkMicrophonePermissionState() {
+    try {
+        if (navigator.permissions && navigator.permissions.query) {
+            const status = await navigator.permissions.query({ name: "microphone" });
+            micPermissionState = status.state;
+            status.onchange = () => {
+                micPermissionState = status.state;
+            };
+            return status.state;
+        }
+    } catch (err) {
+        // Some browsers block microphone permission queries.
+    }
+    return micPermissionState;
+}
+
+async function ensureMicrophoneAccess(options = {}) {
+    const { silent = false } = options;
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        if (!silent) {
+            showNotification(
+                selectedLanguage === "tl"
+                    ? "Hindi available ang mikropono sa browser na ito."
+                    : "Microphone is not available in this browser.",
+                4000
+            );
+        }
+        return false;
+    }
+
+    if (micPermissionRequestInFlight) {
+        return micPermissionRequestInFlight;
+    }
+
+    const current = await checkMicrophonePermissionState();
+    if (current === "granted") {
+        return true;
+    }
+
+    micPermissionRequestInFlight = (async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true
+                }
+            });
+            // Stop tracks right away — permission stays allowed for this site.
+            stream.getTracks().forEach(track => track.stop());
+            micPermissionState = "granted";
+            localStorage.setItem("micPermissionGranted", "true");
+            if (!silent) {
+                showNotification(
+                    selectedLanguage === "tl"
+                        ? "Mikropono ay pinapayagan na."
+                        : "Microphone is allowed.",
+                    2200
+                );
+            }
+            return true;
+        } catch (err) {
+            micPermissionState = "denied";
+            if (!silent) {
+                showNotification(
+                    selectedLanguage === "tl"
+                        ? "Paki-allow ang mikropono para sa Speak Answer."
+                        : "Please allow the microphone for Speak Answer.",
+                    4500
+                );
+            }
+            return false;
+        } finally {
+            micPermissionRequestInFlight = null;
+        }
+    })();
+
+    return micPermissionRequestInFlight;
+}
+
+function requestMicrophoneOnVisit() {
+    // First click/tap/key on the page triggers the browser Allow prompt.
+    const unlockMic = () => {
+        ensureMicrophoneAccess({ silent: true });
+    };
+
+    document.addEventListener("pointerdown", unlockMic, { once: true, capture: true });
+    document.addEventListener("keydown", unlockMic, { once: true, capture: true });
+
+    // If permission was already granted earlier, refresh state quietly.
+    checkMicrophonePermissionState().then(state => {
+        if (state === "granted" || localStorage.getItem("micPermissionGranted") === "true") {
+            micPermissionState = "granted";
+        }
     });
 }
 
@@ -1085,6 +1299,19 @@ if (sfxVolume) {
     sfxVolume.addEventListener("input", () => {
         updateVolumeLabel(sfxVolume, sfxVolumeValue);
         updateSfxVolume();
+    });
+}
+
+if (voiceNarrationToggle) {
+    voiceNarrationToggle.addEventListener("change", () => {
+        applyVoiceNarrationSetting(voiceNarrationToggle.checked);
+        if (voiceNarrationToggle.checked) {
+            speakText(
+                selectedLanguage === "tl"
+                    ? "Naka-on ang voice narration."
+                    : "Voice narration is on."
+            );
+        }
     });
 }
 
@@ -1172,14 +1399,19 @@ window.onload = () => {
 
     }
 
+    const savedVoiceNarration = localStorage.getItem("voiceNarrationEnabled");
+    applyVoiceNarrationSetting(savedVoiceNarration === null ? true : savedVoiceNarration === "true");
+
     updateBgMusic();
     updateSfxVolume();
     updateVolumeLabel(bgMusicVolume, bgMusicVolumeValue);
     updateVolumeLabel(sfxVolume, sfxVolumeValue);
     updateStudentHud();
+    requestMicrophoneOnVisit();
     document.addEventListener("click", () => {
         updateBgMusic();
         playPopSound();
+        ensureMicrophoneAccess({ silent: true });
     }, { once: true });
 };
 
@@ -1449,15 +1681,445 @@ function updateLessonSubtitle() {
         `<span class="lesson-info">${translateLessonProgress(currentLesson + 1, lessons[currentCategory].length)}</span>`;
 }
 
+
+// ======================================================
+// LESSON VOICE INTERACTION (SPEAK ANSWER)
+// ======================================================
+
+// ======================================================
+// LESSON VOICE INTERACTION (SPEAK ANSWER)
+// ======================================================
+
+// ======================================================
+// LESSON VOICE INTERACTION (SPEAK ANSWER)
+// ======================================================
+// ======================================================
+// LESSON VOICE INTERACTION (SPEAK ANSWER)
+// ======================================================
+
+
+
+
+
+// ======================================================
+// LESSON VOICE INTERACTION (SPEAK ANSWER)
+// ======================================================
+
+const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+let lessonSpeechRecognition = null;
+let lessonVoiceListening = false;
+let lessonVoiceRewardedKeys = null;
+
+// Extra spoken forms the recognizer may produce (English + Filipino + near-misses)
+const VOICE_ANSWER_ALIASES = {
+    // Alphabet letters
+    A: ["a", "ay", "ey", "letter a", "letra a", "ei"],
+    B: ["b", "bee", "be", "letter b", "letra b", "bi"],
+    C: ["c", "see", "sea", "si", "letter c", "letra c"],
+    D: ["d", "dee", "di", "letter d", "letra d"],
+    E: ["e", "ee", "letter e", "letra e"],
+    F: ["f", "ef", "eff", "letter f", "letra f"],
+    G: ["g", "jee", "ji", "letter g", "letra g"],
+    H: ["h", "aitch", "eych", "eytch", "letter h", "letra h", "eyts"],
+    I: ["i", "eye", "ay", "letter i", "letra i"],
+    J: ["j", "jay", "jey", "letter j", "letra j"],
+    K: ["k", "kay", "key", "letter k", "letra k"],
+    L: ["l", "el", "ell", "letter l", "letra l"],
+    M: ["m", "em", "letter m", "letra m"],
+    N: ["n", "en", "letter n", "letra n"],
+    O: ["o", "oh", "letter o", "letra o"],
+    P: ["p", "pee", "pi", "letter p", "letra p"],
+    Q: ["q", "cue", "kyu", "queue", "letter q", "letra q"],
+    R: ["r", "ar", "are", "letter r", "letra r"],
+    S: ["s", "es", "ess", "letter s", "letra s"],
+    T: ["t", "tee", "ti", "letter t", "letra t"],
+    U: ["u", "you", "yu", "letter u", "letra u"],
+    V: ["v", "vee", "vi", "letter v", "letra v"],
+    W: ["w", "double u", "doubleu", "double you", "letter w", "letra w", "dabalyu"],
+    X: ["x", "ex", "eks", "letter x", "letra x"],
+    Y: ["y", "why", "wai", "letter y", "letra y"],
+    Z: ["z", "zee", "zed", "zi", "letter z", "letra z"],
+
+    // Alphabet words
+    Apple: ["apple", "apal", "aple", "mansanas", "mansana"],
+    Ball: ["ball", "bol", "bola", "bowl"],
+    Cat: ["cat", "kat", "pusa", "pusang"],
+    Dog: ["dog", "dag", "aso", "dawg"],
+    Elephant: ["elephant", "elefant", "elepante", "elefante"],
+    Fish: ["fish", "fis", "isda", "fishy"],
+    Grapes: ["grapes", "grape", "greps", "ubas", "ubas"],
+    Hat: ["hat", "het", "sombrero"],
+    "Ice Cream": ["ice cream", "icecream", "ice-cream", "ayskrim", "ice", "cream"],
+    Juice: ["juice", "jus", "juce", "katas"],
+    Kite: ["kite", "kayt", "saranggola", "saranggola"],
+    Lion: ["lion", "lyon", "leon", "liyon"],
+    Monkey: ["monkey", "monki", "unggoy", "matzing"],
+    Nest: ["nest", "nes", "pugad"],
+    Orange: ["orange", "oranj", "orenj", "kahel", "dalandan"],
+    Pig: ["pig", "piggy", "baboy"],
+    Queen: ["queen", "kwin", "reyna", "reina"],
+    Rabbit: ["rabbit", "rabit", "kuneho", "bunny"],
+    Sun: ["sun", "son", "araw"],
+    Tiger: ["tiger", "tayger", "tigre"],
+    Umbrella: ["umbrella", "umbrela", "payong"],
+    Van: ["van", "ban", "banyahan"],
+    Whale: ["whale", "weyl", "weil", "balyena", "baleine"],
+    Xylophone: ["xylophone", "zylophone", "silipono", "xylfone", "zylofone"],
+    "Yo-Yo": ["yo-yo", "yoyo", "yo yo", "yo"],
+    Zebra: ["zebra", "zeebra", "zebraa"],
+
+    // Numbers
+    One: ["one", "1", "won", "isa", "uno", "wan"],
+    Two: ["two", "2", "too", "to", "dalawa", "duwa", "dos"],
+    Three: ["three", "3", "tree", "free", "tatlo", "tres"],
+    Four: ["four", "4", "for", "fore", "apat", "kwatro", "quatro"],
+    Five: ["five", "5", "fife", "lima", "singko", "cinco"],
+    Six: ["six", "6", "siks", "anim", "says", "seis"],
+    Seven: ["seven", "7", "sevn", "pito", "syete", "siete"],
+    Eight: ["eight", "8", "ate", "ait", "walo", "otso", "ocho"],
+    Nine: ["nine", "9", "nayn", "siyam", "nuwebe", "nueve"],
+    Ten: ["ten", "10", "tin", "sampu", "diyis", "diez", "dies"],
+
+    // Colors
+    Red: ["red", "read", "rad", "pula", "pulang", "rojo"],
+    Blue: ["blue", "blu", "bloo", "asul", "azul", "bughaw"],
+    Yellow: ["yellow", "yelo", "yellow", "dilaw", "dilaw", "amarillo"],
+    Green: ["green", "grin", "berde", "verde", "lunti"],
+    // Orange already listed above
+    Purple: ["purple", "purpl", "purpel", "ube", "lila", "violet", "morado"],
+    Black: ["black", "blak", "itim", "negro", "dark"],
+    White: ["white", "wite", "puti", "blanco", "blanc"],
+    Brown: ["brown", "braun", "kayumanggi", "kayumangi", "tsokolate", "chocolate"],
+    Pink: ["pink", "pinck", "rosas", "rosa", "pinkish"],
+
+    // Shapes
+    Circle: ["circle", "sirkel", "circl", "bilog", "round", "circulo"],
+    Square: ["square", "skwer", "parisukat", "kwadrado", "cuadro"],
+    Triangle: ["triangle", "trayangle", "triangel", "tatsulok", "triangulo"],
+    Rectangle: ["rectangle", "rektangle", "parihaba", "rektanggulo", "rectangulo"],
+    Star: ["star", "ster", "bituin", "bituing", "estrella"],
+    Heart: ["heart", "hart", "puso", "corazon"],
+    Pentagon: ["pentagon", "pentagono", "5 sides", "five sides"],
+    Hexagon: ["hexagon", "heksagon", "hexagono", "6 sides", "six sides"],
+    Diamond: ["diamond", "daymond", "diyamante", "rhombus", "diamante"],
+    Oval: ["oval", "ovel", "obalo", "ellipse", "egg shape", "egg"]
+};
+
+function normalizeSpokenText(text) {
+    return String(text || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function levenshteinDistance(a, b) {
+    const rows = a.length + 1;
+    const cols = b.length + 1;
+    const matrix = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+    for (let i = 0; i < rows; i++) matrix[i][0] = i;
+    for (let j = 0; j < cols; j++) matrix[0][j] = j;
+
+    for (let i = 1; i < rows; i++) {
+        for (let j = 1; j < cols; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            matrix[i][j] = Math.min(
+                matrix[i - 1][j] + 1,
+                matrix[i][j - 1] + 1,
+                matrix[i - 1][j - 1] + cost
+            );
+        }
+    }
+
+    return matrix[a.length][b.length];
+}
+
+function speechSimilarity(a, b) {
+    if (!a || !b) return 0;
+    if (a === b) return 1;
+    const distance = levenshteinDistance(a, b);
+    return 1 - distance / Math.max(a.length, b.length);
+}
+
+function getLessonVoiceRewardKey() {
+    const lesson = lessons[currentCategory][currentLesson];
+    return `${currentCategory}:${lesson.word}:${lesson.letter || ""}`;
+}
+
+function getLessonVoiceRewardsStore() {
+    if (lessonVoiceRewardedKeys) return lessonVoiceRewardedKeys;
+    const student = localStorage.getItem("studentName") || "Unknown";
+    const raw = localStorage.getItem(getNamespacedKey(`lessonVoiceStars_${encodeURIComponent(student)}`));
+    try {
+        lessonVoiceRewardedKeys = raw ? JSON.parse(raw) : {};
+    } catch (err) {
+        lessonVoiceRewardedKeys = {};
+    }
+    return lessonVoiceRewardedKeys;
+}
+
+function saveLessonVoiceRewardsStore() {
+    const student = localStorage.getItem("studentName") || "Unknown";
+    localStorage.setItem(
+        getNamespacedKey(`lessonVoiceStars_${encodeURIComponent(student)}`),
+        JSON.stringify(getLessonVoiceRewardsStore())
+    );
+}
+
+function hasLessonVoiceStarBeenAwarded() {
+    return !!getLessonVoiceRewardsStore()[getLessonVoiceRewardKey()];
+}
+
+function markLessonVoiceStarAwarded() {
+    const store = getLessonVoiceRewardsStore();
+    store[getLessonVoiceRewardKey()] = true;
+    saveLessonVoiceRewardsStore();
+}
+
+function getExpectedVoiceAnswers() {
+    const lesson = lessons[currentCategory][currentLesson];
+    const answers = new Set();
+
+    const addAnswer = (value) => {
+        const normalized = normalizeSpokenText(value);
+        if (normalized) answers.add(normalized);
+    };
+
+    const addWithAliases = (key) => {
+        if (!key) return;
+        addAnswer(key);
+        const aliases = VOICE_ANSWER_ALIASES[key];
+        if (aliases) aliases.forEach(addAnswer);
+        const translated = translationMap[key];
+        if (translated) addAnswer(translated);
+    };
+
+    if (currentCategory === "alphabet") {
+        addWithAliases(lesson.letter);
+        addWithAliases(lesson.word);
+        addAnswer(`letter ${lesson.letter}`);
+        addAnswer(`letra ${lesson.letter}`);
+    } else if (currentCategory === "numbers") {
+        addWithAliases(lesson.word);
+        addAnswer(String(currentLesson + 1));
+    } else {
+        addWithAliases(lesson.word);
+    }
+
+    return [...answers];
+}
+
+function isSpokenAnswerCorrect(spokenRaw) {
+    const spoken = normalizeSpokenText(spokenRaw);
+    if (!spoken) return false;
+
+    const expectedList = getExpectedVoiceAnswers();
+    const spokenTokens = spoken.split(" ").filter(Boolean);
+
+    for (const expected of expectedList) {
+        if (spoken === expected) return true;
+
+        // Short answers (letters / digits): require an exact token match only
+        if (expected.length <= 2) {
+            if (spokenTokens.includes(expected)) return true;
+            continue;
+        }
+
+        if (spoken.includes(expected) || expected.includes(spoken)) return true;
+
+        // Token-level fuzzy match for longer words
+        if (spokenTokens.some(token => {
+            if (token === expected) return true;
+            if (token.length <= 2) return false;
+            return speechSimilarity(token, expected) >= 0.78;
+        })) {
+            return true;
+        }
+
+        const threshold = expected.length <= 4 ? 0.8 : 0.72;
+        if (speechSimilarity(spoken, expected) >= threshold) return true;
+    }
+
+    return false;
+}
+
+function setLessonVoiceStatus(message, state = "") {
+    if (!lessonVoiceStatus) return;
+    lessonVoiceStatus.textContent = message || "";
+    lessonVoiceStatus.classList.remove("is-correct", "is-wrong", "is-listening");
+    if (state) lessonVoiceStatus.classList.add(`is-${state}`);
+}
+
+function resetLessonVoiceUi() {
+    stopLessonVoiceListening(false);
+    setLessonVoiceStatus("");
+    if (lessonSpeakBtn) {
+        lessonSpeakBtn.classList.remove("is-listening");
+        lessonSpeakBtn.textContent = selectedLanguage === "tl" ? "🎤 Magsalita" : "🎤 Speak Answer";
+    }
+}
+
+function awardLessonVoiceStar() {
+    if (hasLessonVoiceStarBeenAwarded()) return 0;
+    loadStudentStars();
+    quizStars += 1;
+    saveStudentStars();
+    recordDailyStarsEarned(1);
+    markLessonVoiceStarAwarded();
+    updateQuizStarDisplay(true, 1);
+    updateCurrentStudentRecord();
+    return 1;
+}
+
+function stopLessonVoiceListening(updateButton = true) {
+    lessonVoiceListening = false;
+    if (lessonSpeechRecognition) {
+        try {
+            lessonSpeechRecognition.onresult = null;
+            lessonSpeechRecognition.onerror = null;
+            lessonSpeechRecognition.onend = null;
+            lessonSpeechRecognition.stop();
+        } catch (err) {
+            // ignore
+        }
+    }
+    if (updateButton && lessonSpeakBtn) {
+        lessonSpeakBtn.classList.remove("is-listening");
+        lessonSpeakBtn.textContent = selectedLanguage === "tl" ? "🎤 Magsalita" : "🎤 Speak Answer";
+    }
+}
+
+function handleLessonVoiceResult(spokenText) {
+    const heard = String(spokenText || "").trim();
+    if (!heard) {
+        setLessonVoiceStatus(
+            selectedLanguage === "tl" ? "Hindi marinig. Subukan ulit." : "I didn't catch that. Try again.",
+            "wrong"
+        );
+        return;
+    }
+
+    if (isSpokenAnswerCorrect(heard)) {
+        const gained = awardLessonVoiceStar();
+        const message = gained
+            ? (selectedLanguage === "tl"
+                ? `Tama! Narinig ko: "${heard}". +1 bituin!`
+                : `Correct! I heard: "${heard}". +1 star!`)
+            : (selectedLanguage === "tl"
+                ? `Tama! Narinig ko: "${heard}". (Nakuha mo na ang bituin dito.)`
+                : `Correct! I heard: "${heard}". (Star already earned for this item.)`);
+
+        setLessonVoiceStatus(message, "correct");
+        showNotification(message, 3200);
+        speakText(selectedLanguage === "tl" ? "Tama! Magaling!" : "Correct! Great job!");
+    } else {
+        const lesson = lessons[currentCategory][currentLesson];
+        const hint = currentCategory === "alphabet"
+            ? lesson.letter
+            : translateWord(lesson.word);
+        const message = selectedLanguage === "tl"
+            ? `Halos! Narinig ko: "${heard}". Subukan sabihin: ${hint}`
+            : `Close! I heard: "${heard}". Try saying: ${hint}`;
+        setLessonVoiceStatus(message, "wrong");
+        showNotification(message, 3200);
+        speakText(selectedLanguage === "tl" ? "Subukan ulit!" : "Try again!");
+    }
+}
+
+function startLessonVoiceListening() {
+    if (!SpeechRecognitionAPI) {
+        const msg = selectedLanguage === "tl"
+            ? "Hindi available ang voice recognition sa browser na ito. Gamitin ang Chrome o Edge."
+            : "Voice recognition is not available in this browser. Please use Chrome or Edge.";
+        setLessonVoiceStatus(msg, "wrong");
+        showNotification(msg, 4000);
+        return;
+    }
+
+    if (lessonVoiceListening) {
+        stopLessonVoiceListening();
+        setLessonVoiceStatus(
+            selectedLanguage === "tl" ? "Tumigil ang pakikinig." : "Listening stopped.",
+            ""
+        );
+        return;
+    }
+
+    speechSynthesis.cancel();
+    stopLessonVoiceListening(false);
+
+    lessonSpeechRecognition = new SpeechRecognitionAPI();
+    lessonSpeechRecognition.lang = selectedLanguage === "tl" ? "fil-PH" : "en-US";
+    lessonSpeechRecognition.interimResults = false;
+    lessonSpeechRecognition.maxAlternatives = 5;
+    lessonSpeechRecognition.continuous = false;
+
+    lessonVoiceListening = true;
+    if (lessonSpeakBtn) {
+        lessonSpeakBtn.classList.add("is-listening");
+        lessonSpeakBtn.textContent = selectedLanguage === "tl" ? "🛑 Tumigil" : "🛑 Listening...";
+    }
+    setLessonVoiceStatus(
+        selectedLanguage === "tl" ? "Nakikinig... magsalita ngayon." : "Listening... speak now.",
+        "listening"
+    );
+
+    lessonSpeechRecognition.onresult = (event) => {
+        const alternatives = [];
+        for (let i = 0; i < event.results.length; i++) {
+            for (let j = 0; j < event.results[i].length; j++) {
+                alternatives.push(event.results[i][j].transcript);
+            }
+        }
+
+        stopLessonVoiceListening();
+
+        // Accept the first matching alternative (near-miss friendly)
+        const match = alternatives.find(text => isSpokenAnswerCorrect(text));
+        handleLessonVoiceResult(match || alternatives[0] || "");
+    };
+
+    lessonSpeechRecognition.onerror = (event) => {
+        stopLessonVoiceListening();
+        const msg = selectedLanguage === "tl"
+            ? `May problema sa mikropono (${event.error}). Subukan ulit.`
+            : `Mic error (${event.error}). Please try again.`;
+        setLessonVoiceStatus(msg, "wrong");
+    };
+
+    lessonSpeechRecognition.onend = () => {
+        if (lessonVoiceListening) {
+            stopLessonVoiceListening();
+            if (lessonVoiceStatus && lessonVoiceStatus.classList.contains("is-listening")) {
+                setLessonVoiceStatus(
+                    selectedLanguage === "tl" ? "Walang narinig. Subukan ulit." : "No speech detected. Try again.",
+                    "wrong"
+                );
+            }
+        }
+    };
+
+    try {
+        lessonSpeechRecognition.start();
+    } catch (err) {
+        stopLessonVoiceListening();
+        setLessonVoiceStatus(
+            selectedLanguage === "tl" ? "Hindi masimulan ang mikropono." : "Could not start the microphone.",
+            "wrong"
+        );
+    }
+}
+
 function speakLessonText() {
     speechSynthesis.cancel();
+    stopLessonVoiceListening();
 
     const speechText = getLessonSpeechText();
     const speech = new SpeechSynthesisUtterance(speechText);
-
-    speech.rate = 0.8;
-    speech.pitch = 1.1;
-    speech.volume = 1;
+    applyKidFemaleVoice(speech, { rate: 0.85, pitch: 1.55, volume: 1 });
 
     speechSynthesis.speak(speech);
     showNotification(speechText, 2600);
@@ -1490,6 +2152,7 @@ function loadLesson() {
     progressFill.style.width = progress + "%";
 
     updateLessonSubtitle();
+    resetLessonVoiceUi();
     speakLessonText();
 }
 
@@ -1537,6 +2200,7 @@ if (langCancelBtn) langCancelBtn.addEventListener('click', () => {
 function openLessonContinue(category){
     currentCategory = category;
     currentLesson = 0;
+    lessonVoiceRewardedKeys = null;
     // store category and language selection
     loadLesson();
     showScreen(lessonScreen);
@@ -1593,20 +2257,13 @@ previousLesson.onclick = () => {
 };
 
 // -------------------------------
-// SPEAK
-// -------------------------------
-
-voiceBtn.onclick = () => {
-    speakLessonText();
-};
-
-// -------------------------------
 // BACK TO MENU
 // -------------------------------
 
 lessonHomeBtn.onclick = () => {
 
     speechSynthesis.cancel();
+    stopLessonVoiceListening();
     showScreen(menuScreen);
 
 };
@@ -1689,19 +2346,14 @@ lessonImage.onerror = function () {
 // -------------------------------
 
 voiceBtn.onclick = () => {
-
-    speechSynthesis.cancel();
-
-    const sentence = getLessonSpeechText();
-    const speech = new SpeechSynthesisUtterance(sentence);
-
-    speech.rate = 0.8;
-    speech.pitch = 1.1;
-    speech.volume = 1;
-
-    speechSynthesis.speak(speech);
-
+    speakLessonText();
 };
+
+if (lessonSpeakBtn) {
+    lessonSpeakBtn.addEventListener("click", () => {
+        startLessonVoiceListening();
+    });
+}
 
 // -------------------------------
 // Keyboard Support
@@ -1733,6 +2385,14 @@ document.addEventListener("keydown", (event) => {
 
             break;
 
+        case "m":
+        case "M":
+
+            event.preventDefault();
+            if (lessonSpeakBtn) lessonSpeakBtn.click();
+
+            break;
+
     }
 
 });
@@ -1750,9 +2410,7 @@ function welcomeLessonVoice() {
         : "Welcome! Let's start learning.";
 
     const speech = new SpeechSynthesisUtterance(message);
-
-    speech.rate = 0.9;
-    speech.pitch = 1.2;
+    applyKidFemaleVoice(speech, { rate: 0.95, pitch: 1.55 });
 
     speechSynthesis.speak(speech);
 
@@ -2601,15 +3259,10 @@ function congratulateStudent(){
 
     speechSynthesis.cancel();
 
-    const speech =
-        new SpeechSynthesisUtterance(
-
-            "Great job! Let's answer the quiz."
-
-        );
-
-    speech.rate = .9;
-    speech.pitch = 1.2;
+    const speech = new SpeechSynthesisUtterance(
+        "Great job! Let's answer the quiz."
+    );
+    applyKidFemaleVoice(speech, { rate: 0.95, pitch: 1.55 });
 
     speechSynthesis.speak(speech);
 
