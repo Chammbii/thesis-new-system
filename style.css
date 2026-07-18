@@ -198,41 +198,313 @@ h1{
     text-align:left;
 }
 
-.teacher-progress-panel h3{
-    margin-bottom:16px;
+.teacher-error{
+    color:#e63946;
+    font-size:16px;
+    min-height:22px;
+}
+
+/* =====================================================
+   TEACHER DASHBOARD (ENHANCED)
+===================================================== */
+
+#teacherDashboard.screen.active{
+    align-items:flex-start;
+    padding:28px 20px 48px;
+}
+
+.tdash{
+    width:100%;
+    max-width:1180px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:22px;
+}
+
+.tdash-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:20px;
+    padding:28px 30px;
+    border-radius:28px;
+    background:
+        linear-gradient(135deg,rgba(255,255,255,.96),rgba(255,255,255,.88)),
+        linear-gradient(145deg,#dff4ff,#fff4c4);
+    box-shadow:0 18px 40px rgba(29,53,87,.12);
+    border:1px solid rgba(255,255,255,.7);
+}
+
+.tdash-eyebrow{
+    margin:0 0 6px;
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:#3a86ff;
+}
+
+.tdash-header h2{
+    margin:0 0 8px;
+    color:#1d3557;
+    font-size:34px;
+    text-align:left;
+}
+
+.tdash-welcome{
+    margin:0;
+    color:#556680;
+    font-size:17px;
+}
+
+.tdash-header-actions{
+    display:flex;
+    gap:10px;
+    flex-shrink:0;
+}
+
+.tdash-btn{
+    border:none;
+    border-radius:14px;
+    padding:12px 18px;
+    font-family:inherit;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    transition:transform .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+
+.tdash-btn:hover{
+    transform:translateY(-2px);
+}
+
+.tdash-btn--ghost{
+    background:rgba(255,255,255,.85);
+    color:#1d3557;
+    box-shadow:0 6px 16px rgba(29,53,87,.08);
+}
+
+.tdash-btn--solid{
+    background:linear-gradient(135deg,#ffb703,#ff8a4c);
+    color:#fff;
+    box-shadow:0 8px 18px rgba(255,183,3,.3);
+}
+
+.tdash-btn--soft{
+    background:rgba(58,134,255,.12);
+    color:#1d4f9c;
+}
+
+.tdash-btn--danger{
+    background:rgba(230,57,70,.12);
+    color:#c1121f;
+}
+
+.tdash-stats{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:16px;
+}
+
+.tdash-stat{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:20px 18px;
+    border-radius:22px;
+    background:rgba(255,255,255,.92);
+    box-shadow:0 12px 28px rgba(29,53,87,.1);
+    border:1px solid rgba(255,255,255,.8);
+}
+
+.tdash-stat-icon{
+    width:48px;
+    height:48px;
+    border-radius:16px;
+    display:grid;
+    place-items:center;
+    color:#fff;
+    background:linear-gradient(145deg,#57cc99,#3a86ff);
+    flex-shrink:0;
+}
+
+.tdash-stat:nth-child(2) .tdash-stat-icon{
+    background:linear-gradient(145deg,#ffb703,#ff8a4c);
+}
+
+.tdash-stat:nth-child(3) .tdash-stat-icon{
+    background:linear-gradient(145deg,#4cc9f0,#4361ee);
+}
+
+.tdash-stat:nth-child(4) .tdash-stat-icon{
+    background:linear-gradient(145deg,#ffd60a,#f4a261);
+}
+
+.tdash-stat-number{
+    font-size:32px;
+    font-weight:800;
+    color:#1d3557;
+    line-height:1;
+}
+
+.tdash-stat-label{
+    margin-top:4px;
+    font-size:13px;
+    color:#6b7c90;
+    font-weight:600;
+}
+
+.tdash-charts{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:18px;
+}
+
+.tdash-panel{
+    background:rgba(255,255,255,.94);
+    border-radius:26px;
+    padding:22px;
+    box-shadow:0 14px 34px rgba(29,53,87,.1);
+    border:1px solid rgba(255,255,255,.75);
+    text-align:left;
+}
+
+.tdash-panel--wide{
+    width:100%;
+}
+
+.tdash-panel-head{
+    margin-bottom:18px;
+}
+
+.tdash-panel-head h3{
+    margin:0 0 4px;
+    color:#1d3557;
+    font-size:22px;
+}
+
+.tdash-panel-head p{
+    margin:0;
+    color:#6b7c90;
+    font-size:14px;
+}
+
+.bar-chart{
+    display:flex;
+    align-items:flex-end;
+    justify-content:flex-start;
+    gap:14px;
+    min-height:220px;
+    padding:18px 8px 8px;
+    overflow-x:auto;
+    border-radius:18px;
+    background:linear-gradient(180deg,#f7fbff 0%,#eef6ff 100%);
+}
+
+.bar-chart-empty{
+    width:100%;
+    min-height:180px;
+    display:grid;
+    place-items:center;
+    color:#7a8aa0;
+    font-size:15px;
+    text-align:center;
+    padding:20px;
+}
+
+.bar-item{
+    flex:0 0 64px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    min-height:180px;
+    justify-content:flex-end;
+}
+
+.bar-value-label{
+    font-size:12px;
+    font-weight:700;
     color:#1d3557;
 }
 
-.teacher-progress-table{
-    overflow-x:auto;
-    border-radius:24px;
-    background:#f8fbff;
-    padding:18px;
-    box-shadow:0 15px 35px rgba(0,0,0,0.08);
+.bar-track-vertical{
+    width:100%;
+    height:150px;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    border-radius:14px 14px 8px 8px;
+    background:rgba(255,255,255,.7);
+    overflow:hidden;
 }
 
-#teacherStudentProgressTable{
+.bar-fill-vertical{
+    width:78%;
+    border-radius:12px 12px 6px 6px;
+    background:linear-gradient(180deg,#4cc9f0,#3a86ff);
+    min-height:4px;
+    transition:height .55s cubic-bezier(.2,.9,.25,1);
+    box-shadow:0 8px 16px rgba(58,134,255,.25);
+}
+
+.bar-fill-vertical.is-stars{
+    background:linear-gradient(180deg,#ffe566,#ffb703);
+    box-shadow:0 8px 16px rgba(255,183,3,.28);
+}
+
+.bar-name{
+    font-size:12px;
+    font-weight:600;
+    color:#556680;
+    text-align:center;
+    max-width:64px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.teacher-progress-table,
+.quiz-history-table-wrap{
+    overflow-x:auto;
+    border-radius:18px;
+    background:#f7fbff;
+    padding:12px;
+}
+
+#teacherStudentProgressTable,
+#teacherQuizHistoryTable{
     width:100%;
     border-collapse:collapse;
-    min-width:520px;
+    min-width:640px;
 }
 
 #teacherStudentProgressTable th,
-#teacherStudentProgressTable td{
+#teacherStudentProgressTable td,
+#teacherQuizHistoryTable th,
+#teacherQuizHistoryTable td{
     padding:14px 16px;
-    border-bottom:1px solid rgba(0,0,0,0.08);
+    border-bottom:1px solid rgba(29,53,87,.08);
     color:#2a3a5b;
-    font-size:16px;
-}
-
-#teacherStudentProgressTable th{
+    font-size:15px;
     text-align:left;
-    font-weight:700;
-    background:rgba(255,255,255,0.85);
 }
 
-#teacherStudentProgressTable tbody tr:hover{
-    background:rgba(255,255,255,0.9);
+#teacherStudentProgressTable th,
+#teacherQuizHistoryTable th{
+    font-weight:700;
+    background:rgba(255,255,255,.9);
+    color:#1d3557;
+}
+
+#teacherStudentProgressTable tbody tr:hover,
+#teacherQuizHistoryTable tbody tr:hover{
+    background:rgba(255,255,255,.95);
+}
+
+#teacherStudentProgressTable tr.is-selected{
+    background:rgba(141,211,255,.22);
 }
 
 .student-avatar-cell{
@@ -242,26 +514,23 @@ h1{
     object-fit:cover;
     display:block;
 }
-    border:none;
-    border-radius:18px;
-    background:#6c5ce7;
-    color:white;
-    font-size:20px;
-    font-weight:700;
-    cursor:pointer;
-    transition:.3s;
+
+.tdash-row-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+.quiz-history-empty td{
+    text-align:center !important;
+    color:#7a8aa0;
+    padding:28px 16px !important;
 }
 
 .teacher-toggle-btn:hover,
 .link-btn:hover,
 .back-btn:hover{
     background:#5845d4;
-}
-
-.teacher-error{
-    color:#e63946;
-    font-size:16px;
-    min-height:22px;
 }
 
 .teacher-stats{
@@ -283,6 +552,30 @@ h1{
     font-weight:800;
     color:#3a86ff;
     margin-bottom:10px;
+}
+
+@media(max-width:900px){
+    .tdash-stats{
+        grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .tdash-charts{
+        grid-template-columns:1fr;
+    }
+
+    .tdash-header{
+        flex-direction:column;
+    }
+}
+
+@media(max-width:560px){
+    .tdash-stats{
+        grid-template-columns:1fr;
+    }
+
+    .tdash-header h2{
+        font-size:28px;
+    }
 }
 
 .profile-container h2{
