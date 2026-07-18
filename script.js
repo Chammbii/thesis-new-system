@@ -36,6 +36,14 @@ const teacherProgressCategories = document.getElementById("teacherProgressCatego
 const teacherLogoutBtn = document.getElementById("teacherLogoutBtn");
 const teacherDashboardHomeBtn = document.getElementById("teacherDashboardHomeBtn");
 const teacherStudentProgressTable = document.getElementById("teacherStudentProgressTable");
+const teacherStudentCount = document.getElementById("teacherStudentCount");
+const teacherTotalStars = document.getElementById("teacherTotalStars");
+const teacherProgressChart = document.getElementById("teacherProgressChart");
+const teacherStarsChart = document.getElementById("teacherStarsChart");
+const teacherQuizHistoryTable = document.getElementById("teacherQuizHistoryTable");
+const quizHistorySubtitle = document.getElementById("quizHistorySubtitle");
+let selectedHistoryStudent = null;
+let sessionStarsGained = 0;
 
 const settingsBtn = document.getElementById("settingsBtn");
 const settingsModal = document.getElementById("settingsModal");
@@ -439,6 +447,144 @@ function updateCurrentStudentRecord() {
     saveStudentRecords(records);
 }
 
+function getQuizHistoryKey(student) {
+    return getNamespacedKey(`quizHistory_${encodeURIComponent(student)}`);
+}
+
+function getStudentQuizHistory(student) {
+    return JSON.parse(localStorage.getItem(getQuizHistoryKey(student))) || [];
+}
+
+function saveStudentQuizHistory(student, history) {
+    localStorage.setItem(getQuizHistoryKey(student), JSON.stringify(history.slice(0, 40)));
+}
+
+function appendQuizHistoryEntry(student, entry) {
+    const history = getStudentQuizHistory(student);
+    history.unshift(entry);
+    saveStudentQuizHistory(student, history);
+}
+
+function formatQuizHistoryDate(timestamp) {
+    try {
+        return new Date(timestamp).toLocaleString(undefined, {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+            hour: "numeric",
+            minute: "2-digit"
+        });
+    } catch (err) {
+        return "—";
+    }
+}
+
+function renderBarChart(container, items, options = {}) {
+    if (!container) return;
+    container.innerHTML = "";
+
+    if (!items.length) {
+        const empty = document.createElement("div");
+        empty.className = "bar-chart-empty";
+        empty.textContent = options.emptyText || "No student data yet.";
+        container.appendChild(empty);
+        return;
+    }
+
+    const maxValue = Math.max(...items.map(item => item.value), 1);
+
+    items.forEach(item => {
+        const wrap = document.createElement("div");
+        wrap.className = "bar-item";
+        wrap.title = `${item.label}: ${item.display}`;
+
+        const valueLabel = document.createElement("div");
+        valueLabel.className = "bar-value-label";
+        valueLabel.textContent = item.display;
+
+        const track = document.createElement("div");
+        track.className = "bar-track-vertical";
+
+        const fill = document.createElement("div");
+        fill.className = `bar-fill-vertical${options.starStyle ? " is-stars" : ""}`;
+        const heightPct = Math.max(4, Math.round((item.value / maxValue) * 100));
+        fill.style.height = "0%";
+        track.appendChild(fill);
+
+        const name = document.createElement("div");
+        name.className = "bar-name";
+        name.textContent = item.label;
+
+        wrap.appendChild(valueLabel);
+        wrap.appendChild(track);
+        wrap.appendChild(name);
+        container.appendChild(wrap);
+
+        requestAnimationFrame(() => {
+            fill.style.height = `${heightPct}%`;
+        });
+    });
+}
+
+function renderTeacherCharts(records) {
+    const progressItems = records.map(record => ({
+        label: record.name,
+        value: Number(record.progressPercent) || 0,
+        display: `${Number(record.progressPercent) || 0}%`
+    }));
+
+    const starItems = records.map(record => ({
+        label: record.name,
+        value: Number(record.stars) || 0,
+        display: String(Number(record.stars) || 0)
+    }));
+
+    renderBarChart(teacherProgressChart, progressItems, {
+        emptyText: "No progress to chart yet. Students will appear after lessons."
+    });
+    renderBarChart(teacherStarsChart, starItems, {
+        starStyle: true,
+        emptyText: "No stars earned yet. Quiz wins will show up here."
+    });
+}
+
+function renderQuizHistory(studentName) {
+    if (!teacherQuizHistoryTable) return;
+    const tbody = teacherQuizHistoryTable.querySelector("tbody");
+    tbody.innerHTML = "";
+
+    if (!studentName) {
+        if (quizHistorySubtitle) {
+            quizHistorySubtitle.textContent = "Select a student to view every quiz attempt.";
+        }
+        tbody.innerHTML = `<tr class="quiz-history-empty"><td colspan="5">No student selected yet.</td></tr>`;
+        return;
+    }
+
+    if (quizHistorySubtitle) {
+        quizHistorySubtitle.textContent = `Quiz attempts for ${studentName}`;
+    }
+
+    const history = getStudentQuizHistory(studentName);
+    if (!history.length) {
+        tbody.innerHTML = `<tr class="quiz-history-empty"><td colspan="5">No quiz history yet for ${studentName}.</td></tr>`;
+        return;
+    }
+
+    history.forEach(entry => {
+        const row = document.createElement("tr");
+        const category = (entry.category || "quiz").charAt(0).toUpperCase() + (entry.category || "quiz").slice(1);
+        row.innerHTML = `
+            <td>${formatQuizHistoryDate(entry.date)}</td>
+            <td>${category}</td>
+            <td>${entry.score} / ${entry.total}</td>
+            <td>${entry.accuracy}%</td>
+            <td>+${entry.starsGained || 0} ★</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
 function renderTeacherStudentProgress() {
     if (!teacherStudentProgressTable) return;
     const tbody = teacherStudentProgressTable.querySelector("tbody");
@@ -448,8 +594,25 @@ function renderTeacherStudentProgress() {
 
     records.sort((a, b) => b.updatedAt - a.updatedAt);
 
+    if (teacherStudentCount) teacherStudentCount.textContent = String(records.length);
+    if (teacherTotalStars) {
+        const totalStars = records.reduce((sum, record) => sum + (Number(record.stars) || 0), 0);
+        teacherTotalStars.textContent = String(totalStars);
+    }
+
+    renderTeacherCharts(records);
+
+    if (!records.length) {
+        tbody.innerHTML = `<tr class="quiz-history-empty"><td colspan="6">No students tracked yet.</td></tr>`;
+        renderQuizHistory(null);
+        return;
+    }
+
     records.forEach(record => {
         const row = document.createElement("tr");
+        if (selectedHistoryStudent === record.name) {
+            row.classList.add("is-selected");
+        }
 
         const nameTd = document.createElement("td");
         nameTd.textContent = record.name;
@@ -468,19 +631,42 @@ function renderTeacherStudentProgress() {
         accuracyTd.textContent = `${record.accuracy}%`;
 
         const starsTd = document.createElement("td");
-        starsTd.textContent = String(record.stars || 0);
+        starsTd.textContent = `★ ${record.stars || 0}`;
 
         const actionsTd = document.createElement("td");
+        const actionsWrap = document.createElement("div");
+        actionsWrap.className = "tdash-row-actions";
+
+        const historyBtn = document.createElement("button");
+        historyBtn.textContent = "History";
+        historyBtn.className = "tdash-btn tdash-btn--soft";
+        historyBtn.type = "button";
+        historyBtn.addEventListener("click", () => {
+            selectedHistoryStudent = record.name;
+            renderTeacherStudentProgress();
+            renderQuizHistory(record.name);
+            const panel = document.getElementById("quizHistoryPanel");
+            if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+
         const removeBtn = document.createElement("button");
         removeBtn.textContent = "Remove";
-        removeBtn.className = "remove-btn";
+        removeBtn.className = "tdash-btn tdash-btn--danger";
         removeBtn.type = "button";
         removeBtn.addEventListener("click", () => {
             removeStudentRecord(record.name);
+            if (selectedHistoryStudent === record.name) {
+                selectedHistoryStudent = null;
+            }
             renderTeacherStudentProgress();
+            renderQuizHistory(selectedHistoryStudent);
             showNotification(`${record.name} has been removed.`);
         });
-        actionsTd.appendChild(removeBtn);
+
+        actionsWrap.appendChild(historyBtn);
+        actionsWrap.appendChild(removeBtn);
+        actionsTd.appendChild(actionsWrap);
+
         row.appendChild(nameTd);
         row.appendChild(avatarTd);
         row.appendChild(progressTd);
@@ -489,11 +675,16 @@ function renderTeacherStudentProgress() {
         row.appendChild(actionsTd);
         tbody.appendChild(row);
     });
+
+    if (selectedHistoryStudent) {
+        renderQuizHistory(selectedHistoryStudent);
+    }
 }
 
 function removeStudentRecord(studentName) {
     const records = getStudentRecords().filter(record => record.name !== studentName);
     saveStudentRecords(records);
+    localStorage.removeItem(getQuizHistoryKey(studentName));
 }
 
 function showTeacherDashboard(){
@@ -1562,6 +1753,7 @@ function updateQuizStarDisplay(animate = false, gained = 0) {
 function awardQuizStars() {
     const gained = STAR_REWARDS[quizDifficulty] || STAR_REWARDS.easy;
     quizStars += gained;
+    sessionStarsGained += gained;
     saveStudentStars();
     updateQuizStarDisplay(true, gained);
     return gained;
@@ -1662,6 +1854,7 @@ function initializeQuiz(){
 
     quizCategory = currentCategory;
     quizScore = 0;
+    sessionStarsGained = 0;
     loadStudentStars();
     currentQuizIndex = 0;
     quizAnswered = false;
@@ -2140,9 +2333,21 @@ function saveQuizSummary() {
     // Per-student quiz summary (teacher dashboard reads from these keys)
     const lastQuizScoreKey = getNamespacedKey(`lastQuizScore_${encodeURIComponent(student)}`);
     const lastQuizTotalKey = getNamespacedKey(`lastQuizTotal_${encodeURIComponent(student)}`);
+    const total = quizQuestions.length;
+    const accuracy = total > 0 ? Math.round((quizScore / total) * 100) : 0;
 
     localStorage.setItem(lastQuizScoreKey, String(quizScore));
-    localStorage.setItem(lastQuizTotalKey, String(quizQuestions.length));
+    localStorage.setItem(lastQuizTotalKey, String(total));
+
+    appendQuizHistoryEntry(student, {
+        date: Date.now(),
+        category: quizCategory || currentCategory || "quiz",
+        score: quizScore,
+        total,
+        accuracy,
+        starsGained: sessionStarsGained,
+        starsTotal: quizStars
+    });
 
     updateCurrentStudentRecord();
 }
