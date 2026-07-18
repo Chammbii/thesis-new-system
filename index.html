@@ -570,13 +570,18 @@
             Lesson 1 of 26
         </p>
 
-        <!-- Voice Button -->
+        <!-- Voice Buttons -->
 
-        <button id="voiceBtn" class="voice-btn">
+        <div class="lesson-voice-actions">
+            <button id="voiceBtn" class="voice-btn" type="button">
+                🔊 Listen
+            </button>
+            <button id="lessonSpeakBtn" class="voice-btn voice-btn--speak" type="button">
+                🎤 Speak Answer
+            </button>
+        </div>
 
-            🔊 Listen
-
-        </button>
+        <p id="lessonVoiceStatus" class="lesson-voice-status" aria-live="polite"></p>
 
         <!-- Navigation -->
 
