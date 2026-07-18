@@ -190,7 +190,23 @@ h1{
 }
 
 .teacher-form .back-btn{
-    margin-top:-30px;
+    margin-top:4px;
+}
+
+.teacher-form--unlock{
+    gap:20px;
+}
+
+.teacher-form--unlock #teacherSubmitBtn{
+    margin-top:4px;
+}
+
+.teacher-form--unlock .back-btn{
+    margin-top:8px;
+}
+
+.teacher-form--unlock .teacher-error{
+    min-height:0;
 }
 
 .teacher-progress-panel{
@@ -283,6 +299,12 @@ h1{
     background:rgba(255,255,255,.85);
     color:#1d3557;
     box-shadow:0 6px 16px rgba(29,53,87,.08);
+}
+
+.tdash-btn--refresh{
+    background:rgba(76,201,240,.16);
+    color:#0b6e99;
+    box-shadow:0 6px 16px rgba(76,201,240,.18);
 }
 
 .tdash-btn--solid{
@@ -402,6 +424,22 @@ h1{
     background:linear-gradient(180deg,#f7fbff 0%,#eef6ff 100%);
 }
 
+.bar-chart--daily{
+    min-height:260px;
+}
+
+.bar-chart--daily .bar-item{
+    flex:0 0 72px;
+}
+
+.bar-name--date{
+    font-size:11px;
+    white-space:normal;
+    text-align:center;
+    line-height:1.2;
+    max-width:72px;
+}
+
 .bar-chart-empty{
     width:100%;
     min-height:180px;
@@ -452,6 +490,11 @@ h1{
 .bar-fill-vertical.is-stars{
     background:linear-gradient(180deg,#ffe566,#ffb703);
     box-shadow:0 8px 16px rgba(255,183,3,.28);
+}
+
+.bar-fill-vertical.is-daily{
+    background:linear-gradient(180deg,#80ed99,#2ecc71);
+    box-shadow:0 8px 16px rgba(46,204,113,.28);
 }
 
 .bar-name{
@@ -2000,6 +2043,45 @@ footer{
 }
 
 /* =====================================================
+   QUIZ UNLOCK RULE BOX
+===================================================== */
+.quiz-unlock-box{
+    width:100%;
+    max-width:640px;
+    margin:0 auto 18px;
+    padding:16px 20px;
+    border-radius:20px;
+    text-align:left;
+    background:linear-gradient(135deg,#e8f7ff 0%,#fff8e7 100%);
+    border:2px solid rgba(58,134,255,.22);
+    box-shadow:0 10px 24px rgba(29,53,87,.08);
+}
+
+.quiz-unlock-title{
+    font-size:15px;
+    font-weight:800;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    color:#3a86ff;
+    margin-bottom:6px;
+}
+
+.quiz-unlock-rule{
+    margin:0 0 8px;
+    font-size:18px;
+    font-weight:700;
+    color:#1d3557;
+    line-height:1.35;
+}
+
+.quiz-unlock-progress{
+    margin:0;
+    font-size:15px;
+    font-weight:600;
+    color:#556680;
+}
+
+/* =====================================================
    QUESTION NUMBER
 ===================================================== */
 
@@ -2840,7 +2922,9 @@ footer{
 
 }
 
+
 /* Responsive */
+
 
 @media(max-width:768px){
 
