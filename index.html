@@ -200,6 +200,7 @@
                     <p class="tdash-welcome">Welcome back, <span id="teacherNameDisplay">Teacher</span>.</p>
                 </div>
                 <div class="tdash-header-actions">
+                    <button id="teacherDashboardRefreshBtn" class="tdash-btn tdash-btn--refresh" type="button">Refresh</button>
                     <button id="teacherDashboardHomeBtn" class="tdash-btn tdash-btn--ghost" type="button">Home</button>
                     <button id="teacherLogoutBtn" class="tdash-btn tdash-btn--solid" type="button">Logout</button>
                 </div>
@@ -252,6 +253,14 @@
                     <div id="teacherStarsChart" class="bar-chart" aria-label="Student stars bar chart"></div>
                 </section>
             </div>
+
+            <section class="tdash-panel tdash-panel--wide">
+                <div class="tdash-panel-head">
+                    <h3>Stars Earned by Day</h3>
+                    <p>Total stars all students earned each day (last 14 days)</p>
+                </div>
+                <div id="teacherDailyStarsChart" class="bar-chart bar-chart--daily" aria-label="Daily stars earned bar chart"></div>
+            </section>
 
             <section class="tdash-panel tdash-panel--wide">
                 <div class="tdash-panel-head">
@@ -636,6 +645,16 @@
             </div>
         </div>
 
+        <div id="quizUnlockBox" class="quiz-unlock-box" role="status" aria-live="polite">
+            <div class="quiz-unlock-title">Unlock Next Level</div>
+            <p id="quizUnlockRule" class="quiz-unlock-rule">
+                Get all 5 Easy answers correct to unlock Medium.
+            </p>
+            <p id="quizUnlockProgress" class="quiz-unlock-progress">
+                Progress: 0 / 5 correct
+            </p>
+        </div>
+
         <!-- Score -->
 
         <div class="quiz-score">
@@ -650,7 +669,7 @@
 
         <p id="questionNumber">
 
-            Question 1 of 10
+            Question 1 of 5
 
         </p>
 
@@ -759,6 +778,13 @@
  <script src="script.js"></script>
 
 </html>
+
+
+
+
+
+
+
 
 
 
