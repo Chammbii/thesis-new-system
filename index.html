@@ -191,53 +191,114 @@
 
     <section id="teacherDashboard" class="screen">
 
-        <div class="teacher-container">
+        <div class="tdash">
 
-            <div class="teacher-card">
-
-                <h2>Teacher Dashboard</h2>
-
-                <p>Welcome, <span id="teacherNameDisplay">Teacher</span>.</p>
-
-                <div class="teacher-stats">
-
-                    <div class="stat-card">
-                        <div class="stat-number" id="teacherCompletedLessons">0</div>
-                        Lessons Completed
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-number" id="teacherProgressCategories">0</div>
-                        Categories Completed
-                    </div>
-
+            <header class="tdash-header">
+                <div class="tdash-header-copy">
+                    <p class="tdash-eyebrow">QuizLand Teacher</p>
+                    <h2>Classroom Dashboard</h2>
+                    <p class="tdash-welcome">Welcome back, <span id="teacherNameDisplay">Teacher</span>.</p>
                 </div>
-
-                <div class="teacher-actions">
-                    <button id="teacherDashboardHomeBtn" class="back-btn">Back to Home</button>
-                    <button id="teacherLogoutBtn" class="back-btn">Logout</button>
+                <div class="tdash-header-actions">
+                    <button id="teacherDashboardHomeBtn" class="tdash-btn tdash-btn--ghost" type="button">Home</button>
+                    <button id="teacherLogoutBtn" class="tdash-btn tdash-btn--solid" type="button">Logout</button>
                 </div>
+            </header>
 
-                <div class="teacher-progress-panel">
-                    <h3>Student Progress Tracker</h3>
-                    <div class="teacher-progress-table">
-                        <table id="teacherStudentProgressTable">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Avatar</th>
-                                    <th>Progress</th>
-                                    <th>Accuracy</th>
-                                    <th>Stars</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
+            <div class="tdash-stats">
+                <div class="tdash-stat">
+                    <span class="tdash-stat-icon" aria-hidden="true"><i class="fa-solid fa-book-open"></i></span>
+                    <div>
+                        <div class="tdash-stat-number" id="teacherCompletedLessons">0</div>
+                        <div class="tdash-stat-label">Lessons Completed</div>
                     </div>
                 </div>
-
+                <div class="tdash-stat">
+                    <span class="tdash-stat-icon" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></span>
+                    <div>
+                        <div class="tdash-stat-number" id="teacherProgressCategories">0</div>
+                        <div class="tdash-stat-label">Categories Done</div>
+                    </div>
+                </div>
+                <div class="tdash-stat">
+                    <span class="tdash-stat-icon" aria-hidden="true"><i class="fa-solid fa-children"></i></span>
+                    <div>
+                        <div class="tdash-stat-number" id="teacherStudentCount">0</div>
+                        <div class="tdash-stat-label">Students Tracked</div>
+                    </div>
+                </div>
+                <div class="tdash-stat">
+                    <span class="tdash-stat-icon" aria-hidden="true"><i class="fa-solid fa-star"></i></span>
+                    <div>
+                        <div class="tdash-stat-number" id="teacherTotalStars">0</div>
+                        <div class="tdash-stat-label">Stars Earned</div>
+                    </div>
+                </div>
             </div>
+
+            <div class="tdash-charts">
+                <section class="tdash-panel">
+                    <div class="tdash-panel-head">
+                        <h3>Progress by Student</h3>
+                        <p>Lesson category completion (%)</p>
+                    </div>
+                    <div id="teacherProgressChart" class="bar-chart" aria-label="Student progress bar chart"></div>
+                </section>
+                <section class="tdash-panel">
+                    <div class="tdash-panel-head">
+                        <h3>Stars by Student</h3>
+                        <p>Total stars each child earned</p>
+                    </div>
+                    <div id="teacherStarsChart" class="bar-chart" aria-label="Student stars bar chart"></div>
+                </section>
+            </div>
+
+            <section class="tdash-panel tdash-panel--wide">
+                <div class="tdash-panel-head">
+                    <h3>Student Progress Tracker</h3>
+                    <p>Name, avatar, progress, accuracy, stars, and quiz history</p>
+                </div>
+                <div class="teacher-progress-table">
+                    <table id="teacherStudentProgressTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Avatar</th>
+                                <th>Progress</th>
+                                <th>Accuracy</th>
+                                <th>Stars</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="tdash-panel tdash-panel--wide" id="quizHistoryPanel">
+                <div class="tdash-panel-head">
+                    <h3>Quiz History</h3>
+                    <p id="quizHistorySubtitle">Select a student to view every quiz attempt.</p>
+                </div>
+                <div class="quiz-history-table-wrap">
+                    <table id="teacherQuizHistoryTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Score</th>
+                                <th>Accuracy</th>
+                                <th>Stars Gained</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="quiz-history-empty">
+                                <td colspan="5">No student selected yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
         </div>
 
