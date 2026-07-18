@@ -35,11 +35,13 @@ const teacherCompletedLessons = document.getElementById("teacherCompletedLessons
 const teacherProgressCategories = document.getElementById("teacherProgressCategories");
 const teacherLogoutBtn = document.getElementById("teacherLogoutBtn");
 const teacherDashboardHomeBtn = document.getElementById("teacherDashboardHomeBtn");
+const teacherDashboardRefreshBtn = document.getElementById("teacherDashboardRefreshBtn");
 const teacherStudentProgressTable = document.getElementById("teacherStudentProgressTable");
 const teacherStudentCount = document.getElementById("teacherStudentCount");
 const teacherTotalStars = document.getElementById("teacherTotalStars");
 const teacherProgressChart = document.getElementById("teacherProgressChart");
 const teacherStarsChart = document.getElementById("teacherStarsChart");
+const teacherDailyStarsChart = document.getElementById("teacherDailyStarsChart");
 const teacherQuizHistoryTable = document.getElementById("teacherQuizHistoryTable");
 const quizHistorySubtitle = document.getElementById("quizHistorySubtitle");
 let selectedHistoryStudent = null;
@@ -170,20 +172,30 @@ startBtn.addEventListener("click", () => {
 
 let teacherMode = "login";
 let currentTeacherUsername = "Teacher";
+const teacherSwitchRow = document.querySelector(".teacher-switch");
 
-teacherBtn.addEventListener("click", () => {
+function openTeacherLoginScreen() {
+    clearTeacherError();
+    teacherLoginForm.reset();
 
     const sessionEmail = getTeacherSession();
-    if (sessionEmail) {
-        restoreTeacherSession();
+    if (sessionEmail && getTeacherUsers()[sessionEmail]) {
+        // Returning teacher: password-only unlock screen
+        setTeacherMode("unlock");
+        teacherEmail.value = sessionEmail;
+        teacherPassword.value = "";
+        teacherPassword.focus();
         return;
     }
 
     setTeacherMode("login");
     showScreen(teacherScreen);
-    clearTeacherError();
-    teacherLoginForm.reset();
+}
 
+teacherBtn.addEventListener("click", () => {
+    // Always require credentials — never open the dashboard automatically.
+    openTeacherLoginScreen();
+    showScreen(teacherScreen);
 });
 
 teacherBackHome.addEventListener("click", () => {
@@ -205,10 +217,11 @@ teacherToggleMode.addEventListener("click", () => {
 teacherLoginForm.addEventListener("submit", (event) => {
 
     event.preventDefault();
-    if (teacherMode === "login") {
-        handleTeacherLogin();
-    } else {
+    if (teacherMode === "register") {
         handleTeacherRegister();
+    } else {
+        // login + unlock both verify password
+        handleTeacherLogin();
     }
 
 });
@@ -223,11 +236,18 @@ teacherLogoutBtn.addEventListener("click", () => {
 });
 
 teacherDashboardHomeBtn.addEventListener("click", () => {
-
+    // Leave dashboard but keep classroom session for student progress tracking.
+    // Re-opening Teacher Login shows password-only unlock.
     showScreen(homeScreen);
-    showNotification("You are still logged in. Use Logout to end your session.");
-
+    showNotification("Dashboard locked. Enter the password to open it again.", 4000);
 });
+
+if (teacherDashboardRefreshBtn) {
+    teacherDashboardRefreshBtn.addEventListener("click", () => {
+        showTeacherDashboard();
+        showNotification("Dashboard refreshed.");
+    });
+}
 
 function clearTeacherError(){
     if (teacherError) {
@@ -239,19 +259,36 @@ function setTeacherMode(mode){
     teacherMode = mode;
 
     const isRegister = mode === "register";
+    const isUnlock = mode === "unlock";
 
-    teacherFormTitle.textContent = isRegister ? "Teacher Register" : "Teacher Login";
-    teacherFormSubtitle.textContent = isRegister
-        ? "Create a new account to manage lessons."
-        : "Enter your teacher credentials to access the dashboard.";
-    teacherSubmitBtn.textContent = isRegister ? "Register" : "Login";
-    teacherSwitchText.textContent = isRegister
-        ? "Already have an account?"
-        : "Don't have an account?";
-    teacherToggleMode.textContent = isRegister ? "Login" : "Register";
+    if (isUnlock) {
+        teacherFormTitle.textContent = "Enter the Password";
+        teacherFormSubtitle.textContent = "";
+        teacherFormSubtitle.classList.add("teacher-hidden");
+        teacherSubmitBtn.textContent = "Unlock";
+        teacherPassword.placeholder = "Enter the password";
+        teacherLoginForm.classList.add("teacher-form--unlock");
+    } else {
+        teacherFormSubtitle.classList.remove("teacher-hidden");
+        teacherLoginForm.classList.remove("teacher-form--unlock");
+        teacherFormTitle.textContent = isRegister ? "Teacher Register" : "Teacher Login";
+        teacherFormSubtitle.textContent = isRegister
+            ? "Create a new account to manage lessons."
+            : "Enter your teacher credentials to access the dashboard.";
+        teacherSubmitBtn.textContent = isRegister ? "Register" : "Login";
+        teacherPassword.placeholder = "Password";
+        teacherSwitchText.textContent = isRegister
+            ? "Already have an account?"
+            : "Don't have an account?";
+        teacherToggleMode.textContent = isRegister ? "Login" : "Register";
+    }
 
+    teacherEmail.classList.toggle("teacher-hidden", isUnlock);
     teacherConfirmPassword.classList.toggle("teacher-hidden", !isRegister);
     teacherFullName.classList.toggle("teacher-hidden", !isRegister);
+    if (teacherSwitchRow) {
+        teacherSwitchRow.classList.toggle("teacher-hidden", isUnlock);
+    }
 }
 
 function getTeacherUsers(){
@@ -280,6 +317,8 @@ function getTeacherSession(){
 }
 
 function restoreTeacherSession(){
+    // Kept for compatibility: only restores teacher name/context.
+    // Never opens the dashboard without a fresh password login.
     const email = getTeacherSession();
     if (!email) {
         return false;
@@ -293,7 +332,6 @@ function restoreTeacherSession(){
     }
 
     currentTeacherUsername = user.fullName || user.email;
-    showTeacherDashboard();
     return true;
 }
 
@@ -339,10 +377,17 @@ function handleTeacherRegister(){
 }
 
 function handleTeacherLogin(){
-    const email = teacherEmail.value.trim().toLowerCase();
+    const isUnlock = teacherMode === "unlock";
+    const email = (isUnlock ? getTeacherSession() : teacherEmail.value.trim().toLowerCase()) || "";
     const password = teacherPassword.value;
 
-    if (!email || !password) {
+    if (isUnlock) {
+        if (!password) {
+            setTeacherError("Please enter the password.");
+            teacherPassword.focus();
+            return;
+        }
+    } else if (!email || !password) {
         setTeacherError("Please enter both email and password.");
         return;
     }
@@ -351,12 +396,15 @@ function handleTeacherLogin(){
     const user = users[email];
 
     if (!user || user.password !== password) {
-        setTeacherError("Invalid email or password.");
+        setTeacherError(isUnlock ? "Incorrect password." : "Invalid email or password.");
+        teacherPassword.value = "";
+        teacherPassword.focus();
         return;
     }
 
     currentTeacherUsername = user.fullName || user.email;
     saveTeacherSession(email);
+    teacherPassword.value = "";
     showTeacherDashboard();
     showNotification("Welcome back, " + currentTeacherUsername + "!");
 }
@@ -479,6 +527,80 @@ function formatQuizHistoryDate(timestamp) {
     }
 }
 
+function toDateKey(timestamp = Date.now()) {
+    const date = new Date(timestamp);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+function formatChartDayLabel(dateKey) {
+    const [year, month, day] = dateKey.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric"
+    });
+}
+
+function getDailyStarsStore() {
+    return JSON.parse(localStorage.getItem(getNamespacedKey("dailyStarsByDate"))) || {};
+}
+
+function saveDailyStarsStore(store) {
+    localStorage.setItem(getNamespacedKey("dailyStarsByDate"), JSON.stringify(store));
+}
+
+function recordDailyStarsEarned(gained) {
+    if (!gained) return;
+    const store = getDailyStarsStore();
+    const day = toDateKey();
+    store[day] = (Number(store[day]) || 0) + Number(gained);
+    saveDailyStarsStore(store);
+}
+
+function ensureDailyStarsBackfill() {
+    const flagKey = getNamespacedKey("dailyStarsBackfilled");
+    if (localStorage.getItem(flagKey)) {
+        return getDailyStarsStore();
+    }
+
+    const store = getDailyStarsStore();
+    getStudentRecords().forEach(record => {
+        getStudentQuizHistory(record.name).forEach(entry => {
+            if (!entry || !entry.date) return;
+            const day = toDateKey(entry.date);
+            store[day] = (Number(store[day]) || 0) + (Number(entry.starsGained) || 0);
+        });
+    });
+
+    saveDailyStarsStore(store);
+    localStorage.setItem(flagKey, "1");
+    return store;
+}
+
+function getDailyStarsChartItems(dayCount = 14) {
+    const store = ensureDailyStarsBackfill();
+    const items = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let offset = dayCount - 1; offset >= 0; offset--) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - offset);
+        const key = toDateKey(date.getTime());
+        const value = Number(store[key]) || 0;
+        items.push({
+            label: formatChartDayLabel(key),
+            value,
+            display: String(value)
+        });
+    }
+
+    return items;
+}
+
 function renderBarChart(container, items, options = {}) {
     if (!container) return;
     container.innerHTML = "";
@@ -506,13 +628,13 @@ function renderBarChart(container, items, options = {}) {
         track.className = "bar-track-vertical";
 
         const fill = document.createElement("div");
-        fill.className = `bar-fill-vertical${options.starStyle ? " is-stars" : ""}`;
+        fill.className = `bar-fill-vertical${options.starStyle ? " is-stars" : ""}${options.dailyStyle ? " is-daily" : ""}`;
         const heightPct = Math.max(4, Math.round((item.value / maxValue) * 100));
         fill.style.height = "0%";
         track.appendChild(fill);
 
         const name = document.createElement("div");
-        name.className = "bar-name";
+        name.className = options.dailyStyle ? "bar-name bar-name--date" : "bar-name";
         name.textContent = item.label;
 
         wrap.appendChild(valueLabel);
@@ -545,6 +667,10 @@ function renderTeacherCharts(records) {
     renderBarChart(teacherStarsChart, starItems, {
         starStyle: true,
         emptyText: "No stars earned yet. Quiz wins will show up here."
+    });
+    renderBarChart(teacherDailyStarsChart, getDailyStarsChartItems(14), {
+        dailyStyle: true,
+        emptyText: "No daily star activity yet."
     });
 }
 
@@ -1683,6 +1809,8 @@ const questionNumberEl = document.getElementById("questionNumber");
 const quizQuestionEl = document.getElementById("quizQuestion");
 const quizProgressFillEl = document.getElementById("quizProgressFill");
 const quizVoiceBtn = document.getElementById("quizVoiceBtn");
+const quizUnlockRuleEl = document.getElementById("quizUnlockRule");
+const quizUnlockProgressEl = document.getElementById("quizUnlockProgress");
 const answerButtons = document.querySelectorAll(".answer-card");
 
 const STAR_REWARDS = {
@@ -1709,6 +1837,44 @@ function applyQuizDifficultyUI() {
     });
 }
 
+function updateQuizUnlockBox() {
+    if (!quizUnlockRuleEl || !quizUnlockProgressEl) return;
+
+    const total = quizQuestions.length || getExpectedQuestionCountForDifficulty(quizDifficulty);
+    const correct = quizStageState ? (quizStageState.stageScore || 0) : 0;
+    const levelName = quizDifficulty.charAt(0).toUpperCase() + quizDifficulty.slice(1);
+    const titleEl = document.querySelector(".quiz-unlock-title");
+
+    let ruleText;
+    if (selectedLanguage === "tl") {
+        if (titleEl) titleEl.textContent = "Paano Ma-unlock ang Susunod na Level";
+        if (quizDifficulty === "easy") {
+            ruleText = `Kailangan mong makuha ang lahat ng ${total} Easy na tanong nang tama para ma-unlock ang Medium.`;
+        } else if (quizDifficulty === "medium") {
+            ruleText = `Kailangan mong makuha ang lahat ng ${total} Medium na tanong nang tama para ma-unlock ang Hard.`;
+        } else {
+            ruleText = `Huling level: sagutin nang tama ang lahat ng ${total} Hard na tanong.`;
+        }
+        quizUnlockProgressEl.textContent = `Progreso: ${correct} / ${total} tama (${levelName})`;
+    } else {
+        if (titleEl) {
+            titleEl.textContent = quizDifficulty === "hard"
+                ? "Final Level Goal"
+                : "Unlock Next Level";
+        }
+        if (quizDifficulty === "easy") {
+            ruleText = `Get all ${total} Easy answers correct to unlock Medium.`;
+        } else if (quizDifficulty === "medium") {
+            ruleText = `Get all ${total} Medium answers correct to unlock Hard.`;
+        } else {
+            ruleText = `Final level: answer all ${total} Hard questions correctly.`;
+        }
+        quizUnlockProgressEl.textContent = `Progress: ${correct} / ${total} correct (${levelName})`;
+    }
+
+    quizUnlockRuleEl.textContent = ruleText;
+}
+
 difficultyButtons.forEach(btn => {
     btn.addEventListener("click", () => {
         // Difficulty buttons are display-only; quiz difficulty is automatic.
@@ -1724,6 +1890,7 @@ let quizScore = 0;
 let quizAnswered = false;
 let quizComplete = false;
 let selectedQuizChoice = null;
+let quizStageState = null;
 
 function updateQuizStarDisplay(animate = false, gained = 0) {
     if (quizStarCountEl) {
@@ -1755,6 +1922,7 @@ function awardQuizStars() {
     quizStars += gained;
     sessionStarsGained += gained;
     saveStudentStars();
+    recordDailyStarsEarned(gained);
     updateQuizStarDisplay(true, gained);
     return gained;
 }
@@ -1868,17 +2036,18 @@ function initializeQuiz(){
             ? quizTitleTranslations[quizCategory] || (quizCategory.charAt(0).toUpperCase() + quizCategory.slice(1) + " Quiz")
             : (quizCategory.charAt(0).toUpperCase() + quizCategory.slice(1) + " Quiz");
 
-    // Sequential stage progression: Easy -> Medium -> Hard
-    // Each stage is exactly 5 questions.
+    // Sequential stage progression: Easy (5) -> Medium (10) -> Hard (15)
+    // Must get every answer correct in a stage to unlock the next.
     const stageConfig = [
-        { difficulty: 'easy', questionCount: 5 },
-        { difficulty: 'medium', questionCount: 5 },
-        { difficulty: 'hard', questionCount: 5 }
+        { difficulty: 'easy', questionCount: QUIZ_DIFFICULTY.easy.questionCount },
+        { difficulty: 'medium', questionCount: QUIZ_DIFFICULTY.medium.questionCount },
+        { difficulty: 'hard', questionCount: QUIZ_DIFFICULTY.hard.questionCount }
     ];
 
     quizStageState = {
         stageIndex: 0,
         stageConfig,
+        stageScore: 0,
         quizDifficulty: quizDifficulty
     };
 
@@ -1974,20 +2143,31 @@ const QUESTION_BANK = {
     }
 };
 
-function generateQuizQuestions(category, difficulty){
+function generateQuizQuestions(category, difficulty, overrideCount){
 
     const items = lessons[category];
     const pool = [...items];
     const cfg = QUIZ_DIFFICULTY[difficulty] || QUIZ_DIFFICULTY.easy;
-    const questionCount = Math.min(cfg.questionCount, pool.length);
+    const questionCount = Math.max(1, overrideCount || cfg.questionCount);
 
-    const shuffled = pool
+    // Shuffle, then reuse the pool if the category has fewer items than needed
+    // (e.g. numbers/colors/shapes have 10 items but Hard needs 15 questions).
+    const shuffledPool = () => pool
         .map(item => ({item, sort: Math.random()}))
         .sort((a, b) => a.sort - b.sort)
-        .map(entry => entry.item)
-        .slice(0, questionCount);
+        .map(entry => entry.item);
 
-    return shuffled.map((item, idx) => {
+    const selected = [];
+    while (selected.length < questionCount) {
+        const batch = shuffledPool();
+        for (const item of batch) {
+            if (selected.length >= questionCount) break;
+            selected.push(item);
+        }
+        if (!batch.length) break;
+    }
+
+    return selected.map((item, idx) => {
         const isAlt = idx % 2 === 1;
         const localizedWord = translateWord(item.word);
         let enPrompt;
@@ -2097,14 +2277,17 @@ function loadQuizQuestion(){
 
     quizQuestionEl.textContent = question.prompt;
 
-    // Display fixed 1-15 slot progression (even if quiz ends early)
     const displayIndex = currentQuizIndex + 1;
-    questionNumberEl.textContent = `Question ${displayIndex} of 15`;
-
+    const totalQuestions = quizQuestions.length;
+    questionNumberEl.textContent = selectedLanguage === 'tl'
+        ? `Tanong ${displayIndex} ng ${totalQuestions}`
+        : `Question ${displayIndex} of ${totalQuestions}`;
 
     currentScoreEl.textContent = String(quizScore);
     quizProgressFillEl.style.width =
         `${Math.round((currentQuizIndex / quizQuestions.length) * 100)}%`;
+
+    updateQuizUnlockBox();
 
     const quizAnswerGrid = document.getElementById("quizAnswerGrid");
     if (quizAnswerGrid) {
@@ -2194,7 +2377,9 @@ function confirmQuizAnswer(){
 
     if (isCorrect) {
         quizScore++;
+        if (quizStageState) quizStageState.stageScore = (quizStageState.stageScore || 0) + 1;
         awardQuizStars();
+        updateQuizUnlockBox();
 
         quizCorrectFeedbackToggle = (quizCorrectFeedbackToggle + 1) % 2;
         const isEven = quizCorrectFeedbackToggle === 0;
@@ -2245,17 +2430,22 @@ function getExpectedQuestionCountForDifficulty(difficulty) {
     return cfg.questionCount;
 }
 
-function getNextDifficultyAfterCompletion(currentDifficulty, score) {
+function getNextDifficultyAfterCompletion(currentDifficulty, stageScore) {
     // Spec:
     // Easy passed with exactly 5/5 correct -> starts Medium
     // Medium passed with exactly 10/10 correct -> starts Hard
-    // Otherwise -> ends quiz and returns to menu (and resets to Easy)
+    // Even 1 wrong answer -> ends quiz (no advance)
+    const expected = getExpectedQuestionCountForDifficulty(currentDifficulty);
 
-    if (currentDifficulty === 'easy' && score === 5) {
+    if (stageScore !== expected) {
+        return 'end';
+    }
+
+    if (currentDifficulty === 'easy') {
         return 'medium';
     }
 
-    if (currentDifficulty === 'medium' && score === 10) {
+    if (currentDifficulty === 'medium') {
         return 'hard';
     }
 
@@ -2264,10 +2454,18 @@ function getNextDifficultyAfterCompletion(currentDifficulty, score) {
 
 function finishQuiz(){
 
-    // If there are more stages (easy -> medium -> hard), load the next stage.
-    if (quizStageState && quizStageState.stageIndex < quizStageState.stageConfig.length - 1) {
+    const stageScore = quizStageState ? (quizStageState.stageScore || 0) : quizScore;
+    const nextDifficulty = getNextDifficultyAfterCompletion(quizDifficulty, stageScore);
+    const canAdvance =
+        nextDifficulty !== 'end' &&
+        quizStageState &&
+        quizStageState.stageIndex < quizStageState.stageConfig.length - 1;
+
+    // Perfect stage score required to unlock Medium or Hard.
+    if (canAdvance) {
 
         quizStageState.stageIndex++;
+        quizStageState.stageScore = 0;
 
         quizDifficulty = quizStageState.stageConfig[quizStageState.stageIndex].difficulty;
 
@@ -2286,26 +2484,58 @@ function finishQuiz(){
             quizStageState.stageConfig[quizStageState.stageIndex].questionCount
         );
 
-    // Update question number display to restart at 1 for each stage.
-        questionNumberEl.textContent = selectedLanguage === 'tl' ? `Tanong 1 ng 5` : `Question 1 of 5`;
+        const totalQuestions = quizQuestions.length;
+        questionNumberEl.textContent = selectedLanguage === 'tl'
+            ? `Tanong 1 ng ${totalQuestions}`
+            : `Question 1 of ${totalQuestions}`;
 
+        const unlockMessage = selectedLanguage === 'tl'
+            ? (nextDifficulty === 'medium'
+                ? "Perpekto! Susunod: Medium level!"
+                : "Perpekto! Susunod: Hard level!")
+            : (nextDifficulty === 'medium'
+                ? "Perfect! Next up: Medium level!"
+                : "Perfect! Next up: Hard level!");
+        showNotification(unlockMessage);
 
         loadQuizQuestion();
         return;
 
     }
 
-    // No more stages: finish entire quiz session
+    // Incomplete stage or Hard finished: end entire quiz session
+    const stageTotal = quizQuestions.length;
+    const sessionTotal = quizStageState
+        ? quizStageState.stageConfig
+            .slice(0, quizStageState.stageIndex + 1)
+            .reduce((sum, stage) => sum + stage.questionCount, 0)
+        : stageTotal;
+
     quizComplete = true;
     quizProgressFillEl.style.width = "100%";
     quizQuestionEl.textContent = selectedLanguage === 'tl' ? "Tapos na ang Pagsusulit!" : "Quiz Complete!";
     questionNumberEl.textContent = selectedLanguage === 'tl'
-        ? `Pinal na Iskor: ${quizScore} / ${quizQuestions.length}`
-        : `Final Score: ${quizScore} / ${quizQuestions.length}`;
-    const finishMessage = selectedLanguage === 'tl'
-        ? `Magaling, ${localStorage.getItem("studentName") || "Estudyante"}! Nakakuha ka ng ${quizStars} bituin!`
-        : `Great work, ${localStorage.getItem("studentName") || "Student"}! You earned ${quizStars} stars!`;
-    showNotification(finishMessage);
+        ? `Pinal na Iskor: ${quizScore} / ${sessionTotal}`
+        : `Final Score: ${quizScore} / ${sessionTotal}`;
+
+    let finishMessage;
+    const didNotAdvance = stageScore < stageTotal && quizDifficulty !== 'hard';
+    if (didNotAdvance) {
+        finishMessage = selectedLanguage === 'tl'
+            ? `Kailangan mong makuha ang lahat ng tama (${stageScore}/${stageTotal}) para makapunta sa susunod na level.`
+            : `You need a perfect score (${stageScore}/${stageTotal}) to unlock the next level.`;
+    } else {
+        finishMessage = selectedLanguage === 'tl'
+            ? `Magaling, ${localStorage.getItem("studentName") || "Estudyante"}! Nakakuha ka ng ${quizStars} bituin!`
+            : `Great work, ${localStorage.getItem("studentName") || "Student"}! You earned ${quizStars} stars!`;
+    }
+
+    const noticeDuration = didNotAdvance ? 10000 : 2800;
+    showNotification(finishMessage, noticeDuration);
+    if (didNotAdvance) {
+        speakText(finishMessage);
+    }
+
     currentScoreEl.textContent = String(quizScore);
     updateQuizStarDisplay(true, 0);
     answerButtons.forEach(btn => {
@@ -2314,26 +2544,26 @@ function finishQuiz(){
     });
 
     // Persist summary for teacher dashboard
-    saveQuizSummary();
+    saveQuizSummary(sessionTotal);
 
     // Reset stored difficulty
     localStorage.setItem('quizDifficulty', 'easy');
 
     setTimeout(() => {
         showScreen(menuScreen);
-    }, 1800);
+    }, noticeDuration);
 }
 
 
 
 
-function saveQuizSummary() {
+function saveQuizSummary(sessionTotal) {
     const student = localStorage.getItem("studentName") || "Unknown";
 
     // Per-student quiz summary (teacher dashboard reads from these keys)
     const lastQuizScoreKey = getNamespacedKey(`lastQuizScore_${encodeURIComponent(student)}`);
     const lastQuizTotalKey = getNamespacedKey(`lastQuizTotal_${encodeURIComponent(student)}`);
-    const total = quizQuestions.length;
+    const total = sessionTotal || quizQuestions.length;
     const accuracy = total > 0 ? Math.round((quizScore / total) * 100) : 0;
 
     localStorage.setItem(lastQuizScoreKey, String(quizScore));
@@ -2360,7 +2590,7 @@ quizVoiceBtn.onclick = () => {
 
 answerButtons.forEach(button => {
     button.addEventListener("click", () => selectQuizAnswer(button));
-});
+});    
 
 
 // -------------------------------
