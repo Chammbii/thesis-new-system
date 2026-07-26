@@ -1130,10 +1130,8 @@ function speakText(text, options = {}) {
 }
 
 // ======================================================
-// MICROPHONE PERMISSION (request early while using the site)
+// MICROPHONE PERMISSION (requested when Speak Answer is used)
 // ======================================================
-// Browsers cannot silently grant the mic without the user clicking Allow once.
-// We request it on first interaction so Speak Answer works immediately after.
 
 let micPermissionState = "unknown";
 let micPermissionRequestInFlight = null;
@@ -1216,23 +1214,6 @@ async function ensureMicrophoneAccess(options = {}) {
     })();
 
     return micPermissionRequestInFlight;
-}
-
-function requestMicrophoneOnVisit() {
-    // First click/tap/key on the page triggers the browser Allow prompt.
-    const unlockMic = () => {
-        ensureMicrophoneAccess({ silent: true });
-    };
-
-    document.addEventListener("pointerdown", unlockMic, { once: true, capture: true });
-    document.addEventListener("keydown", unlockMic, { once: true, capture: true });
-
-    // If permission was already granted earlier, refresh state quietly.
-    checkMicrophonePermissionState().then(state => {
-        if (state === "granted" || localStorage.getItem("micPermissionGranted") === "true") {
-            micPermissionState = "granted";
-        }
-    });
 }
 
 function speakQuizQuestion() {
@@ -1407,11 +1388,9 @@ window.onload = () => {
     updateVolumeLabel(bgMusicVolume, bgMusicVolumeValue);
     updateVolumeLabel(sfxVolume, sfxVolumeValue);
     updateStudentHud();
-    requestMicrophoneOnVisit();
     document.addEventListener("click", () => {
         updateBgMusic();
         playPopSound();
-        ensureMicrophoneAccess({ silent: true });
     }, { once: true });
 };
 
@@ -1629,56 +1608,129 @@ function translateLessonProgress(count, total) {
 let currentCategory = "alphabet";
 let currentLesson = 0;
 
-function getLessonSpeechText() {
-    const lesson = lessons[currentCategory][currentLesson];
+function getLessonSpeechAlternatives(lesson) {
     const localizedWord = translateWord(lesson.word);
+    const letter = lesson.letter;
+    const digit = currentLesson + 1;
+    const word = selectedLanguage === "tl" ? localizedWord : lesson.word;
 
-    if (selectedLanguage === 'tl') {
+    if (selectedLanguage === "tl") {
         switch (currentCategory) {
-            case "alphabet": {
-                const letter = lesson.letter;
-                return currentLesson % 2 === 0
-                    ? `Tingnan! Ito ang letrang ${letter}. Masasabi mo ba ang "${letter}"?`
-                    : `Ito ang letrang ${letter}. Sabihin natin ang "${letter}" nang magkasama!`;
-            }
-            case "numbers": {
-                const digit = currentLesson + 1;
-                return `Ito ang numerong ${digit}. Masasabi mo ba, "${localizedWord}"?`;
-            }
+            case "alphabet":
+                return [
+                    // Existing feedback (kept)
+                    `Tingnan! Ito ang letrang ${letter}. Masasabi mo ba ang "${letter}"?`,
+                    `Ito ang letrang ${letter}. Sabihin natin ang "${letter}" nang magkasama!`,
+                    // Alternatives
+                    `Masasabi mo ba kung anong letra ang nakikita mo?`,
+                    `Anong letra ito?`,
+                    `Kilala mo ba ang letrang ito?`,
+                    `Ano ang tawag sa letrang ito?`,
+                    `Naaalala mo ba ang letrang ito?`
+                ];
+            case "numbers":
+                return [
+                    // Existing feedback (kept)
+                    `Ito ang numerong ${digit}. Masasabi mo ba, "${word}"?`,
+                    // Alternatives
+                    `Masasabi mo ba kung anong numero ang nakikita mo?`,
+                    `Anong numero ito?`,
+                    `Kilala mo ba ang numerong ito?`,
+                    `Ano ang tawag sa numerong ito?`,
+                    `Naaalala mo ba ang numerong ito?`
+                ];
             case "colors":
-                return `Tingnan! Ang kulay na ito ay ${localizedWord}. Masasabi mo ba, "${localizedWord}"?`;
+                return [
+                    // Existing feedback (kept)
+                    `Tingnan! Ang kulay na ito ay ${word}. Masasabi mo ba, "${word}"?`,
+                    // Alternatives
+                    `Masasabi mo ba kung anong kulay ang nakikita mo?`,
+                    `Anong kulay ito?`,
+                    `Kilala mo ba ang kulay na ito?`,
+                    `Ano ang tawag sa kulay na ito?`,
+                    `Naaalala mo ba ang kulay na ito?`
+                ];
             case "shapes":
-                return `Tingnan! Ang hugis na ito ay ${localizedWord}. Masasabi mo ba, "${localizedWord}"?`;
+                return [
+                    // Existing feedback (kept)
+                    `Tingnan! Ang hugis na ito ay ${word}. Masasabi mo ba, "${word}"?`,
+                    // Alternatives
+                    `Masasabi mo ba kung anong hugis ang nakikita mo?`,
+                    `Anong hugis ito?`,
+                    `Kilala mo ba ang hugis na ito?`,
+                    `Ano ang tawag sa hugis na ito?`,
+                    `Naaalala mo ba ang hugis na ito?`
+                ];
             default:
-                return localizedWord;
+                return [word];
         }
     }
 
     switch (currentCategory) {
-        case "alphabet": {
-            const letter = lesson.letter;
-            return currentLesson % 2 === 0
-                ? `Look! It's the letter ${letter}. Can you say "${letter}"?`
-                : `This is the letter ${letter}. Let's say "${letter}" together!`;
-        }
-        case "numbers": {
-            const digit = currentLesson + 1;
-            return `This is the number ${digit}. Can you say, "${lesson.word}"?`;
-        }
+        case "alphabet":
+            return [
+                // Existing feedback (kept)
+                `Look! It's the letter ${letter}. Can you say "${letter}"?`,
+                `This is the letter ${letter}. Let's say "${letter}" together!`,
+                // Alternatives
+                `Can you tell me what letter you see?`,
+                `Which letter is this?`,
+                `Do you know this letter?`,
+                `What do we call this letter?`,
+                `Can you remember this letter?`
+            ];
+        case "numbers":
+            return [
+                // Existing feedback (kept)
+                `This is the number ${digit}. Can you say, "${word}"?`,
+                // Alternatives
+                `Can you tell me what number you see?`,
+                `Which number is this?`,
+                `Do you know this number?`,
+                `What do we call this number?`,
+                `Can you remember this number?`
+            ];
         case "colors":
-            return `Look! This color is ${lesson.word}. Can you say, "${lesson.word}"?`;
+            return [
+                // Existing feedback (kept)
+                `Look! This color is ${word}. Can you say, "${word}"?`,
+                // Alternatives
+                `Can you tell me what color you see?`,
+                `Which color is this?`,
+                `Do you know this color?`,
+                `What do we call this color?`,
+                `Can you remember this color?`
+            ];
         case "shapes":
-            return `Look! This shape is ${lesson.word}. Can you say, "${lesson.word}"?`;
+            return [
+                // Existing feedback (kept)
+                `Look! This shape is ${word}. Can you say, "${word}"?`,
+                // Alternatives
+                `Can you tell me what shape you see?`,
+                `Which shape is this?`,
+                `Do you know this shape?`,
+                `What do we call this shape?`,
+                `Can you remember this shape?`
+            ];
         default:
-            return lesson.word;
+            return [word];
     }
+}
+
+function getLessonSpeechText() {
+    const lesson = lessons[currentCategory][currentLesson];
+    const alternatives = getLessonSpeechAlternatives(lesson);
+    return alternatives[currentLesson % alternatives.length];
 }
 
 function updateLessonSubtitle() {
     if (!lessonFeedback) return;
 
-    lessonFeedback.innerHTML =
-        `<span class="lesson-info">${translateLessonProgress(currentLesson + 1, lessons[currentCategory].length)}</span>`;
+    const progressText = translateLessonProgress(
+        currentLesson + 1,
+        lessons[currentCategory].length
+    );
+    lessonFeedback.textContent = progressText;
 }
 
 
@@ -1958,7 +2010,7 @@ function resetLessonVoiceUi() {
     setLessonVoiceStatus("");
     if (lessonSpeakBtn) {
         lessonSpeakBtn.classList.remove("is-listening");
-        lessonSpeakBtn.textContent = selectedLanguage === "tl" ? "🎤 Magsalita" : "🎤 Speak Answer";
+        lessonSpeakBtn.textContent = selectedLanguage === "tl" ? "🎤 Magsalita" : "🎤 Speak";
     }
 }
 
@@ -1988,7 +2040,7 @@ function stopLessonVoiceListening(updateButton = true) {
     }
     if (updateButton && lessonSpeakBtn) {
         lessonSpeakBtn.classList.remove("is-listening");
-        lessonSpeakBtn.textContent = selectedLanguage === "tl" ? "🎤 Magsalita" : "🎤 Speak Answer";
+        lessonSpeakBtn.textContent = selectedLanguage === "tl" ? "🎤 Magsalita" : "🎤 Speak";
     }
 }
 
@@ -2029,7 +2081,7 @@ function handleLessonVoiceResult(spokenText) {
     }
 }
 
-function startLessonVoiceListening() {
+async function startLessonVoiceListening() {
     if (!SpeechRecognitionAPI) {
         const msg = selectedLanguage === "tl"
             ? "Hindi available ang voice recognition sa browser na ito. Gamitin ang Chrome o Edge."
@@ -2050,6 +2102,18 @@ function startLessonVoiceListening() {
 
     speechSynthesis.cancel();
     stopLessonVoiceListening(false);
+
+    const micReady = await ensureMicrophoneAccess({ silent: true });
+    if (!micReady) {
+        stopLessonVoiceListening();
+        setLessonVoiceStatus(
+            selectedLanguage === "tl"
+                ? "Paki-allow ang mikropono para sa Speak Answer."
+                : "Please allow the microphone for Speak Answer.",
+            "wrong"
+        );
+        return;
+    }
 
     lessonSpeechRecognition = new SpeechRecognitionAPI();
     lessonSpeechRecognition.lang = selectedLanguage === "tl" ? "fil-PH" : "en-US";
@@ -2128,21 +2192,34 @@ function speakLessonText() {
 function loadLesson() {
 
     const lesson = lessons[currentCategory][currentLesson];
+    const localizedWord = translateWord(lesson.word);
 
     lessonTitle.textContent = translateLessonTitle(currentCategory);
     lessonImage.src = lesson.image;
+    lessonLetter.classList.remove("lesson-prompt-text", "lesson-color-name", "lesson-shape-name");
 
     if (currentCategory === "alphabet") {
-        // Show alternating letter prompts instead of plain "A" / "Apple"
-        lessonLetter.textContent = getLessonSpeechText();
-        lessonLetter.classList.add("lesson-prompt-text");
+        lessonLetter.textContent = lesson.letter;
+        lessonWord.textContent = localizedWord;
+        lessonWord.hidden = false;
+    } else if (currentCategory === "numbers") {
+        lessonLetter.textContent = String(currentLesson + 1);
+        lessonWord.textContent = localizedWord;
+        lessonWord.hidden = false;
+    } else if (currentCategory === "colors") {
+        lessonLetter.textContent = localizedWord.toUpperCase();
+        lessonLetter.classList.add("lesson-color-name");
+        lessonWord.textContent = "";
+        lessonWord.hidden = true;
+    } else if (currentCategory === "shapes") {
+        lessonLetter.textContent = localizedWord;
+        lessonLetter.classList.add("lesson-shape-name");
         lessonWord.textContent = "";
         lessonWord.hidden = true;
     } else {
-        lessonLetter.textContent = lesson.letter;
-        lessonLetter.classList.remove("lesson-prompt-text");
-        lessonWord.textContent = translateWord(lesson.word);
-        lessonWord.hidden = false;
+        lessonLetter.textContent = lesson.letter || localizedWord;
+        lessonWord.textContent = localizedWord;
+        lessonWord.hidden = !lesson.letter;
     }
 
     const progress =
@@ -2826,44 +2903,60 @@ function generateQuizQuestions(category, difficulty, overrideCount){
     }
 
     return selected.map((item, idx) => {
-        const isAlt = idx % 2 === 1;
+        const promptVariant = idx % 3;
         const localizedWord = translateWord(item.word);
         let enPrompt;
         let tlPrompt;
 
         if (category === 'alphabet') {
             const letter = item.letter;
-            enPrompt = isAlt
-                ? `The letter ${letter} needs your help! Can you find the letter ${letter}?`
-                : `Where is the letter ${letter}? Let's find it together!`;
-            tlPrompt = isAlt
-                ? `Kailangan ng tulong ang letrang ${letter}! Maaari mo bang hanapin ang letrang ${letter}?`
-                : `Nasaan ang letrang ${letter}? Hanapin natin ito nang magkasama!`;
+            if (promptVariant === 0) {
+                enPrompt = `Look carefully. Which one is letter ${letter}?`;
+                tlPrompt = `Tingnan nang mabuti. Alin ang letrang ${letter}?`;
+            } else if (promptVariant === 1) {
+                enPrompt = `The letter ${letter} needs your help! Can you find the letter ${letter}?`;
+                tlPrompt = `Kailangan ng tulong ang letrang ${letter}! Maaari mo bang hanapin ang letrang ${letter}?`;
+            } else {
+                enPrompt = `Where is the letter ${letter}? Let's find it together!`;
+                tlPrompt = `Nasaan ang letrang ${letter}? Hanapin natin ito nang magkasama!`;
+            }
         } else if (category === 'numbers') {
             const digit = items.findIndex(entry => entry.word === item.word) + 1;
-            enPrompt = isAlt
-                ? `The number ${digit} needs your help! Can you find the number ${digit}?`
-                : `Where is the number ${digit}? Let's find it together!`;
-            tlPrompt = isAlt
-                ? `Kailangan ng tulong ang numerong ${digit}! Maaari mo bang hanapin ang numerong ${digit}?`
-                : `Nasaan ang numerong ${digit}? Hanapin natin ito nang magkasama!`;
+            if (promptVariant === 0) {
+                enPrompt = `Look carefully. Which one is number ${digit}?`;
+                tlPrompt = `Tingnan nang mabuti. Alin ang numerong ${digit}?`;
+            } else if (promptVariant === 1) {
+                enPrompt = `The number ${digit} needs your help! Can you find the number ${digit}?`;
+                tlPrompt = `Kailangan ng tulong ang numerong ${digit}! Maaari mo bang hanapin ang numerong ${digit}?`;
+            } else {
+                enPrompt = `Where is the number ${digit}? Let's find it together!`;
+                tlPrompt = `Nasaan ang numerong ${digit}? Hanapin natin ito nang magkasama!`;
+            }
         } else if (category === 'colors') {
-            enPrompt = isAlt
-                ? `The color ${item.word} needs your help! Can you find the color ${item.word}?`
-                : `Where is the color ${item.word}? Let's find it together!`;
-            tlPrompt = isAlt
-                ? `Kailangan ng tulong ang kulay ${localizedWord}! Maaari mo bang hanapin ang kulay ${localizedWord}?`
-                : `Nasaan ang kulay ${localizedWord}? Hanapin natin ito nang magkasama!`;
+            if (promptVariant === 0) {
+                enPrompt = `Look carefully. Which one is ${item.word}?`;
+                tlPrompt = `Tingnan nang mabuti. Alin ang kulay na ${localizedWord}?`;
+            } else if (promptVariant === 1) {
+                enPrompt = `The color ${item.word} needs your help! Can you find the color ${item.word}?`;
+                tlPrompt = `Kailangan ng tulong ang kulay ${localizedWord}! Maaari mo bang hanapin ang kulay ${localizedWord}?`;
+            } else {
+                enPrompt = `Where is the color ${item.word}? Let's find it together!`;
+                tlPrompt = `Nasaan ang kulay ${localizedWord}? Hanapin natin ito nang magkasama!`;
+            }
         } else if (category === 'shapes') {
-            enPrompt = isAlt
-                ? `The shape ${item.word} needs your help! Can you find the shape ${item.word}?`
-                : `Where is the shape ${item.word}? Let's find it together!`;
-            tlPrompt = isAlt
-                ? `Kailangan ng tulong ang hugis ${localizedWord}! Maaari mo bang hanapin ang hugis ${localizedWord}?`
-                : `Nasaan ang hugis ${localizedWord}? Hanapin natin ito nang magkasama!`;
+            if (promptVariant === 0) {
+                enPrompt = `Look carefully. Which one is ${item.word}?`;
+                tlPrompt = `Tingnan nang mabuti. Alin ang hugis na ${localizedWord}?`;
+            } else if (promptVariant === 1) {
+                enPrompt = `The shape ${item.word} needs your help! Can you find the shape ${item.word}?`;
+                tlPrompt = `Kailangan ng tulong ang hugis ${localizedWord}! Maaari mo bang hanapin ang hugis ${localizedWord}?`;
+            } else {
+                enPrompt = `Where is the shape ${item.word}? Let's find it together!`;
+                tlPrompt = `Nasaan ang hugis ${localizedWord}? Hanapin natin ito nang magkasama!`;
+            }
         } else {
-            enPrompt = `Which one is ${item.word}?`;
-            tlPrompt = `Alin sa mga ito ang ${localizedWord}?`;
+            enPrompt = `Look carefully. Which one is ${item.word}?`;
+            tlPrompt = `Tingnan nang mabuti. Alin ang ${localizedWord}?`;
         }
 
         return {
