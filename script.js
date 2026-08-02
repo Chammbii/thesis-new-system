@@ -36,6 +36,7 @@ const teacherProgressCategories = document.getElementById("teacherProgressCatego
 const teacherLogoutBtn = document.getElementById("teacherLogoutBtn");
 const teacherDashboardHomeBtn = document.getElementById("teacherDashboardHomeBtn");
 const teacherDashboardRefreshBtn = document.getElementById("teacherDashboardRefreshBtn");
+const teacherDownloadReceiptBtn = document.getElementById("teacherDownloadReceiptBtn");
 const teacherStudentProgressTable = document.getElementById("teacherStudentProgressTable");
 const teacherStudentCount = document.getElementById("teacherStudentCount");
 const teacherTotalStars = document.getElementById("teacherTotalStars");
@@ -62,6 +63,10 @@ const sfxToggle = document.getElementById("sfxToggle");
 const sfxVolume = document.getElementById("sfxVolume");
 const sfxVolumeValue = document.getElementById("sfxVolumeValue");
 const voiceNarrationToggle = document.getElementById("voiceNarrationToggle");
+const microphoneToggle = document.getElementById("microphoneToggle");
+const microphoneStatus = document.getElementById("microphoneStatus");
+const microphoneAllowBtn = document.getElementById("microphoneAllowBtn");
+const microphoneExtraRow = document.getElementById("microphoneExtraRow");
 const notificationBox = document.getElementById("notificationBox");
 const bgMusicElement = document.getElementById("bgMusic");
 const popSound = document.getElementById("popSound");
@@ -248,6 +253,12 @@ if (teacherDashboardRefreshBtn) {
     teacherDashboardRefreshBtn.addEventListener("click", () => {
         showTeacherDashboard();
         showNotification("Dashboard refreshed.");
+    });
+}
+
+if (teacherDownloadReceiptBtn) {
+    teacherDownloadReceiptBtn.addEventListener("click", () => {
+        downloadTeacherProgressReceipt();
     });
 }
 
@@ -809,6 +820,97 @@ function renderTeacherStudentProgress() {
     }
 }
 
+function formatReceiptDate(timestamp) {
+    try {
+        return new Date(timestamp).toLocaleString();
+    } catch (err) {
+        return "N/A";
+    }
+}
+
+function getStudentHistorySummary(studentName) {
+    const history = getStudentQuizHistory(studentName);
+    if (!history.length) {
+        return {
+            attempts: 0,
+            avgAccuracy: 0,
+            starsFromHistory: 0,
+            lastAttempt: "N/A"
+        };
+    }
+
+    const attempts = history.length;
+    const totalAccuracy = history.reduce((sum, entry) => sum + (Number(entry.accuracy) || 0), 0);
+    const starsFromHistory = history.reduce((sum, entry) => sum + (Number(entry.starsGained) || 0), 0);
+    return {
+        attempts,
+        avgAccuracy: Math.round(totalAccuracy / attempts),
+        starsFromHistory,
+        lastAttempt: formatReceiptDate(history[0]?.date)
+    };
+}
+
+function buildTeacherProgressReceipt() {
+    const records = getStudentRecords().slice().sort((a, b) => b.updatedAt - a.updatedAt);
+    const generatedAt = new Date();
+    const totalCategories = Object.keys(lessons).length;
+    const totalStudents = records.length;
+    const totalStars = records.reduce((sum, record) => sum + (Number(record.stars) || 0), 0);
+
+    const lines = [];
+    lines.push("QUIZLAND STUDENT PROGRESS RECEIPT");
+    lines.push("=================================");
+    lines.push(`Teacher: ${currentTeacherUsername || "Teacher"}`);
+    lines.push(`Generated: ${formatReceiptDate(generatedAt.getTime())}`);
+    lines.push(`Students Tracked: ${totalStudents}`);
+    lines.push(`Total Stars Earned: ${totalStars}`);
+    lines.push("");
+
+    if (!records.length) {
+        lines.push("No student records found yet.");
+        return lines.join("\n");
+    }
+
+    records.forEach((record, index) => {
+        const summary = getStudentHistorySummary(record.name);
+        lines.push(`Student ${index + 1}: ${record.name}`);
+        lines.push(`- Avatar: ${record.avatar || 1}`);
+        lines.push(`- Progress: ${record.categoriesDone || 0}/${totalCategories} (${record.progressPercent || 0}%)`);
+        lines.push(`- Latest Accuracy: ${record.accuracy || 0}%`);
+        lines.push(`- Total Stars: ${record.stars || 0}`);
+        lines.push(`- Quiz Attempts: ${summary.attempts}`);
+        lines.push(`- Avg Quiz Accuracy: ${summary.avgAccuracy}%`);
+        lines.push(`- Stars from Quiz History: ${summary.starsFromHistory}`);
+        lines.push(`- Last Quiz Attempt: ${summary.lastAttempt}`);
+        lines.push(`- Last Updated: ${formatReceiptDate(record.updatedAt)}`);
+        lines.push("---------------------------------");
+    });
+
+    return lines.join("\n");
+}
+
+function downloadTeacherProgressReceipt() {
+    const receiptText = buildTeacherProgressReceipt();
+    const teacherLabel = String(currentTeacherUsername || "teacher")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") || "teacher";
+    const dateLabel = toDateKey();
+    const fileName = `quizland-progress-receipt-${teacherLabel}-${dateLabel}.txt`;
+
+    const blob = new Blob([receiptText], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = fileName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+
+    showNotification("Student progress receipt downloaded.");
+}
+
 function removeStudentRecord(studentName) {
     const records = getStudentRecords().filter(record => record.name !== studentName);
     saveStudentRecords(records);
@@ -902,6 +1004,7 @@ function updateVolumeLabel(input, label) {
 function openSettingsModal() {
     updateVolumeLabel(bgMusicVolume, bgMusicVolumeValue);
     updateVolumeLabel(sfxVolume, sfxVolumeValue);
+    updateMicrophoneSettingUi();
     if (settingsModal) settingsModal.style.display = "flex";
 }
 
@@ -1129,6 +1232,88 @@ function speakText(text, options = {}) {
     });
 }
 
+function isMicrophoneEnabled() {
+    if (microphoneToggle) return !!microphoneToggle.checked;
+    const saved = localStorage.getItem("microphoneEnabled");
+    return saved === null ? true : saved === "true";
+}
+
+function applyMicrophoneSetting(enabled) {
+    if (microphoneToggle) {
+        microphoneToggle.checked = enabled;
+    }
+    localStorage.setItem("microphoneEnabled", enabled ? "true" : "false");
+    if (!enabled) {
+        stopLessonVoiceListening();
+    }
+    updateMicrophoneSettingUi();
+}
+
+function setMicrophoneStatus(state, label) {
+    if (!microphoneStatus) return;
+    microphoneStatus.textContent = label;
+    microphoneStatus.classList.remove(
+        "mic-status--unknown",
+        "mic-status--allowed",
+        "mic-status--blocked",
+        "mic-status--off"
+    );
+    microphoneStatus.classList.add(`mic-status--${state}`);
+}
+
+async function updateMicrophoneSettingUi() {
+    if (!microphoneStatus) return;
+
+    if (!isMicrophoneEnabled()) {
+        if (microphoneExtraRow) microphoneExtraRow.hidden = true;
+        setMicrophoneStatus("off", selectedLanguage === "tl" ? "Naka-off" : "Off");
+        if (microphoneAllowBtn) microphoneAllowBtn.disabled = true;
+        return;
+    }
+
+    if (microphoneExtraRow) microphoneExtraRow.hidden = false;
+
+    if (!canUseVoiceFeatures()) {
+        setMicrophoneStatus(
+            "blocked",
+            selectedLanguage === "tl" ? "Kailangan ng localhost" : "Needs localhost"
+        );
+        if (microphoneAllowBtn) microphoneAllowBtn.disabled = false;
+        return;
+    }
+
+    const permission = await checkMicrophonePermissionState();
+    if (permission === "granted") {
+        setMicrophoneStatus("allowed", selectedLanguage === "tl" ? "Pinapayagan" : "Allowed");
+    } else if (permission === "denied") {
+        setMicrophoneStatus("blocked", selectedLanguage === "tl" ? "Blocked" : "Blocked");
+    } else {
+        setMicrophoneStatus("unknown", selectedLanguage === "tl" ? "Hindi pa na-allow" : "Not allowed yet");
+    }
+
+    if (microphoneAllowBtn) {
+        microphoneAllowBtn.disabled = permission === "granted";
+    }
+}
+
+async function requestMicrophoneFromSettings() {
+    if (!isMicrophoneEnabled()) {
+        applyMicrophoneSetting(true);
+    }
+
+    const allowed = await ensureMicrophoneAccess({ silent: false });
+    await updateMicrophoneSettingUi();
+
+    if (allowed) {
+        showNotification(
+            selectedLanguage === "tl"
+                ? "Mikropono ay handa na para sa Speak Answer."
+                : "Microphone is ready for Speak Answer.",
+            2500
+        );
+    }
+}
+
 // ======================================================
 // MICROPHONE PERMISSION (requested when Speak Answer is used)
 // ======================================================
@@ -1136,13 +1321,39 @@ function speakText(text, options = {}) {
 let micPermissionState = "unknown";
 let micPermissionRequestInFlight = null;
 
+function canUseVoiceFeatures() {
+    return window.isSecureContext && !!SpeechRecognitionAPI;
+}
+
+function getMicrophoneBlockedMessage() {
+    if (!window.isSecureContext) {
+        return selectedLanguage === "tl"
+            ? "Buksan ang app sa http://localhost (hindi file://) para gumana ang mikropono."
+            : "Open the app at http://localhost (not as a file) for the microphone to work.";
+    }
+    if (!SpeechRecognitionAPI) {
+        return selectedLanguage === "tl"
+            ? "Hindi available ang voice recognition sa browser na ito. Gamitin ang Chrome o Edge."
+            : "Voice recognition is not available in this browser. Please use Chrome or Edge.";
+    }
+    if (!navigator.mediaDevices?.getUserMedia) {
+        return selectedLanguage === "tl"
+            ? "Hindi available ang mikropono sa browser na ito."
+            : "Microphone is not available in this browser.";
+    }
+    return selectedLanguage === "tl"
+        ? "Paki-allow ang mikropono sa browser settings, tapos subukan ulit."
+        : "Please allow the microphone in your browser settings, then try again.";
+}
+
 async function checkMicrophonePermissionState() {
     try {
-        if (navigator.permissions && navigator.permissions.query) {
+        if (navigator.permissions?.query) {
             const status = await navigator.permissions.query({ name: "microphone" });
             micPermissionState = status.state;
             status.onchange = () => {
                 micPermissionState = status.state;
+                updateMicrophoneSettingUi();
             };
             return status.state;
         }
@@ -1155,16 +1366,16 @@ async function checkMicrophonePermissionState() {
 async function ensureMicrophoneAccess(options = {}) {
     const { silent = false } = options;
 
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    if (!window.isSecureContext) {
         if (!silent) {
-            showNotification(
-                selectedLanguage === "tl"
-                    ? "Hindi available ang mikropono sa browser na ito."
-                    : "Microphone is not available in this browser.",
-                4000
-            );
+            showNotification(getMicrophoneBlockedMessage(), 5000);
         }
         return false;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+        // Speech recognition may still request mic access on its own.
+        return true;
     }
 
     if (micPermissionRequestInFlight) {
@@ -1178,13 +1389,7 @@ async function ensureMicrophoneAccess(options = {}) {
 
     micPermissionRequestInFlight = (async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                audio: {
-                    echoCancellation: true,
-                    noiseSuppression: true
-                }
-            });
-            // Stop tracks right away — permission stays allowed for this site.
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             stream.getTracks().forEach(track => track.stop());
             micPermissionState = "granted";
             localStorage.setItem("micPermissionGranted", "true");
@@ -1198,22 +1403,48 @@ async function ensureMicrophoneAccess(options = {}) {
             }
             return true;
         } catch (err) {
-            micPermissionState = "denied";
-            if (!silent) {
-                showNotification(
-                    selectedLanguage === "tl"
-                        ? "Paki-allow ang mikropono para sa Speak Answer."
-                        : "Please allow the microphone for Speak Answer.",
-                    4500
-                );
+            if (err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError") {
+                micPermissionState = "denied";
             }
-            return false;
+            if (!silent) {
+                showNotification(getMicrophoneBlockedMessage(), 4500);
+            }
+            // Let speech recognition try anyway — Chrome may still prompt or work.
+            return true;
         } finally {
             micPermissionRequestInFlight = null;
         }
     })();
 
     return micPermissionRequestInFlight;
+}
+
+function getSpeechRecognitionErrorMessage(errorCode) {
+    switch (errorCode) {
+        case "not-allowed":
+        case "service-not-allowed":
+            return getMicrophoneBlockedMessage();
+        case "audio-capture":
+            return selectedLanguage === "tl"
+                ? "Walang nahanap na mikropono. Ikonekta ang mic at subukan ulit."
+                : "No microphone found. Connect a mic and try again.";
+        case "no-speech":
+            return selectedLanguage === "tl"
+                ? "Walang narinig. Subukan ulit."
+                : "No speech detected. Try again.";
+        case "network":
+            return selectedLanguage === "tl"
+                ? "Kailangan ng internet para sa voice recognition."
+                : "Voice recognition needs an internet connection.";
+        case "aborted":
+            return selectedLanguage === "tl"
+                ? "Tumigil ang pakikinig."
+                : "Listening stopped.";
+        default:
+            return selectedLanguage === "tl"
+                ? `May problema sa mikropono (${errorCode}). Subukan ulit.`
+                : `Mic error (${errorCode}). Please try again.`;
+    }
 }
 
 function speakQuizQuestion() {
@@ -1296,11 +1527,53 @@ if (voiceNarrationToggle) {
     });
 }
 
+if (microphoneToggle) {
+    microphoneToggle.addEventListener("change", () => {
+        applyMicrophoneSetting(microphoneToggle.checked);
+        showNotification(
+            microphoneToggle.checked
+                ? (selectedLanguage === "tl" ? "Naka-on ang mikropono." : "Microphone is on.")
+                : (selectedLanguage === "tl" ? "Naka-off ang mikropono." : "Microphone is off."),
+            2200
+        );
+    });
+}
+
+if (microphoneAllowBtn) {
+    microphoneAllowBtn.addEventListener("click", () => {
+        requestMicrophoneFromSettings();
+    });
+}
+
+const VOICE_HEARD_NOTIFICATION_MS = 2000;
+
+function showVoiceHeardNotification(spokenText, isFinal = true) {
+    const heard = String(spokenText || "").trim();
+    if (!heard || !notificationBox) return;
+
+    const label = selectedLanguage === "tl" ? "Narinig ko" : "You said";
+    const message = `🎤 ${label}: "${heard}"`;
+
+    notificationBox.textContent = message;
+    notificationBox.classList.add("show", "voice-heard");
+    notificationBox.classList.remove("hidden");
+
+    clearTimeout(notificationBox.hideTimer);
+
+    if (isFinal) {
+        notificationBox.hideTimer = setTimeout(() => {
+            notificationBox.classList.remove("show", "voice-heard");
+            notificationBox.classList.add("hidden");
+        }, VOICE_HEARD_NOTIFICATION_MS);
+    }
+}
+
 function showNotification(message, duration = 2800) {
 
     if (!notificationBox) return;
 
     notificationBox.textContent = message;
+    notificationBox.classList.remove("voice-heard");
 
     notificationBox.classList.add("show");
 
@@ -1382,6 +1655,9 @@ window.onload = () => {
 
     const savedVoiceNarration = localStorage.getItem("voiceNarrationEnabled");
     applyVoiceNarrationSetting(savedVoiceNarration === null ? true : savedVoiceNarration === "true");
+
+    const savedMicrophone = localStorage.getItem("microphoneEnabled");
+    applyMicrophoneSetting(savedMicrophone === null ? true : savedMicrophone === "true");
 
     updateBgMusic();
     updateSfxVolume();
@@ -2058,14 +2334,13 @@ function handleLessonVoiceResult(spokenText) {
         const gained = awardLessonVoiceStar();
         const message = gained
             ? (selectedLanguage === "tl"
-                ? `Tama! Narinig ko: "${heard}". +1 bituin!`
-                : `Correct! I heard: "${heard}". +1 star!`)
+                ? `Tama! +1 bituin!`
+                : `Correct! +1 star!`)
             : (selectedLanguage === "tl"
-                ? `Tama! Narinig ko: "${heard}". (Nakuha mo na ang bituin dito.)`
-                : `Correct! I heard: "${heard}". (Star already earned for this item.)`);
+                ? `Tama! (Nakuha mo na ang bituin dito.)`
+                : `Correct! (Star already earned for this item.)`);
 
         setLessonVoiceStatus(message, "correct");
-        showNotification(message, 3200);
         speakText(selectedLanguage === "tl" ? "Tama! Magaling!" : "Correct! Great job!");
     } else {
         const lesson = lessons[currentCategory][currentLesson];
@@ -2073,21 +2348,27 @@ function handleLessonVoiceResult(spokenText) {
             ? lesson.letter
             : translateWord(lesson.word);
         const message = selectedLanguage === "tl"
-            ? `Halos! Narinig ko: "${heard}". Subukan sabihin: ${hint}`
-            : `Close! I heard: "${heard}". Try saying: ${hint}`;
+            ? `Halos! Subukan sabihin: ${hint}`
+            : `Close! Try saying: ${hint}`;
         setLessonVoiceStatus(message, "wrong");
-        showNotification(message, 3200);
         speakText(selectedLanguage === "tl" ? "Subukan ulit!" : "Try again!");
     }
 }
 
 async function startLessonVoiceListening() {
-    if (!SpeechRecognitionAPI) {
+    if (!isMicrophoneEnabled()) {
         const msg = selectedLanguage === "tl"
-            ? "Hindi available ang voice recognition sa browser na ito. Gamitin ang Chrome o Edge."
-            : "Voice recognition is not available in this browser. Please use Chrome or Edge.";
+            ? "Naka-off ang mikropono. Buksan ito sa Settings."
+            : "Microphone is off. Turn it on in Settings.";
         setLessonVoiceStatus(msg, "wrong");
-        showNotification(msg, 4000);
+        showNotification(msg, 3000);
+        return;
+    }
+
+    if (!canUseVoiceFeatures()) {
+        const msg = getMicrophoneBlockedMessage();
+        setLessonVoiceStatus(msg, "wrong");
+        showNotification(msg, 5000);
         return;
     }
 
@@ -2103,21 +2384,18 @@ async function startLessonVoiceListening() {
     speechSynthesis.cancel();
     stopLessonVoiceListening(false);
 
-    const micReady = await ensureMicrophoneAccess({ silent: true });
-    if (!micReady) {
-        stopLessonVoiceListening();
-        setLessonVoiceStatus(
-            selectedLanguage === "tl"
-                ? "Paki-allow ang mikropono para sa Speak Answer."
-                : "Please allow the microphone for Speak Answer.",
-            "wrong"
-        );
-        return;
-    }
+    showNotification(
+        selectedLanguage === "tl"
+            ? "🎤 Paki-allow ang mikropono kung lalabas ang tanong ng browser."
+            : "🎤 Please click Allow if your browser asks for the microphone.",
+        VOICE_HEARD_NOTIFICATION_MS
+    );
+
+    await ensureMicrophoneAccess({ silent: true });
 
     lessonSpeechRecognition = new SpeechRecognitionAPI();
     lessonSpeechRecognition.lang = selectedLanguage === "tl" ? "fil-PH" : "en-US";
-    lessonSpeechRecognition.interimResults = false;
+    lessonSpeechRecognition.interimResults = true;
     lessonSpeechRecognition.maxAlternatives = 5;
     lessonSpeechRecognition.continuous = false;
 
@@ -2130,38 +2408,59 @@ async function startLessonVoiceListening() {
         selectedLanguage === "tl" ? "Nakikinig... magsalita ngayon." : "Listening... speak now.",
         "listening"
     );
+    showNotification(
+        selectedLanguage === "tl" ? "🎤 Magsalita ngayon..." : "🎤 Speak now...",
+        VOICE_HEARD_NOTIFICATION_MS
+    );
 
     lessonSpeechRecognition.onresult = (event) => {
+        let interimTranscript = "";
+        let finalTranscript = "";
         const alternatives = [];
-        for (let i = 0; i < event.results.length; i++) {
-            for (let j = 0; j < event.results[i].length; j++) {
-                alternatives.push(event.results[i][j].transcript);
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const result = event.results[i];
+            const transcript = result[0]?.transcript || "";
+            if (result.isFinal) {
+                finalTranscript += transcript;
+            } else {
+                interimTranscript += transcript;
+            }
+
+            for (let j = 0; j < result.length; j++) {
+                alternatives.push(result[j].transcript);
             }
         }
 
+        const liveText = (finalTranscript || interimTranscript).trim();
+        if (liveText) {
+            showVoiceHeardNotification(liveText, !!finalTranscript);
+        }
+
+        if (!finalTranscript) return;
+
         stopLessonVoiceListening();
 
-        // Accept the first matching alternative (near-miss friendly)
         const match = alternatives.find(text => isSpokenAnswerCorrect(text));
-        handleLessonVoiceResult(match || alternatives[0] || "");
+        handleLessonVoiceResult(match || finalTranscript.trim());
     };
 
     lessonSpeechRecognition.onerror = (event) => {
         stopLessonVoiceListening();
-        const msg = selectedLanguage === "tl"
-            ? `May problema sa mikropono (${event.error}). Subukan ulit.`
-            : `Mic error (${event.error}). Please try again.`;
+        const msg = getSpeechRecognitionErrorMessage(event.error);
         setLessonVoiceStatus(msg, "wrong");
+        showNotification(msg, event.error === "not-allowed" ? 5000 : VOICE_HEARD_NOTIFICATION_MS);
     };
 
     lessonSpeechRecognition.onend = () => {
         if (lessonVoiceListening) {
             stopLessonVoiceListening();
             if (lessonVoiceStatus && lessonVoiceStatus.classList.contains("is-listening")) {
-                setLessonVoiceStatus(
-                    selectedLanguage === "tl" ? "Walang narinig. Subukan ulit." : "No speech detected. Try again.",
-                    "wrong"
-                );
+                const msg = selectedLanguage === "tl"
+                    ? "Walang narinig. Subukan ulit."
+                    : "No speech detected. Try again.";
+                setLessonVoiceStatus(msg, "wrong");
+                showNotification(msg, VOICE_HEARD_NOTIFICATION_MS);
             }
         }
     };
@@ -2170,10 +2469,9 @@ async function startLessonVoiceListening() {
         lessonSpeechRecognition.start();
     } catch (err) {
         stopLessonVoiceListening();
-        setLessonVoiceStatus(
-            selectedLanguage === "tl" ? "Hindi masimulan ang mikropono." : "Could not start the microphone.",
-            "wrong"
-        );
+        const msg = getMicrophoneBlockedMessage();
+        setLessonVoiceStatus(msg, "wrong");
+        showNotification(msg, 5000);
     }
 }
 
