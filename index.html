@@ -200,6 +200,7 @@
                     <p class="tdash-welcome">Welcome back, <span id="teacherNameDisplay">Teacher</span>.</p>
                 </div>
                 <div class="tdash-header-actions">
+                    <button id="teacherDownloadReceiptBtn" class="tdash-btn tdash-btn--export" type="button">Download Receipt</button>
                     <button id="teacherDashboardRefreshBtn" class="tdash-btn tdash-btn--refresh" type="button">Refresh</button>
                     <button id="teacherDashboardHomeBtn" class="tdash-btn tdash-btn--ghost" type="button">Home</button>
                     <button id="teacherLogoutBtn" class="tdash-btn tdash-btn--solid" type="button">Logout</button>
@@ -478,6 +479,27 @@
                             <input id="voiceNarrationToggle" type="checkbox" checked>
                             <span class="switch-track" aria-hidden="true"></span>
                         </label>
+                    </div>
+
+                    <div class="setting-row">
+                        <div class="setting-copy">
+                            <span class="setting-label">Microphone</span>
+                            <span class="setting-hint">Use your voice for Speak Answer in lessons</span>
+                        </div>
+                        <label class="switch" for="microphoneToggle">
+                            <input id="microphoneToggle" type="checkbox" checked>
+                            <span class="switch-track" aria-hidden="true"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-row setting-row--mic-extra" id="microphoneExtraRow">
+                        <div class="mic-setting-controls">
+                            <span id="microphoneStatus" class="mic-status mic-status--unknown">Checking...</span>
+                            <button type="button" id="microphoneAllowBtn" class="mic-allow-btn">
+                                <i class="fa-solid fa-microphone"></i>
+                                Allow Microphone
+                            </button>
+                        </div>
                     </div>
                 </section>
 
