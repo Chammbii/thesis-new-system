@@ -233,6 +233,23 @@ teacherLoginForm.addEventListener("submit", (event) => {
 
 });
 
+// Clear error state when user starts typing in input fields
+[teacherEmail, teacherPassword, teacherConfirmPassword, teacherFullName].forEach(input => {
+    if (input) {
+        input.addEventListener("input", () => {
+            const wrapper = input.closest(".input-wrapper");
+            if (wrapper) {
+                wrapper.classList.remove("error");
+                const errorMsg = wrapper.querySelector(".input-error-message");
+                if (errorMsg) {
+                    errorMsg.textContent = "";
+                }
+            }
+        });
+    }
+});
+
+
 teacherLogoutBtn.addEventListener("click", () => {
 
     currentTeacherUsername = "Teacher";
@@ -263,9 +280,15 @@ if (teacherDownloadReceiptBtn) {
 }
 
 function clearTeacherError(){
-    if (teacherError) {
-        teacherError.textContent = "";
-    }
+    // Clear error state from all input wrappers
+    const inputWrappers = document.querySelectorAll(".input-wrapper");
+    inputWrappers.forEach(wrapper => {
+        wrapper.classList.remove("error");
+        const errorMsg = wrapper.querySelector(".input-error-message");
+        if (errorMsg) {
+            errorMsg.textContent = "";
+        }
+    });
 }
 
 function setTeacherMode(mode){
@@ -296,9 +319,9 @@ function setTeacherMode(mode){
         teacherToggleMode.textContent = isRegister ? "Login" : "Register";
     }
 
-    teacherEmail.classList.toggle("teacher-hidden", isUnlock);
-    teacherConfirmPassword.classList.toggle("teacher-hidden", !isRegister);
-    teacherFullName.classList.toggle("teacher-hidden", !isRegister);
+    teacherEmail.closest(".input-wrapper").classList.toggle("teacher-hidden", isUnlock);
+    teacherConfirmPassword.closest(".input-wrapper").classList.toggle("teacher-hidden", !isRegister);
+    teacherFullName.closest(".input-wrapper").classList.toggle("teacher-hidden", !isRegister);
     if (teacherSwitchRow) {
         teacherSwitchRow.classList.toggle("teacher-hidden", isUnlock);
     }
@@ -423,8 +446,23 @@ function handleTeacherLogin(){
 }
 
 function setTeacherError(message){
-    if (teacherError) {
-        teacherError.textContent = message;
+    // Find the first visible input wrapper and display the error there
+    const inputWrappers = document.querySelectorAll(".input-wrapper");
+    let targetWrapper = null;
+    
+    for (let wrapper of inputWrappers) {
+        if (!wrapper.classList.contains("teacher-hidden")) {
+            targetWrapper = wrapper;
+            break;
+        }
+    }
+    
+    if (targetWrapper) {
+        targetWrapper.classList.add("error");
+        const errorMsg = targetWrapper.querySelector(".input-error-message");
+        if (errorMsg) {
+            errorMsg.textContent = message;
+        }
     }
 }
 
