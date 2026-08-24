@@ -161,15 +161,29 @@
 
                 <form id="teacherLoginForm" class="teacher-form">
 
-                    <input type="email" id="teacherEmail" placeholder="Email">
+                    <div class="input-wrapper">
+                        <input type="email" id="teacherEmail" placeholder="Email">
+                        <span class="input-error-icon" aria-hidden="true">⚠</span>
+                        <div class="input-error-message"></div>
+                    </div>
 
-                    <input type="password" id="teacherPassword" placeholder="Password">
+                    <div class="input-wrapper">
+                        <input type="password" id="teacherPassword" placeholder="Password">
+                        <span class="input-error-icon" aria-hidden="true">⚠</span>
+                        <div class="input-error-message"></div>
+                    </div>
 
-                    <input type="password" id="teacherConfirmPassword" placeholder="Confirm Password" class="teacher-hidden">
+                    <div class="input-wrapper teacher-hidden">
+                        <input type="password" id="teacherConfirmPassword" placeholder="Confirm Password">
+                        <span class="input-error-icon" aria-hidden="true">⚠</span>
+                        <div class="input-error-message"></div>
+                    </div>
 
-                    <input type="text" id="teacherFullName" placeholder="Full Name" class="teacher-hidden">
-
-                    <div id="teacherError" class="teacher-error"></div>
+                    <div class="input-wrapper teacher-hidden">
+                        <input type="text" id="teacherFullName" placeholder="Full Name">
+                        <span class="input-error-icon" aria-hidden="true">⚠</span>
+                        <div class="input-error-message"></div>
+                    </div>
 
                     <button type="submit" class="main-btn" id="teacherSubmitBtn">Login</button>
 
