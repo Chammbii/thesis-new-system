@@ -36,7 +36,6 @@ const teacherProgressCategories = document.getElementById("teacherProgressCatego
 const teacherLogoutBtn = document.getElementById("teacherLogoutBtn");
 const teacherDashboardHomeBtn = document.getElementById("teacherDashboardHomeBtn");
 const teacherDashboardRefreshBtn = document.getElementById("teacherDashboardRefreshBtn");
-const teacherDownloadReceiptBtn = document.getElementById("teacherDownloadReceiptBtn");
 const teacherStudentProgressTable = document.getElementById("teacherStudentProgressTable");
 const teacherStudentCount = document.getElementById("teacherStudentCount");
 const teacherTotalStars = document.getElementById("teacherTotalStars");
@@ -63,10 +62,6 @@ const sfxToggle = document.getElementById("sfxToggle");
 const sfxVolume = document.getElementById("sfxVolume");
 const sfxVolumeValue = document.getElementById("sfxVolumeValue");
 const voiceNarrationToggle = document.getElementById("voiceNarrationToggle");
-const microphoneToggle = document.getElementById("microphoneToggle");
-const microphoneStatus = document.getElementById("microphoneStatus");
-const microphoneAllowBtn = document.getElementById("microphoneAllowBtn");
-const microphoneExtraRow = document.getElementById("microphoneExtraRow");
 const notificationBox = document.getElementById("notificationBox");
 const bgMusicElement = document.getElementById("bgMusic");
 const popSound = document.getElementById("popSound");
@@ -270,12 +265,6 @@ if (teacherDashboardRefreshBtn) {
     teacherDashboardRefreshBtn.addEventListener("click", () => {
         showTeacherDashboard();
         showNotification("Dashboard refreshed.");
-    });
-}
-
-if (teacherDownloadReceiptBtn) {
-    teacherDownloadReceiptBtn.addEventListener("click", () => {
-        downloadTeacherProgressReceipt();
     });
 }
 
@@ -748,11 +737,14 @@ function renderQuizHistory(studentName) {
         return;
     }
 
-    history.forEach(entry => {
+    history.forEach((entry, index) => {
         const row = document.createElement("tr");
+        if (index === 0) {
+            row.classList.add("is-latest");
+        }
         const category = (entry.category || "quiz").charAt(0).toUpperCase() + (entry.category || "quiz").slice(1);
         row.innerHTML = `
-            <td>${formatQuizHistoryDate(entry.date)}</td>
+            <td>${formatQuizHistoryDate(entry.date)}${index === 0 ? '<span class="latest-history-badge">Latest</span>' : ""}</td>
             <td>${category}</td>
             <td>${entry.score} / ${entry.total}</td>
             <td>${entry.accuracy}%</td>
@@ -862,97 +854,6 @@ function renderTeacherStudentProgress() {
     }
 }
 
-function formatReceiptDate(timestamp) {
-    try {
-        return new Date(timestamp).toLocaleString();
-    } catch (err) {
-        return "N/A";
-    }
-}
-
-function getStudentHistorySummary(studentName) {
-    const history = getStudentQuizHistory(studentName);
-    if (!history.length) {
-        return {
-            attempts: 0,
-            avgAccuracy: 0,
-            starsFromHistory: 0,
-            lastAttempt: "N/A"
-        };
-    }
-
-    const attempts = history.length;
-    const totalAccuracy = history.reduce((sum, entry) => sum + (Number(entry.accuracy) || 0), 0);
-    const starsFromHistory = history.reduce((sum, entry) => sum + (Number(entry.starsGained) || 0), 0);
-    return {
-        attempts,
-        avgAccuracy: Math.round(totalAccuracy / attempts),
-        starsFromHistory,
-        lastAttempt: formatReceiptDate(history[0]?.date)
-    };
-}
-
-function buildTeacherProgressReceipt() {
-    const records = getStudentRecords().slice().sort((a, b) => b.updatedAt - a.updatedAt);
-    const generatedAt = new Date();
-    const totalCategories = Object.keys(lessons).length;
-    const totalStudents = records.length;
-    const totalStars = records.reduce((sum, record) => sum + (Number(record.stars) || 0), 0);
-
-    const lines = [];
-    lines.push("QUIZLAND STUDENT PROGRESS RECEIPT");
-    lines.push("=================================");
-    lines.push(`Teacher: ${currentTeacherUsername || "Teacher"}`);
-    lines.push(`Generated: ${formatReceiptDate(generatedAt.getTime())}`);
-    lines.push(`Students Tracked: ${totalStudents}`);
-    lines.push(`Total Stars Earned: ${totalStars}`);
-    lines.push("");
-
-    if (!records.length) {
-        lines.push("No student records found yet.");
-        return lines.join("\n");
-    }
-
-    records.forEach((record, index) => {
-        const summary = getStudentHistorySummary(record.name);
-        lines.push(`Student ${index + 1}: ${record.name}`);
-        lines.push(`- Avatar: ${record.avatar || 1}`);
-        lines.push(`- Progress: ${record.categoriesDone || 0}/${totalCategories} (${record.progressPercent || 0}%)`);
-        lines.push(`- Latest Accuracy: ${record.accuracy || 0}%`);
-        lines.push(`- Total Stars: ${record.stars || 0}`);
-        lines.push(`- Quiz Attempts: ${summary.attempts}`);
-        lines.push(`- Avg Quiz Accuracy: ${summary.avgAccuracy}%`);
-        lines.push(`- Stars from Quiz History: ${summary.starsFromHistory}`);
-        lines.push(`- Last Quiz Attempt: ${summary.lastAttempt}`);
-        lines.push(`- Last Updated: ${formatReceiptDate(record.updatedAt)}`);
-        lines.push("---------------------------------");
-    });
-
-    return lines.join("\n");
-}
-
-function downloadTeacherProgressReceipt() {
-    const receiptText = buildTeacherProgressReceipt();
-    const teacherLabel = String(currentTeacherUsername || "teacher")
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "") || "teacher";
-    const dateLabel = toDateKey();
-    const fileName = `quizland-progress-receipt-${teacherLabel}-${dateLabel}.txt`;
-
-    const blob = new Blob([receiptText], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = fileName;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(url);
-
-    showNotification("Student progress receipt downloaded.");
-}
-
 function removeStudentRecord(studentName) {
     const records = getStudentRecords().filter(record => record.name !== studentName);
     saveStudentRecords(records);
@@ -1046,7 +947,6 @@ function updateVolumeLabel(input, label) {
 function openSettingsModal() {
     updateVolumeLabel(bgMusicVolume, bgMusicVolumeValue);
     updateVolumeLabel(sfxVolume, sfxVolumeValue);
-    updateMicrophoneSettingUi();
     if (settingsModal) settingsModal.style.display = "flex";
 }
 
@@ -1275,85 +1175,7 @@ function speakText(text, options = {}) {
 }
 
 function isMicrophoneEnabled() {
-    if (microphoneToggle) return !!microphoneToggle.checked;
-    const saved = localStorage.getItem("microphoneEnabled");
-    return saved === null ? true : saved === "true";
-}
-
-function applyMicrophoneSetting(enabled) {
-    if (microphoneToggle) {
-        microphoneToggle.checked = enabled;
-    }
-    localStorage.setItem("microphoneEnabled", enabled ? "true" : "false");
-    if (!enabled) {
-        stopLessonVoiceListening();
-    }
-    updateMicrophoneSettingUi();
-}
-
-function setMicrophoneStatus(state, label) {
-    if (!microphoneStatus) return;
-    microphoneStatus.textContent = label;
-    microphoneStatus.classList.remove(
-        "mic-status--unknown",
-        "mic-status--allowed",
-        "mic-status--blocked",
-        "mic-status--off"
-    );
-    microphoneStatus.classList.add(`mic-status--${state}`);
-}
-
-async function updateMicrophoneSettingUi() {
-    if (!microphoneStatus) return;
-
-    if (!isMicrophoneEnabled()) {
-        if (microphoneExtraRow) microphoneExtraRow.hidden = true;
-        setMicrophoneStatus("off", selectedLanguage === "tl" ? "Naka-off" : "Off");
-        if (microphoneAllowBtn) microphoneAllowBtn.disabled = true;
-        return;
-    }
-
-    if (microphoneExtraRow) microphoneExtraRow.hidden = false;
-
-    if (!canUseVoiceFeatures()) {
-        setMicrophoneStatus(
-            "blocked",
-            selectedLanguage === "tl" ? "Kailangan ng localhost" : "Needs localhost"
-        );
-        if (microphoneAllowBtn) microphoneAllowBtn.disabled = false;
-        return;
-    }
-
-    const permission = await checkMicrophonePermissionState();
-    if (permission === "granted") {
-        setMicrophoneStatus("allowed", selectedLanguage === "tl" ? "Pinapayagan" : "Allowed");
-    } else if (permission === "denied") {
-        setMicrophoneStatus("blocked", selectedLanguage === "tl" ? "Blocked" : "Blocked");
-    } else {
-        setMicrophoneStatus("unknown", selectedLanguage === "tl" ? "Hindi pa na-allow" : "Not allowed yet");
-    }
-
-    if (microphoneAllowBtn) {
-        microphoneAllowBtn.disabled = permission === "granted";
-    }
-}
-
-async function requestMicrophoneFromSettings() {
-    if (!isMicrophoneEnabled()) {
-        applyMicrophoneSetting(true);
-    }
-
-    const allowed = await ensureMicrophoneAccess({ silent: false, notifySuccess: false });
-    await updateMicrophoneSettingUi();
-
-    if (allowed) {
-        showNotification(
-            selectedLanguage === "tl"
-                ? "Mikropono ay handa na para sa Speak Answer."
-                : "Microphone is ready for Speak Answer.",
-            2500
-        );
-    }
+    return true;
 }
 
 // ======================================================
@@ -1372,8 +1194,8 @@ function canUseVoiceFeatures() {
 function getMicrophoneBlockedMessage() {
     if (!window.isSecureContext) {
         return selectedLanguage === "tl"
-            ? "Buksan ang app sa http://localhost (hindi file://) para gumana ang mikropono."
-            : "Open the app at http://localhost (not as a file) for the microphone to work.";
+            ? "Buksan ang app sa http://localhost o HTTPS, hindi file://, para gumana ang mikropono."
+            : "Open the app at http://localhost or HTTPS, not file://, for the microphone to work.";
     }
     if (!SpeechRecognitionAPI) {
         return selectedLanguage === "tl"
@@ -1386,8 +1208,8 @@ function getMicrophoneBlockedMessage() {
             : "Microphone is not available in this browser.";
     }
     return selectedLanguage === "tl"
-        ? "Paki-allow ang mikropono sa browser settings, tapos subukan ulit."
-        : "Please allow the microphone in your browser settings, then try again.";
+        ? "Hindi available ang mikropono."
+        : "Microphone unavailable.";
 }
 
 async function checkMicrophonePermissionState() {
@@ -1397,7 +1219,6 @@ async function checkMicrophonePermissionState() {
             micPermissionState = status.state;
             status.onchange = () => {
                 micPermissionState = status.state;
-                updateMicrophoneSettingUi();
             };
             return status.state;
         }
@@ -1425,19 +1246,6 @@ async function ensureMicrophoneAccess(options = {}) {
 
     if (micPermissionRequestInFlight) {
         return micPermissionRequestInFlight;
-    }
-
-    const current = await checkMicrophonePermissionState();
-    if (current === "granted") {
-        micPermissionState = "granted";
-        return true;
-    }
-
-    if (current === "denied") {
-        if (!silent) {
-            showNotification(getMicrophoneBlockedMessage(), 4500);
-        }
-        return false;
     }
 
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -1588,54 +1396,13 @@ if (voiceNarrationToggle) {
     });
 }
 
-if (microphoneToggle) {
-    microphoneToggle.addEventListener("change", () => {
-        applyMicrophoneSetting(microphoneToggle.checked);
-        showNotification(
-            microphoneToggle.checked
-                ? (selectedLanguage === "tl" ? "Naka-on ang mikropono." : "Microphone is on.")
-                : (selectedLanguage === "tl" ? "Naka-off ang mikropono." : "Microphone is off."),
-            2200
-        );
-    });
-}
-
-if (microphoneAllowBtn) {
-    microphoneAllowBtn.addEventListener("click", () => {
-        requestMicrophoneFromSettings();
-    });
-}
-
-const VOICE_HEARD_NOTIFICATION_MS = 2000;
-
-function showVoiceHeardNotification(spokenText, isFinal = true) {
-    const heard = String(spokenText || "").trim();
-    if (!heard || !notificationBox) return;
-
-    const label = selectedLanguage === "tl" ? "Narinig ko" : "You said";
-    const message = `🎤 ${label}: "${heard}"`;
-
-    notificationBox.textContent = message;
-    notificationBox.classList.add("show", "voice-heard");
-    notificationBox.classList.remove("hidden");
-
-    clearTimeout(notificationBox.hideTimer);
-
-    if (isFinal) {
-        notificationBox.hideTimer = setTimeout(() => {
-            notificationBox.classList.remove("show", "voice-heard");
-            notificationBox.classList.add("hidden");
-        }, VOICE_HEARD_NOTIFICATION_MS);
-    }
-}
+const VOICE_FEEDBACK_NOTIFICATION_MS = 2000;
 
 function showNotification(message, duration = 2800) {
 
     if (!notificationBox) return;
 
     notificationBox.textContent = message;
-    notificationBox.classList.remove("voice-heard");
-
     notificationBox.classList.add("show");
 
     notificationBox.classList.remove("hidden");
@@ -1716,9 +1483,6 @@ window.onload = () => {
 
     const savedVoiceNarration = localStorage.getItem("voiceNarrationEnabled");
     applyVoiceNarrationSetting(savedVoiceNarration === null ? true : savedVoiceNarration === "true");
-
-    const savedMicrophone = localStorage.getItem("microphoneEnabled");
-    applyMicrophoneSetting(savedMicrophone === null ? true : savedMicrophone === "true");
 
     updateBgMusic();
     updateSfxVolume();
@@ -2356,7 +2120,7 @@ function resetLessonVoiceUi() {
 function awardLessonVoiceStar() {
     if (hasLessonVoiceStarBeenAwarded()) return 0;
     loadStudentStars();
-    const gained = 1 * 5;
+    const gained = 1;
     quizStars += gained;
     saveStudentStars();
     recordDailyStarsEarned(gained);
@@ -2404,8 +2168,8 @@ function handleLessonVoiceResult(spokenText) {
         const gained = awardLessonVoiceStar();
         const message = gained
             ? (selectedLanguage === "tl"
-                ? `Tama! +1 bituin!`
-                : `Correct! +1 star!`)
+                ? `Tama! +${gained} bituin!`
+                : `Correct! +${gained} star!`)
             : (selectedLanguage === "tl"
                 ? `Tama! (Nakuha mo na ang bituin dito.)`
                 : `Correct! (Star already earned for this item.)`);
@@ -2502,11 +2266,6 @@ async function startLessonVoiceListening() {
             }
         }
 
-        const liveText = (finalTranscript || interimTranscript).trim();
-        if (liveText) {
-            showVoiceHeardNotification(liveText, !!finalTranscript);
-        }
-
         if (!finalTranscript) return;
 
         lessonVoiceGotResult = true;
@@ -2524,7 +2283,7 @@ async function startLessonVoiceListening() {
         stopLessonVoiceListening();
         const msg = getSpeechRecognitionErrorMessage(event.error);
         setLessonVoiceStatus(msg, "wrong");
-        showNotification(msg, event.error === "not-allowed" ? 5000 : VOICE_HEARD_NOTIFICATION_MS);
+        showNotification(msg, event.error === "not-allowed" ? 5000 : VOICE_FEEDBACK_NOTIFICATION_MS);
     };
 
     recognition.onend = () => {
@@ -2538,7 +2297,7 @@ async function startLessonVoiceListening() {
                     ? "Walang narinig. Subukan ulit."
                     : "No speech detected. Try again.";
                 setLessonVoiceStatus(msg, "wrong");
-                showNotification(msg, VOICE_HEARD_NOTIFICATION_MS);
+                showNotification(msg, VOICE_FEEDBACK_NOTIFICATION_MS);
             }
         }
     };
@@ -2552,7 +2311,7 @@ async function startLessonVoiceListening() {
         } else {
             showNotification(
                 selectedLanguage === "tl" ? "🎤 Magsalita ngayon..." : "🎤 Speak now...",
-                VOICE_HEARD_NOTIFICATION_MS
+                VOICE_FEEDBACK_NOTIFICATION_MS
             );
         }
     } catch (err) {
@@ -2571,7 +2330,7 @@ async function startLessonVoiceListening() {
             ? "Walang narinig. Subukan ulit."
             : "No speech detected. Try again.";
         setLessonVoiceStatus(msg, "wrong");
-        showNotification(msg, VOICE_HEARD_NOTIFICATION_MS);
+        showNotification(msg, VOICE_FEEDBACK_NOTIFICATION_MS);
     }, 12000);
 }
 
@@ -3043,6 +2802,15 @@ function updateQuizStarDisplay(animate = false, gained = 0) {
         floater.textContent = `+${gained} ★`;
         quizStarScoreEl.appendChild(floater);
         floater.addEventListener("animationend", () => floater.remove());
+
+        for (let index = 0; index < 8; index++) {
+            const spark = document.createElement("span");
+            spark.className = "quiz-star-spark";
+            spark.style.setProperty("--spark-angle", `${index * 45}deg`);
+            spark.style.setProperty("--spark-distance", `${34 + (index % 2) * 10}px`);
+            quizStarScoreEl.appendChild(spark);
+            spark.addEventListener("animationend", () => spark.remove());
+        }
     }
 
     setTimeout(() => {
@@ -3051,7 +2819,7 @@ function updateQuizStarDisplay(animate = false, gained = 0) {
 }
 
 function awardQuizStars() {
-    const gained = (STAR_REWARDS[quizDifficulty] || STAR_REWARDS.easy) * 5;
+    const gained = STAR_REWARDS[quizDifficulty] || STAR_REWARDS.easy;
     quizStars += gained;
     sessionStarsGained += gained;
     saveStudentStars();
