@@ -214,7 +214,6 @@
                     <p class="tdash-welcome">Welcome back, <span id="teacherNameDisplay">Teacher</span>.</p>
                 </div>
                 <div class="tdash-header-actions">
-                    <button id="teacherDownloadReceiptBtn" class="tdash-btn tdash-btn--export" type="button">Download Receipt</button>
                     <button id="teacherDashboardRefreshBtn" class="tdash-btn tdash-btn--refresh" type="button">Refresh</button>
                     <button id="teacherDashboardHomeBtn" class="tdash-btn tdash-btn--ghost" type="button">Home</button>
                     <button id="teacherLogoutBtn" class="tdash-btn tdash-btn--solid" type="button">Logout</button>
