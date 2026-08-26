@@ -76,6 +76,7 @@ const avatars = document.querySelectorAll(".avatar-card");
 // ---------- LESSON ----------
 const lessonScreen = document.getElementById("lessonScreen");
 const lessonButtons = document.querySelectorAll(".lesson-btn");
+const quizMenuButtons = document.querySelectorAll(".quiz-menu-btn");
 const progressFill = document.getElementById("progressFill");
 const lessonTitle = document.getElementById("lessonTitle");
 const lessonImage = document.getElementById("lessonImage");
@@ -116,6 +117,7 @@ function showScreen(screen) {
 
     screen.classList.add("active");
     updateStudentHud();
+    if (screen === menuScreen) updateQuizMenuButtons();
 
 }
 
@@ -468,6 +470,11 @@ function getNamespacedKey(suffix) {
     return `studentProgress_${getProgressNamespace()}_${suffix}`;
 }
 
+function getCurrentStudentProgressKey(suffix) {
+    const student = localStorage.getItem("studentName") || "NewStudent";
+    return getNamespacedKey(`student_${encodeURIComponent(student)}_${suffix}`);
+}
+
 function getStudentRecords() {
     const key = getNamespacedKey("studentRecords");
     return JSON.parse(localStorage.getItem(key)) || [];
@@ -484,8 +491,8 @@ function updateCurrentStudentRecord() {
     if (!student) return;
 
     const avatarIndex = Number(localStorage.getItem("avatar")) || 1;
-    const completedLessons = Number(localStorage.getItem(getNamespacedKey("completedLessons"))) || 0;
-    const lessonProgress = JSON.parse(localStorage.getItem(getNamespacedKey("lessonProgress"))) || {};
+    const completedLessons = Number(localStorage.getItem(getCurrentStudentProgressKey("completedLessons"))) || 0;
+    const lessonProgress = JSON.parse(localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))) || {};
     const categoriesDone = Object.keys(lessonProgress).length;
     const totalCategories = Object.keys(lessons).length;
     const progressPercent = totalCategories > 0
@@ -864,10 +871,10 @@ function showTeacherDashboard(){
     showScreen(teacherDashboard);
     teacherNameDisplay.textContent = currentTeacherUsername;
 
-    const completed = Number(localStorage.getItem(getNamespacedKey("completedLessons"))) || 0;
+    const completed = Number(localStorage.getItem(getCurrentStudentProgressKey("completedLessons"))) || 0;
     teacherCompletedLessons.textContent = completed;
 
-    const progress = JSON.parse(localStorage.getItem(getNamespacedKey("lessonProgress"))) || {};
+    const progress = JSON.parse(localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))) || {};
     teacherProgressCategories.textContent = Object.keys(progress).length;
 
     renderTeacherStudentProgress();
@@ -2444,10 +2451,40 @@ function openLessonContinue(category){
 // MENU BUTTONS
 // -------------------------------
 
+function getCompletedLessonCategories() {
+    return JSON.parse(localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))) || {};
+}
+
+function updateQuizMenuButtons() {
+    const completedCategories = getCompletedLessonCategories();
+    quizMenuButtons.forEach(button => {
+        const category = button.dataset.quizCategory;
+        const unlocked = !!completedCategories[category];
+        button.disabled = !unlocked;
+        button.classList.toggle("is-unlocked", unlocked);
+        button.textContent = unlocked ? "Quiz ⭐" : "Quiz 🔒";
+        button.title = unlocked ? "Start quiz" : "Finish the lesson to unlock this quiz";
+    });
+}
+
+function openCategoryQuiz(category) {
+    if (!getCompletedLessonCategories()[category]) return;
+    currentCategory = category;
+    quizCategory = category;
+    showScreen(quizScreen);
+    initializeQuiz();
+}
+
 lessonButtons[0].onclick = () => openLesson("alphabet");
 lessonButtons[1].onclick = () => openLesson("numbers");
 lessonButtons[2].onclick = () => openLesson("colors");
 lessonButtons[3].onclick = () => openLesson("shapes");
+
+quizMenuButtons.forEach(button => {
+    button.addEventListener("click", () => openCategoryQuiz(button.dataset.quizCategory));
+});
+
+updateQuizMenuButtons();
 
 // -------------------------------
 // NEXT
@@ -2835,12 +2872,12 @@ function awardQuizStars() {
 
 function saveLessonProgress() {
 
-    let progress = JSON.parse(localStorage.getItem(getNamespacedKey("lessonProgress"))) || {};
+    let progress = JSON.parse(localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))) || {};
 
     progress[currentCategory] = true;
 
     localStorage.setItem(
-        getNamespacedKey("lessonProgress"),
+        getCurrentStudentProgressKey("lessonProgress"),
         JSON.stringify(progress)
     );
 
@@ -2853,12 +2890,12 @@ function saveLessonProgress() {
 function saveStudentProgress() {
 
     let completed =
-        Number(localStorage.getItem(getNamespacedKey("completedLessons"))) || 0;
+        Number(localStorage.getItem(getCurrentStudentProgressKey("completedLessons"))) || 0;
 
     completed++;
 
     localStorage.setItem(
-        getNamespacedKey("completedLessons"),
+        getCurrentStudentProgressKey("completedLessons"),
         completed
     );
 
@@ -3553,7 +3590,7 @@ function showProgress(){
 
     const progress =
         JSON.parse(
-            localStorage.getItem(getNamespacedKey("lessonProgress"))
+            localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))
         ) || {};
 
     console.log(progress);
@@ -3570,7 +3607,7 @@ function completedCategories(){
 
     const progress =
         JSON.parse(
-            localStorage.getItem(getNamespacedKey("lessonProgress"))
+            localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))
         ) || {};
 
     return Object.keys(progress).length;
