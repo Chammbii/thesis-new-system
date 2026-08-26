@@ -2203,6 +2203,46 @@ footer{
     animation:starCountBump .55s ease;
 }
 
+.quiz-star-score.star-celebration{
+    box-shadow:0 0 0 5px rgba(255,214,10,.16),0 16px 36px rgba(255,183,3,.48);
+}
+
+.star-reward-flight{
+    position:fixed;
+    top:50%;
+    left:50%;
+    z-index:2500;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:18px 26px;
+    border:3px solid #ffb703;
+    border-radius:24px;
+    background:linear-gradient(145deg,#fffdf0,#ffe08a);
+    color:#a85f00;
+    font-size:34px;
+    line-height:1;
+    box-shadow:0 16px 38px rgba(255,183,3,.45),0 0 0 8px rgba(255,214,10,.18);
+    pointer-events:none;
+    transform:translate(-50%,-50%) scale(1);
+    animation:starRewardAppear .5s cubic-bezier(.2,.9,.25,1) both;
+}
+
+.star-reward-flight.is-flying{
+    animation:starRewardFly .75s cubic-bezier(.55,.05,.2,1) forwards;
+}
+
+.star-reward-icon{
+    color:#ffb703;
+    font-size:58px;
+    text-shadow:0 3px 0 #e58b00,0 0 16px rgba(255,183,3,.7);
+    animation:starRewardIcon .5s ease-in-out infinite alternate;
+}
+
+.star-reward-flight strong{
+    font-size:42px;
+}
+
 .quiz-star-float{
     position:absolute;
     top:50%;
@@ -2230,6 +2270,33 @@ footer{
     pointer-events:none;
     transform:rotate(var(--spark-angle)) translateY(-8px) scale(.2);
     animation:starSpark .65s cubic-bezier(.2,.8,.3,1) forwards;
+}
+
+.quiz-star-ring{
+    position:absolute;
+    top:50%;
+    left:50%;
+    width:100%;
+    aspect-ratio:1;
+    border:3px solid rgba(255,183,3,.72);
+    border-radius:50%;
+    pointer-events:none;
+    transform:translate(-50%,-50%) scale(.4);
+    animation:starRing .7s ease-out forwards;
+}
+
+.quiz-star-ray{
+    position:absolute;
+    top:50%;
+    left:50%;
+    width:5px;
+    height:13px;
+    border-radius:999px;
+    background:#ff8a4c;
+    pointer-events:none;
+    transform:rotate(var(--ray-angle)) translateY(-24px) scaleY(.2);
+    transform-origin:50% 24px;
+    animation:starRay .7s cubic-bezier(.2,.8,.3,1) forwards;
 }
 
 @keyframes starIdle{
@@ -2271,10 +2338,38 @@ footer{
     }
 }
 
+@keyframes starRewardAppear{
+    0%{ opacity:0; transform:translate(-50%,-50%) scale(.35); }
+    70%{ opacity:1; transform:translate(-50%,-50%) scale(1.12); }
+    100%{ opacity:1; transform:translate(-50%,-50%) scale(1); }
+}
+
+@keyframes starRewardIcon{
+    from{ transform:rotate(-10deg) scale(1); }
+    to{ transform:rotate(10deg) scale(1.12); }
+}
+
+@keyframes starRewardFly{
+    0%{ opacity:1; transform:translate(-50%,-50%) scale(1) rotate(0deg); }
+    65%{ opacity:1; transform:translate(calc(-50% + var(--fly-x) * .72),calc(-50% + var(--fly-y) * .72)) scale(.7) rotate(250deg); }
+    100%{ opacity:0; transform:translate(calc(-50% + var(--fly-x)),calc(-50% + var(--fly-y))) scale(.22) rotate(360deg); }
+}
+
 @keyframes starSpark{
     0%{ opacity:0; transform:rotate(var(--spark-angle)) translateY(-8px) scale(.2); }
     25%{ opacity:1; }
     100%{ opacity:0; transform:rotate(var(--spark-angle)) translateY(calc(var(--spark-distance) * -1)) scale(1); }
+}
+
+@keyframes starRing{
+    0%{ opacity:.9; transform:translate(-50%,-50%) scale(.35); }
+    100%{ opacity:0; transform:translate(-50%,-50%) scale(2.1); }
+}
+
+@keyframes starRay{
+    0%{ opacity:0; transform:rotate(var(--ray-angle)) translateY(-22px) scaleY(.2); }
+    25%{ opacity:1; }
+    100%{ opacity:0; transform:rotate(var(--ray-angle)) translateY(-50px) scaleY(1); }
 }
 
 /* =====================================================
@@ -2715,6 +2810,21 @@ footer{
 
     .quiz-star-float{
         font-size:18px;
+    }
+
+    .star-reward-flight{
+        gap:8px;
+        padding:14px 20px;
+        border-radius:20px;
+        font-size:26px;
+    }
+
+    .star-reward-icon{
+        font-size:44px;
+    }
+
+    .star-reward-flight strong{
+        font-size:32px;
     }
 
     #quizTitle{
