@@ -2829,16 +2829,29 @@ function updateQuizStarDisplay(animate = false, gained = 0) {
     if (!animate || !quizStarScoreEl || gained <= 0) return;
 
     quizStarScoreEl.classList.remove("pop");
+    quizStarScoreEl.classList.remove("star-celebration");
     // Force reflow so the animation can replay
     void quizStarScoreEl.offsetWidth;
-    quizStarScoreEl.classList.add("pop");
+    quizStarScoreEl.classList.add("pop", "star-celebration");
 
     if (quizStarScoreEl) {
-        const floater = document.createElement("div");
-        floater.className = "quiz-star-float";
-        floater.textContent = `+${gained} ★`;
-        quizStarScoreEl.appendChild(floater);
-        floater.addEventListener("animationend", () => floater.remove());
+        const reward = document.createElement("div");
+        reward.className = "star-reward-flight";
+        reward.innerHTML = `<span class="star-reward-icon">★</span><strong>+${gained}</strong>`;
+        document.body.appendChild(reward);
+
+        window.setTimeout(() => {
+            const target = quizStarScoreEl.getBoundingClientRect();
+            const targetX = target.left + target.width / 2 - window.innerWidth / 2;
+            const targetY = target.top + target.height / 2 - window.innerHeight / 2;
+            reward.style.setProperty("--fly-x", `${targetX}px`);
+            reward.style.setProperty("--fly-y", `${targetY}px`);
+            reward.classList.add("is-flying");
+        }, 500);
+
+        reward.addEventListener("animationend", () => {
+            if (reward.classList.contains("is-flying")) reward.remove();
+        });
 
         for (let index = 0; index < 8; index++) {
             const spark = document.createElement("span");
@@ -2848,10 +2861,23 @@ function updateQuizStarDisplay(animate = false, gained = 0) {
             quizStarScoreEl.appendChild(spark);
             spark.addEventListener("animationend", () => spark.remove());
         }
+
+        const ring = document.createElement("span");
+        ring.className = "quiz-star-ring";
+        quizStarScoreEl.appendChild(ring);
+        ring.addEventListener("animationend", () => ring.remove());
+
+        for (let index = 0; index < 12; index++) {
+            const ray = document.createElement("span");
+            ray.className = "quiz-star-ray";
+            ray.style.setProperty("--ray-angle", `${index * 30}deg`);
+            quizStarScoreEl.appendChild(ray);
+            ray.addEventListener("animationend", () => ray.remove());
+        }
     }
 
     setTimeout(() => {
-        quizStarScoreEl.classList.remove("pop");
+        quizStarScoreEl.classList.remove("pop", "star-celebration");
     }, 600);
 }
 
