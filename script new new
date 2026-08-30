@@ -1,6 +1,3 @@
-
-
-
 // ======================================================
 // QUIZLAND ADVENTURE
 // SCRIPT.JS
@@ -29,6 +26,8 @@ const teacherFormTitle = document.getElementById("teacherFormTitle");
 const teacherFormSubtitle = document.getElementById("teacherFormSubtitle");
 const teacherSwitchText = document.getElementById("teacherSwitchText");
 const teacherSubmitBtn = document.getElementById("teacherSubmitBtn");
+const teacherForgotPasswordBtn = document.getElementById("teacherForgotPasswordBtn");
+const teacherLogoutUnlockBtn = document.getElementById("teacherLogoutUnlockBtn");
 const teacherDashboard = document.getElementById("teacherDashboard");
 const teacherNameDisplay = document.getElementById("teacherNameDisplay");
 const teacherCompletedLessons = document.getElementById("teacherCompletedLessons");
@@ -66,6 +65,310 @@ const notificationBox = document.getElementById("notificationBox");
 const bgMusicElement = document.getElementById("bgMusic");
 const popSound = document.getElementById("popSound");
 const bgAudio = bgMusicElement || null;
+
+const QUIZLAND_SUPABASE = window.QUIZLAND_SUPABASE || {};
+let quizlandSupabaseClient = null;
+
+function initSupabaseClient() {
+    if (!window.supabase) {
+        console.warn("Supabase JS client is not loaded yet.");
+        return null;
+    }
+
+    if (!QUIZLAND_SUPABASE.enabled) {
+        console.info("Supabase is disabled. Falling back to localStorage.");
+        return null;
+    }
+
+    if (!QUIZLAND_SUPABASE.url || !QUIZLAND_SUPABASE.anonKey) {
+        console.warn("Supabase URL or anon key is missing. Please update supabase-config.js.");
+        return null;
+    }
+
+    if (!quizlandSupabaseClient) {
+        quizlandSupabaseClient = window.supabase.createClient(
+            QUIZLAND_SUPABASE.url,
+            QUIZLAND_SUPABASE.anonKey
+        );
+    }
+
+    return quizlandSupabaseClient;
+}
+
+function isSupabaseConnected() {
+    return !!initSupabaseClient();
+}
+
+async function readSupabaseTable(tableName, select = "*", options = {}) {
+    const client = initSupabaseClient();
+    if (!client) return null;
+
+    let query = client.from(tableName).select(select);
+
+    if (options.filter) {
+        options.filter.forEach(([column, operator, value]) => {
+            query = query.filter(column, operator, value);
+        });
+    }
+
+    if (options.orderBy) {
+        const [column, ascending = false] = options.orderBy;
+        query = query.order(column, { ascending });
+    }
+
+    const { data, error } = await query;
+    if (error) {
+        console.error(`Supabase read error for ${tableName}:`, error.message);
+        return null;
+    }
+
+    return data;
+}
+
+async function upsertSupabaseRow(tableName, row, conflictColumn = "id") {
+    const client = initSupabaseClient();
+    if (!client) return null;
+
+    const { data, error } = await client
+        .from(tableName)
+        .upsert(row, { onConflict: conflictColumn })
+        .select();
+
+    if (error) {
+        console.error(`Supabase upsert error for ${tableName}:`, error.message);
+        return null;
+    }
+
+    return data;
+}
+
+async function insertSupabaseRow(tableName, row) {
+    const client = initSupabaseClient();
+    if (!client) return null;
+
+    const { data, error } = await client
+        .from(tableName)
+        .insert(row)
+        .select();
+
+    if (error) {
+        console.error(`Supabase insert error for ${tableName}:`, error.message);
+        return null;
+    }
+
+    return data;
+}
+
+function syncSupabaseStatusToConsole() {
+    const client = initSupabaseClient();
+    if (client) {
+        console.log("Supabase connected successfully.");
+    }
+}
+
+function getSupabaseTableName(key) {
+    const tableMap = (QUIZLAND_SUPABASE.tables || {});
+    const mapped = tableMap[key] || key;
+    if (mapped === "teacherProfiles") return "teacher_profiles";
+    if (mapped === "students") return "students";
+    if (mapped === "lessonProgress") return "lesson_progress";
+    if (mapped === "quizHistory") return "quiz_history";
+    if (mapped === "dailyStars") return "daily_stars";
+    return mapped;
+}
+
+async function syncTeacherProfileToSupabase(email, fullName, password) {
+    const client = initSupabaseClient();
+    if (!client) return null;
+
+    const tableName = getSupabaseTableName("teacherProfiles");
+    const payload = {
+        email,
+        full_name: fullName,
+        password
+    };
+
+    const { data, error } = await client
+        .from(tableName)
+        .insert(payload)
+        .select();
+
+    if (error) {
+        console.error("Supabase teacher profile save failed:", error.message, error);
+        return {
+            error: error.message,
+            tableName
+        };
+    }
+
+    if (data && data[0]) {
+        localStorage.setItem("teacherSupabaseId", data[0].id);
+    }
+
+    return data && data[0] ? data[0] : null;
+}
+
+async function syncStudentProfileToSupabase() {
+    const client = initSupabaseClient();
+    if (!client) return null;
+
+    const student = localStorage.getItem("studentName") || "Unknown";
+    const avatarIndex = Number(localStorage.getItem("avatar")) || 1;
+    const teacherId = localStorage.getItem("teacherSupabaseId") || null;
+    const studentId = localStorage.getItem("studentSupabaseId") || null;
+    const progressKey = getCurrentStudentProgressKey("lessonProgress");
+    const lessonProgress = JSON.parse(localStorage.getItem(progressKey)) || {};
+    const completedLessons = Number(localStorage.getItem(getCurrentStudentProgressKey("completedLessons"))) || 0;
+    const totalCategories = Object.keys(lessons).length;
+    const categoriesDone = Object.keys(lessonProgress).length;
+    const progressPercent = totalCategories > 0 ? Math.round((categoriesDone / totalCategories) * 100) : 0;
+    const lastQuizScoreKey = getNamespacedKey(`lastQuizScore_${encodeURIComponent(student)}`);
+    const lastQuizTotalKey = getNamespacedKey(`lastQuizTotal_${encodeURIComponent(student)}`);
+    const lastQuizScore = Number(localStorage.getItem(lastQuizScoreKey)) || 0;
+    const lastQuizTotal = Number(localStorage.getItem(lastQuizTotalKey)) || 0;
+    const accuracy = lastQuizTotal > 0 ? Math.round((lastQuizScore / lastQuizTotal) * 100) : 0;
+    const starsKey = getNamespacedKey(`totalStars_${encodeURIComponent(student)}`);
+    const stars = Number(localStorage.getItem(starsKey)) || 0;
+
+    const tableName = getSupabaseTableName("students");
+    const payload = {
+        name: student,
+        avatar: avatarIndex,
+        teacher_id: teacherId,
+        completed_lessons: completedLessons,
+        categories_done: categoriesDone,
+        progress_percent: progressPercent,
+        accuracy,
+        stars,
+        updated_at: new Date().toISOString()
+    };
+
+    if (studentId) {
+        payload.id = studentId;
+        const { data, error } = await client
+            .from(tableName)
+            .upsert(payload, { onConflict: "id" })
+            .select();
+
+        if (error) {
+            console.error("Supabase student profile update failed:", error.message);
+            return null;
+        }
+
+        if (data && data[0]) {
+            localStorage.setItem("studentSupabaseId", data[0].id);
+            return data[0];
+        }
+
+        return null;
+    }
+
+    const { data, error } = await client
+        .from(tableName)
+        .insert(payload)
+        .select();
+
+    if (error) {
+        console.error("Supabase student profile insert failed:", error.message);
+        return null;
+    }
+
+    if (data && data[0]) {
+        localStorage.setItem("studentSupabaseId", data[0].id);
+    }
+
+    return data && data[0] ? data[0] : null;
+}
+
+async function syncLessonProgressToSupabase(category) {
+    const client = initSupabaseClient();
+    if (!client) return null;
+
+    const studentId = localStorage.getItem("studentSupabaseId");
+    if (!studentId) return null;
+
+    const tableName = getSupabaseTableName("lessonProgress");
+    const payload = {
+        student_id: studentId,
+        category,
+        completed: true,
+        updated_at: new Date().toISOString()
+    };
+
+    const { data, error } = await client
+        .from(tableName)
+        .insert(payload)
+        .select();
+
+    if (error) {
+        console.error("Supabase lesson progress save failed:", error.message);
+        return null;
+    }
+
+    return data;
+}
+
+async function syncQuizHistoryToSupabase(student, entry) {
+    const client = initSupabaseClient();
+    if (!client) return null;
+
+    const studentId = localStorage.getItem("studentSupabaseId");
+    if (!studentId) return null;
+
+    const tableName = getSupabaseTableName("quizHistory");
+    const payload = {
+        student_id: studentId,
+        category: entry.category || currentCategory || "quiz",
+        score: Number(entry.score) || 0,
+        total: Number(entry.total) || 0,
+        accuracy: Number(entry.accuracy) || 0,
+        stars_gained: Number(entry.starsGained) || 0,
+        stars_total: Number(entry.starsTotal) || 0,
+        created_at: new Date(entry.date || Date.now()).toISOString()
+    };
+
+    const { data, error } = await client
+        .from(tableName)
+        .insert(payload)
+        .select();
+
+    if (error) {
+        console.error("Supabase quiz history save failed:", error.message);
+        return null;
+    }
+
+    return data;
+}
+
+async function syncDailyStarsToSupabase(gained) {
+    const client = initSupabaseClient();
+    if (!client) return null;
+
+    const teacherId = localStorage.getItem("teacherSupabaseId") || null;
+    const studentId = localStorage.getItem("studentSupabaseId") || null;
+    if (!teacherId && !studentId) return null;
+
+    const tableName = getSupabaseTableName("dailyStars");
+    const payload = {
+        teacher_id: teacherId,
+        student_id: studentId,
+        date: new Date().toISOString().slice(0, 10),
+        stars: Number(gained) || 0,
+        created_at: new Date().toISOString()
+    };
+
+    const { data, error } = await client
+        .from(tableName)
+        .insert(payload)
+        .select();
+
+    if (error) {
+        console.error("Supabase daily stars save failed:", error.message);
+        return null;
+    }
+
+    return data;
+}
 
 // ---------- STUDENT ----------
 const studentName = document.getElementById("studentName");
@@ -210,6 +513,17 @@ teacherBackHome.addEventListener("click", () => {
 
 });
 
+teacherForgotPasswordBtn.addEventListener("click", handleTeacherForgotPassword);
+
+teacherLogoutUnlockBtn.addEventListener("click", () => {
+    currentTeacherUsername = "Teacher";
+    clearTeacherSession();
+    setTeacherMode("login");
+    teacherLoginForm.reset();
+    showScreen(homeScreen);
+    showNotification("Logged out successfully.");
+});
+
 teacherToggleMode.addEventListener("click", () => {
 
     setTeacherMode(teacherMode === "login" ? "register" : "login");
@@ -218,14 +532,14 @@ teacherToggleMode.addEventListener("click", () => {
 
 });
 
-teacherLoginForm.addEventListener("submit", (event) => {
+teacherLoginForm.addEventListener("submit", async (event) => {
 
     event.preventDefault();
     if (teacherMode === "register") {
-        handleTeacherRegister();
+        await handleTeacherRegister();
     } else {
         // login + unlock both verify password
-        handleTeacherLogin();
+        await handleTeacherLogin();
     }
 
 });
@@ -244,6 +558,21 @@ teacherLoginForm.addEventListener("submit", (event) => {
             }
         });
     }
+});
+
+document.querySelectorAll(".password-toggle-btn").forEach(button => {
+    button.addEventListener("click", () => {
+        const targetId = button.dataset.toggleTarget;
+        const targetInput = targetId ? document.getElementById(targetId) : null;
+
+        if (!targetInput) return;
+
+        const isPassword = targetInput.type === "password";
+        targetInput.type = isPassword ? "text" : "password";
+        button.textContent = isPassword ? "Hide" : "Show";
+        button.setAttribute("aria-label", isPassword ? "Hide password" : "Show password");
+        targetInput.focus();
+    });
 });
 
 
@@ -313,9 +642,58 @@ function setTeacherMode(mode){
     teacherEmail.closest(".input-wrapper").classList.toggle("teacher-hidden", isUnlock);
     teacherConfirmPassword.closest(".input-wrapper").classList.toggle("teacher-hidden", !isRegister);
     teacherFullName.closest(".input-wrapper").classList.toggle("teacher-hidden", !isRegister);
+    if (teacherForgotPasswordBtn) {
+        teacherForgotPasswordBtn.classList.toggle("teacher-hidden", !isUnlock);
+    }
+    if (teacherLogoutUnlockBtn) {
+        teacherLogoutUnlockBtn.classList.toggle("teacher-hidden", !isUnlock);
+    }
     if (teacherSwitchRow) {
         teacherSwitchRow.classList.toggle("teacher-hidden", isUnlock);
     }
+}
+
+function handleTeacherForgotPassword() {
+    const email = getTeacherSession();
+
+    if (!email) {
+        showNotification("Please log in first to reset your password.");
+        return;
+    }
+
+    const users = getTeacherUsers();
+    const user = users[email];
+
+    if (!user) {
+        showNotification("No registered teacher account was found for this email.");
+        return;
+    }
+
+    showNotification("A password reset email has been sent to " + email + ".", 4500);
+
+    const newPassword = window.prompt("Enter a new password for " + email + ":", "");
+    if (newPassword === null) {
+        return;
+    }
+
+    const trimmedPassword = newPassword.trim();
+
+    if (!trimmedPassword) {
+        showNotification("Password reset was cancelled.");
+        return;
+    }
+
+    user.password = trimmedPassword;
+    users[email] = user;
+    saveTeacherUsers(users);
+    teacherPassword.value = "";
+    if (teacherConfirmPassword) {
+        teacherConfirmPassword.value = "";
+    }
+    setTeacherMode("login");
+    teacherEmail.value = email;
+    teacherEmail.focus();
+    showNotification("Password updated successfully. Please sign in with your new password.", 4500);
 }
 
 function getTeacherUsers(){
@@ -362,7 +740,7 @@ function restoreTeacherSession(){
     return true;
 }
 
-function handleTeacherRegister(){
+async function handleTeacherRegister(){
     const email = teacherEmail.value.trim().toLowerCase();
     const password = teacherPassword.value;
     const confirmPassword = teacherConfirmPassword.value;
@@ -378,21 +756,22 @@ function handleTeacherRegister(){
         return;
     }
 
-    const users = getTeacherUsers();
-    const userKey = email;
-
-    if (users[userKey]) {
-        setTeacherError("This email is already registered.");
+    const client = initSupabaseClient();
+    if (!client) {
+        setTeacherError("Supabase is not configured. Please add your URL and anon key.");
         return;
     }
 
-    users[userKey] = {
-        email: email,
-        fullName: fullName,
-        password: password
-    };
+    const supabaseProfile = await syncTeacherProfileToSupabase(email, fullName, password);
+    if (!supabaseProfile || (supabaseProfile.error && supabaseProfile.error) || !supabaseProfile.id) {
+        const message = supabaseProfile && supabaseProfile.error
+            ? "Registration blocked by Supabase policy. Allow INSERT on teacher_profiles and refresh the page."
+            : "Registration failed in Supabase. Check your table permissions.";
+        setTeacherError(message);
+        return;
+    }
 
-    saveTeacherUsers(users);
+    localStorage.setItem("teacherSupabaseId", supabaseProfile.id);
     setTeacherMode("login");
     showScreen(teacherScreen);
     teacherEmail.value = email;
@@ -403,33 +782,55 @@ function handleTeacherRegister(){
     showNotification("Registration successful. Please login with your new email.");
 }
 
-function handleTeacherLogin(){
+async function handleTeacherLogin(){
     const isUnlock = teacherMode === "unlock";
     const email = (isUnlock ? getTeacherSession() : teacherEmail.value.trim().toLowerCase()) || "";
     const password = teacherPassword.value;
 
     if (isUnlock) {
         if (!password) {
-            setTeacherError("Please enter the password.");
+            showNotification("Please enter the password.", 3000);
             teacherPassword.focus();
             return;
         }
     } else if (!email || !password) {
-        setTeacherError("Please enter both email and password.");
+        showNotification("Please enter both email and password.", 3000);
         return;
     }
 
-    const users = getTeacherUsers();
-    const user = users[email];
-
-    if (!user || user.password !== password) {
-        setTeacherError(isUnlock ? "Incorrect password." : "Invalid email or password.");
+    const client = initSupabaseClient();
+    if (!client) {
+        showNotification(isUnlock ? "Incorrect password." : "Invalid email or password.", 3000);
         teacherPassword.value = "";
         teacherPassword.focus();
         return;
     }
 
-    currentTeacherUsername = user.fullName || user.email;
+    const tableName = getSupabaseTableName("teacherProfiles");
+    const { data, error } = await client
+        .from(tableName)
+        .select("*")
+        .eq("email", email)
+        .limit(1);
+
+    if (error || !data || !data[0]) {
+        showNotification(isUnlock ? "Incorrect password." : "Invalid email or password.", 3000);
+        teacherPassword.value = "";
+        teacherPassword.focus();
+        return;
+    }
+
+    const user = data[0];
+    const storedPassword = user.password || "";
+    if (storedPassword !== password) {
+        showNotification(isUnlock ? "Incorrect password." : "Invalid email or password.", 3000);
+        teacherPassword.value = "";
+        teacherPassword.focus();
+        return;
+    }
+
+    currentTeacherUsername = user.full_name || user.email || "Teacher";
+    localStorage.setItem("teacherSupabaseId", user.id);
     saveTeacherSession(email);
     teacherPassword.value = "";
     showTeacherDashboard();
@@ -540,6 +941,7 @@ function updateCurrentStudentRecord() {
     }
 
     saveStudentRecords(records);
+    syncStudentProfileToSupabase();
 }
 
 function getQuizHistoryKey(student) {
@@ -558,6 +960,7 @@ function appendQuizHistoryEntry(student, entry) {
     const history = getStudentQuizHistory(student);
     history.unshift(entry);
     saveStudentQuizHistory(student, history);
+    syncQuizHistoryToSupabase(student, entry);
 }
 
 function formatQuizHistoryDate(timestamp) {
@@ -605,6 +1008,7 @@ function recordDailyStarsEarned(gained) {
     const day = toDateKey();
     store[day] = (Number(store[day]) || 0) + Number(gained);
     saveDailyStarsStore(store);
+    syncDailyStarsToSupabase(gained);
 }
 
 function ensureDailyStarsBackfill() {
@@ -2907,6 +3311,8 @@ function saveLessonProgress() {
         JSON.stringify(progress)
     );
 
+    syncLessonProgressToSupabase(currentCategory);
+
 }
 
 // -------------------------------
@@ -3662,13 +4068,3 @@ window.addEventListener("load",()=>{
 // ======================================================
 // END OF PART 2
 // ======================================================
-
-
-
-
-
-
-
-
-
-
