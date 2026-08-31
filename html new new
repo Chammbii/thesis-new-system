@@ -73,29 +73,6 @@
 
 
 
-    <!-- ===================================================== -->
-    <!-- LANGUAGE SELECTOR -->
-
-        <div id="languageModal" class="modal">
-
-            <div class="modal-content">
-
-                <h2>Select Language</h2>
-
-                <p>Choose language for lesson narration:</p>
-
-                <div class="language-options">
-                    <button id="langEnBtn" class="main-btn">English</button>
-                    <button id="langTlBtn" class="main-btn">Tagalog</button>
-                </div>
-                <div class="language-cancel">
-                    <button id="langCancelBtn" class="back-btn">Cancel</button>
-                </div>
-
-            </div>
-
-        </div>
-
     <!-- LESSON SCREEN -->
     <!-- STUDENT PROFILE -->
     <!-- ===================================================== -->
@@ -697,7 +674,7 @@
             <div class="quiz-difficulty-label">Difficulty</div>
             <div class="quiz-difficulty-buttons" role="group" aria-label="Quiz difficulty">
                 <button type="button" class="difficulty-btn" data-difficulty="easy" disabled>Easy</button>
-                <button type="button" class="difficulty-btn" data-difficulty="medium" disabled>Medium</button>
+                <button type="button" class="difficulty-btn" data-difficulty="medium" disabled>Normal</button>
                 <button type="button" class="difficulty-btn" data-difficulty="hard" disabled>Hard</button>
 
 
