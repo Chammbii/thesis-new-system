@@ -36,7 +36,6 @@ const teacherProgressCategories = document.getElementById("teacherProgressCatego
 const teacherLogoutBtn = document.getElementById("teacherLogoutBtn");
 const teacherDashboardHomeBtn = document.getElementById("teacherDashboardHomeBtn");
 const teacherDashboardRefreshBtn = document.getElementById("teacherDashboardRefreshBtn");
-const teacherDownloadReceiptBtn = document.getElementById("teacherDownloadReceiptBtn");
 const teacherStudentProgressTable = document.getElementById("teacherStudentProgressTable");
 const teacherStudentCount = document.getElementById("teacherStudentCount");
 const teacherTotalStars = document.getElementById("teacherTotalStars");
@@ -64,8 +63,8 @@ const sfxVolume = document.getElementById("sfxVolume");
 const sfxVolumeValue = document.getElementById("sfxVolumeValue");
 const voiceNarrationToggle = document.getElementById("voiceNarrationToggle");
 const microphoneToggle = document.getElementById("microphoneToggle");
-const microphoneStatus = document.getElementById("microphoneStatus");
 const microphoneAllowBtn = document.getElementById("microphoneAllowBtn");
+const microphoneStatus = document.getElementById("microphoneStatus");
 const microphoneExtraRow = document.getElementById("microphoneExtraRow");
 const notificationBox = document.getElementById("notificationBox");
 const bgMusicElement = document.getElementById("bgMusic");
@@ -81,6 +80,7 @@ const avatars = document.querySelectorAll(".avatar-card");
 // ---------- LESSON ----------
 const lessonScreen = document.getElementById("lessonScreen");
 const lessonButtons = document.querySelectorAll(".lesson-btn");
+const quizMenuButtons = document.querySelectorAll(".quiz-menu-btn");
 const progressFill = document.getElementById("progressFill");
 const lessonTitle = document.getElementById("lessonTitle");
 const lessonImage = document.getElementById("lessonImage");
@@ -93,10 +93,7 @@ const lessonVoiceStatus = document.getElementById("lessonVoiceStatus");
 const previousLesson = document.getElementById("previousLesson");
 const nextLesson = document.getElementById("nextLesson");
 const lessonHomeBtn = document.getElementById("lessonHomeBtn");
-const languageModal = document.getElementById("languageModal");
-const langEnBtn = document.getElementById("langEnBtn");
-const langTlBtn = document.getElementById("langTlBtn");
-const langCancelBtn = document.getElementById("langCancelBtn");
+
 
 let selectedAvatar = null;
 let quizStars = 0;
@@ -121,6 +118,7 @@ function showScreen(screen) {
 
     screen.classList.add("active");
     updateStudentHud();
+    if (screen === menuScreen) updateQuizMenuButtons();
 
 }
 
@@ -270,12 +268,6 @@ if (teacherDashboardRefreshBtn) {
     teacherDashboardRefreshBtn.addEventListener("click", () => {
         showTeacherDashboard();
         showNotification("Dashboard refreshed.");
-    });
-}
-
-if (teacherDownloadReceiptBtn) {
-    teacherDownloadReceiptBtn.addEventListener("click", () => {
-        downloadTeacherProgressReceipt();
     });
 }
 
@@ -479,6 +471,11 @@ function getNamespacedKey(suffix) {
     return `studentProgress_${getProgressNamespace()}_${suffix}`;
 }
 
+function getCurrentStudentProgressKey(suffix) {
+    const student = localStorage.getItem("studentName") || "NewStudent";
+    return getNamespacedKey(`student_${encodeURIComponent(student)}_${suffix}`);
+}
+
 function getStudentRecords() {
     const key = getNamespacedKey("studentRecords");
     return JSON.parse(localStorage.getItem(key)) || [];
@@ -495,8 +492,8 @@ function updateCurrentStudentRecord() {
     if (!student) return;
 
     const avatarIndex = Number(localStorage.getItem("avatar")) || 1;
-    const completedLessons = Number(localStorage.getItem(getNamespacedKey("completedLessons"))) || 0;
-    const lessonProgress = JSON.parse(localStorage.getItem(getNamespacedKey("lessonProgress"))) || {};
+    const completedLessons = Number(localStorage.getItem(getCurrentStudentProgressKey("completedLessons"))) || 0;
+    const lessonProgress = JSON.parse(localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))) || {};
     const categoriesDone = Object.keys(lessonProgress).length;
     const totalCategories = Object.keys(lessons).length;
     const progressPercent = totalCategories > 0
@@ -748,11 +745,14 @@ function renderQuizHistory(studentName) {
         return;
     }
 
-    history.forEach(entry => {
+    history.forEach((entry, index) => {
         const row = document.createElement("tr");
+        if (index === 0) {
+            row.classList.add("is-latest");
+        }
         const category = (entry.category || "quiz").charAt(0).toUpperCase() + (entry.category || "quiz").slice(1);
         row.innerHTML = `
-            <td>${formatQuizHistoryDate(entry.date)}</td>
+            <td>${formatQuizHistoryDate(entry.date)}${index === 0 ? '<span class="latest-history-badge">Latest</span>' : ""}</td>
             <td>${category}</td>
             <td>${entry.score} / ${entry.total}</td>
             <td>${entry.accuracy}%</td>
@@ -804,8 +804,12 @@ function renderTeacherStudentProgress() {
         const progressTd = document.createElement("td");
         progressTd.textContent = `${record.categoriesDone}/${totalCategories} (${record.progressPercent}%)`;
 
-        const accuracyTd = document.createElement("td");
-        accuracyTd.textContent = `${record.accuracy}%`;
+        const latestActivity = getStudentQuizHistory(record.name)[0];
+        const latestScoreTd = document.createElement("td");
+        latestScoreTd.className = "latest-activity-cell";
+        latestScoreTd.innerHTML = latestActivity
+            ? `<strong>${latestActivity.score} / ${latestActivity.total}</strong><span>${latestActivity.accuracy}% accuracy</span>`
+            : `<strong>No quiz yet</strong><span>${record.accuracy || 0}% accuracy</span>`;
 
         const starsTd = document.createElement("td");
         starsTd.textContent = `★ ${record.stars || 0}`;
@@ -847,7 +851,7 @@ function renderTeacherStudentProgress() {
         row.appendChild(nameTd);
         row.appendChild(avatarTd);
         row.appendChild(progressTd);
-        row.appendChild(accuracyTd);
+        row.appendChild(latestScoreTd);
         row.appendChild(starsTd);
         row.appendChild(actionsTd);
         tbody.appendChild(row);
@@ -856,97 +860,6 @@ function renderTeacherStudentProgress() {
     if (selectedHistoryStudent) {
         renderQuizHistory(selectedHistoryStudent);
     }
-}
-
-function formatReceiptDate(timestamp) {
-    try {
-        return new Date(timestamp).toLocaleString();
-    } catch (err) {
-        return "N/A";
-    }
-}
-
-function getStudentHistorySummary(studentName) {
-    const history = getStudentQuizHistory(studentName);
-    if (!history.length) {
-        return {
-            attempts: 0,
-            avgAccuracy: 0,
-            starsFromHistory: 0,
-            lastAttempt: "N/A"
-        };
-    }
-
-    const attempts = history.length;
-    const totalAccuracy = history.reduce((sum, entry) => sum + (Number(entry.accuracy) || 0), 0);
-    const starsFromHistory = history.reduce((sum, entry) => sum + (Number(entry.starsGained) || 0), 0);
-    return {
-        attempts,
-        avgAccuracy: Math.round(totalAccuracy / attempts),
-        starsFromHistory,
-        lastAttempt: formatReceiptDate(history[0]?.date)
-    };
-}
-
-function buildTeacherProgressReceipt() {
-    const records = getStudentRecords().slice().sort((a, b) => b.updatedAt - a.updatedAt);
-    const generatedAt = new Date();
-    const totalCategories = Object.keys(lessons).length;
-    const totalStudents = records.length;
-    const totalStars = records.reduce((sum, record) => sum + (Number(record.stars) || 0), 0);
-
-    const lines = [];
-    lines.push("QUIZLAND STUDENT PROGRESS RECEIPT");
-    lines.push("=================================");
-    lines.push(`Teacher: ${currentTeacherUsername || "Teacher"}`);
-    lines.push(`Generated: ${formatReceiptDate(generatedAt.getTime())}`);
-    lines.push(`Students Tracked: ${totalStudents}`);
-    lines.push(`Total Stars Earned: ${totalStars}`);
-    lines.push("");
-
-    if (!records.length) {
-        lines.push("No student records found yet.");
-        return lines.join("\n");
-    }
-
-    records.forEach((record, index) => {
-        const summary = getStudentHistorySummary(record.name);
-        lines.push(`Student ${index + 1}: ${record.name}`);
-        lines.push(`- Avatar: ${record.avatar || 1}`);
-        lines.push(`- Progress: ${record.categoriesDone || 0}/${totalCategories} (${record.progressPercent || 0}%)`);
-        lines.push(`- Latest Accuracy: ${record.accuracy || 0}%`);
-        lines.push(`- Total Stars: ${record.stars || 0}`);
-        lines.push(`- Quiz Attempts: ${summary.attempts}`);
-        lines.push(`- Avg Quiz Accuracy: ${summary.avgAccuracy}%`);
-        lines.push(`- Stars from Quiz History: ${summary.starsFromHistory}`);
-        lines.push(`- Last Quiz Attempt: ${summary.lastAttempt}`);
-        lines.push(`- Last Updated: ${formatReceiptDate(record.updatedAt)}`);
-        lines.push("---------------------------------");
-    });
-
-    return lines.join("\n");
-}
-
-function downloadTeacherProgressReceipt() {
-    const receiptText = buildTeacherProgressReceipt();
-    const teacherLabel = String(currentTeacherUsername || "teacher")
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "") || "teacher";
-    const dateLabel = toDateKey();
-    const fileName = `quizland-progress-receipt-${teacherLabel}-${dateLabel}.txt`;
-
-    const blob = new Blob([receiptText], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = fileName;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(url);
-
-    showNotification("Student progress receipt downloaded.");
 }
 
 function removeStudentRecord(studentName) {
@@ -959,10 +872,10 @@ function showTeacherDashboard(){
     showScreen(teacherDashboard);
     teacherNameDisplay.textContent = currentTeacherUsername;
 
-    const completed = Number(localStorage.getItem(getNamespacedKey("completedLessons"))) || 0;
+    const completed = Number(localStorage.getItem(getCurrentStudentProgressKey("completedLessons"))) || 0;
     teacherCompletedLessons.textContent = completed;
 
-    const progress = JSON.parse(localStorage.getItem(getNamespacedKey("lessonProgress"))) || {};
+    const progress = JSON.parse(localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))) || {};
     teacherProgressCategories.textContent = Object.keys(progress).length;
 
     renderTeacherStudentProgress();
@@ -1042,7 +955,6 @@ function updateVolumeLabel(input, label) {
 function openSettingsModal() {
     updateVolumeLabel(bgMusicVolume, bgMusicVolumeValue);
     updateVolumeLabel(sfxVolume, sfxVolumeValue);
-    updateMicrophoneSettingUi();
     if (settingsModal) settingsModal.style.display = "flex";
 }
 
@@ -1271,93 +1183,17 @@ function speakText(text, options = {}) {
 }
 
 function isMicrophoneEnabled() {
-    if (microphoneToggle) return !!microphoneToggle.checked;
-    const saved = localStorage.getItem("microphoneEnabled");
-    return saved === null ? true : saved === "true";
-}
-
-function applyMicrophoneSetting(enabled) {
-    if (microphoneToggle) {
-        microphoneToggle.checked = enabled;
-    }
-    localStorage.setItem("microphoneEnabled", enabled ? "true" : "false");
-    if (!enabled) {
-        stopLessonVoiceListening();
-    }
-    updateMicrophoneSettingUi();
-}
-
-function setMicrophoneStatus(state, label) {
-    if (!microphoneStatus) return;
-    microphoneStatus.textContent = label;
-    microphoneStatus.classList.remove(
-        "mic-status--unknown",
-        "mic-status--allowed",
-        "mic-status--blocked",
-        "mic-status--off"
-    );
-    microphoneStatus.classList.add(`mic-status--${state}`);
-}
-
-async function updateMicrophoneSettingUi() {
-    if (!microphoneStatus) return;
-
-    if (!isMicrophoneEnabled()) {
-        if (microphoneExtraRow) microphoneExtraRow.hidden = true;
-        setMicrophoneStatus("off", selectedLanguage === "tl" ? "Naka-off" : "Off");
-        if (microphoneAllowBtn) microphoneAllowBtn.disabled = true;
-        return;
-    }
-
-    if (microphoneExtraRow) microphoneExtraRow.hidden = false;
-
-    if (!canUseVoiceFeatures()) {
-        setMicrophoneStatus(
-            "blocked",
-            selectedLanguage === "tl" ? "Kailangan ng localhost" : "Needs localhost"
-        );
-        if (microphoneAllowBtn) microphoneAllowBtn.disabled = false;
-        return;
-    }
-
-    const permission = await checkMicrophonePermissionState();
-    if (permission === "granted") {
-        setMicrophoneStatus("allowed", selectedLanguage === "tl" ? "Pinapayagan" : "Allowed");
-    } else if (permission === "denied") {
-        setMicrophoneStatus("blocked", selectedLanguage === "tl" ? "Blocked" : "Blocked");
-    } else {
-        setMicrophoneStatus("unknown", selectedLanguage === "tl" ? "Hindi pa na-allow" : "Not allowed yet");
-    }
-
-    if (microphoneAllowBtn) {
-        microphoneAllowBtn.disabled = permission === "granted";
-    }
-}
-
-async function requestMicrophoneFromSettings() {
-    if (!isMicrophoneEnabled()) {
-        applyMicrophoneSetting(true);
-    }
-
-    const allowed = await ensureMicrophoneAccess({ silent: false });
-    await updateMicrophoneSettingUi();
-
-    if (allowed) {
-        showNotification(
-            selectedLanguage === "tl"
-                ? "Mikropono ay handa na para sa Speak Answer."
-                : "Microphone is ready for Speak Answer.",
-            2500
-        );
-    }
+    return microphoneToggle ? microphoneToggle.checked : true;
 }
 
 // ======================================================
 // MICROPHONE PERMISSION (requested when Speak Answer is used)
 // ======================================================
 
+const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
 let micPermissionState = "unknown";
 let micPermissionRequestInFlight = null;
+let micAllowNotificationShown = false;
 
 function canUseVoiceFeatures() {
     return window.isSecureContext && !!SpeechRecognitionAPI;
@@ -1366,8 +1202,8 @@ function canUseVoiceFeatures() {
 function getMicrophoneBlockedMessage() {
     if (!window.isSecureContext) {
         return selectedLanguage === "tl"
-            ? "Buksan ang app sa http://localhost (hindi file://) para gumana ang mikropono."
-            : "Open the app at http://localhost (not as a file) for the microphone to work.";
+            ? "Buksan ang app sa http://localhost o HTTPS, hindi file://, para gumana ang mikropono."
+            : "Open the app at http://localhost or HTTPS, not file://, for the microphone to work.";
     }
     if (!SpeechRecognitionAPI) {
         return selectedLanguage === "tl"
@@ -1380,8 +1216,8 @@ function getMicrophoneBlockedMessage() {
             : "Microphone is not available in this browser.";
     }
     return selectedLanguage === "tl"
-        ? "Paki-allow ang mikropono sa browser settings, tapos subukan ulit."
-        : "Please allow the microphone in your browser settings, then try again.";
+        ? "Hindi available ang mikropono."
+        : "Microphone unavailable.";
 }
 
 async function checkMicrophonePermissionState() {
@@ -1391,7 +1227,6 @@ async function checkMicrophonePermissionState() {
             micPermissionState = status.state;
             status.onchange = () => {
                 micPermissionState = status.state;
-                updateMicrophoneSettingUi();
             };
             return status.state;
         }
@@ -1401,8 +1236,14 @@ async function checkMicrophonePermissionState() {
     return micPermissionState;
 }
 
+function getMicrophoneAllowMessage() {
+    return selectedLanguage === "tl"
+        ? "🎤 Paki-click ang Allow isang beses para gumana ang mikropono."
+        : "🎤 Click Allow once so the microphone can work.";
+}
+
 async function ensureMicrophoneAccess(options = {}) {
-    const { silent = false } = options;
+    const { silent = false, notifySuccess = false } = options;
 
     if (!window.isSecureContext) {
         if (!silent) {
@@ -1411,27 +1252,26 @@ async function ensureMicrophoneAccess(options = {}) {
         return false;
     }
 
-    if (!navigator.mediaDevices?.getUserMedia) {
-        // Speech recognition may still request mic access on its own.
-        return true;
-    }
-
     if (micPermissionRequestInFlight) {
         return micPermissionRequestInFlight;
     }
 
-    const current = await checkMicrophonePermissionState();
-    if (current === "granted") {
+    if (!navigator.mediaDevices?.getUserMedia) {
+        // Speech recognition can request mic access on its own.
         return true;
     }
 
     micPermissionRequestInFlight = (async () => {
         try {
+            if (!silent && !micAllowNotificationShown) {
+                micAllowNotificationShown = true;
+                showNotification(getMicrophoneAllowMessage(), 4500);
+            }
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             stream.getTracks().forEach(track => track.stop());
             micPermissionState = "granted";
             localStorage.setItem("micPermissionGranted", "true");
-            if (!silent) {
+            if (!silent && notifySuccess) {
                 showNotification(
                     selectedLanguage === "tl"
                         ? "Mikropono ay pinapayagan na."
@@ -1447,8 +1287,7 @@ async function ensureMicrophoneAccess(options = {}) {
             if (!silent) {
                 showNotification(getMicrophoneBlockedMessage(), 4500);
             }
-            // Let speech recognition try anyway — Chrome may still prompt or work.
-            return true;
+            return false;
         } finally {
             micPermissionRequestInFlight = null;
         }
@@ -1565,54 +1404,83 @@ if (voiceNarrationToggle) {
     });
 }
 
+// ======================================================
+// MICROPHONE SETTINGS
+// ======================================================
+
+function saveMicrophoneEnabled(enabled) {
+    localStorage.setItem("microphoneEnabled", enabled ? "true" : "false");
+}
+
+function loadMicrophoneEnabled() {
+    const saved = localStorage.getItem("microphoneEnabled");
+    return saved === null ? true : saved === "true";
+}
+
+function updateMicrophoneStatus() {
+    if (!microphoneStatus) return;
+
+    const statusMap = {
+        "granted": { text: "✓ Allowed", class: "mic-status--granted" },
+        "denied": { text: "✗ Denied", class: "mic-status--denied" },
+        "prompt": { text: "? Ask permission", class: "mic-status--prompt" },
+        "unknown": { text: "Checking...", class: "mic-status--unknown" }
+    };
+
+    const status = statusMap[micPermissionState] || statusMap["unknown"];
+    microphoneStatus.textContent = status.text;
+    microphoneStatus.className = "mic-status " + status.class;
+
+    // Show/hide the Allow button based on permission state
+    if (microphoneAllowBtn) {
+        microphoneAllowBtn.style.display = 
+            micPermissionState === "granted" ? "none" : "block";
+    }
+}
+
 if (microphoneToggle) {
+    // Load saved state
+    microphoneToggle.checked = loadMicrophoneEnabled();
+
     microphoneToggle.addEventListener("change", () => {
-        applyMicrophoneSetting(microphoneToggle.checked);
-        showNotification(
-            microphoneToggle.checked
-                ? (selectedLanguage === "tl" ? "Naka-on ang mikropono." : "Microphone is on.")
-                : (selectedLanguage === "tl" ? "Naka-off ang mikropono." : "Microphone is off."),
-            2200
-        );
+        saveMicrophoneEnabled(microphoneToggle.checked);
+        if (microphoneToggle.checked) {
+            showNotification(
+                selectedLanguage === "tl"
+                    ? "🎤 Mikropono ay naka-on."
+                    : "🎤 Microphone is on."
+            );
+        } else {
+            showNotification(
+                selectedLanguage === "tl"
+                    ? "🎤 Mikropono ay naka-off."
+                    : "🎤 Microphone is off."
+            );
+        }
     });
 }
 
 if (microphoneAllowBtn) {
-    microphoneAllowBtn.addEventListener("click", () => {
-        requestMicrophoneFromSettings();
+    microphoneAllowBtn.addEventListener("click", async () => {
+        const result = await ensureMicrophoneAccess({ silent: false, notifySuccess: true });
+        updateMicrophoneStatus();
     });
 }
 
-const VOICE_HEARD_NOTIFICATION_MS = 2000;
+// Initialize microphone status on page load
+setTimeout(() => {
+    checkMicrophonePermissionState().then(() => {
+        updateMicrophoneStatus();
+    });
+}, 100);
 
-function showVoiceHeardNotification(spokenText, isFinal = true) {
-    const heard = String(spokenText || "").trim();
-    if (!heard || !notificationBox) return;
-
-    const label = selectedLanguage === "tl" ? "Narinig ko" : "You said";
-    const message = `🎤 ${label}: "${heard}"`;
-
-    notificationBox.textContent = message;
-    notificationBox.classList.add("show", "voice-heard");
-    notificationBox.classList.remove("hidden");
-
-    clearTimeout(notificationBox.hideTimer);
-
-    if (isFinal) {
-        notificationBox.hideTimer = setTimeout(() => {
-            notificationBox.classList.remove("show", "voice-heard");
-            notificationBox.classList.add("hidden");
-        }, VOICE_HEARD_NOTIFICATION_MS);
-    }
-}
+const VOICE_FEEDBACK_NOTIFICATION_MS = 2000;
 
 function showNotification(message, duration = 2800) {
 
     if (!notificationBox) return;
 
     notificationBox.textContent = message;
-    notificationBox.classList.remove("voice-heard");
-
     notificationBox.classList.add("show");
 
     notificationBox.classList.remove("hidden");
@@ -1694,9 +1562,6 @@ window.onload = () => {
     const savedVoiceNarration = localStorage.getItem("voiceNarrationEnabled");
     applyVoiceNarrationSetting(savedVoiceNarration === null ? true : savedVoiceNarration === "true");
 
-    const savedMicrophone = localStorage.getItem("microphoneEnabled");
-    applyMicrophoneSetting(savedMicrophone === null ? true : savedMicrophone === "true");
-
     updateBgMusic();
     updateSfxVolume();
     updateVolumeLabel(bgMusicVolume, bgMusicVolumeValue);
@@ -1756,32 +1621,32 @@ document.addEventListener("click", () => {
 const lessons = {
 
     alphabet: [
-        {title:"Alphabet Lesson",letter:"A",word:"Apple",image:"alpha001.png"},
-        {title:"Alphabet Lesson",letter:"B",word:"Ball",image:"alpha002.png"},
-        {title:"Alphabet Lesson",letter:"C",word:"Cat",image:"alpha003.png"},
-        {title:"Alphabet Lesson",letter:"D",word:"Dog",image:"alpha004.png"},
-        {title:"Alphabet Lesson",letter:"E",word:"Elephant",image:"alpha005.png"},
-        {title:"Alphabet Lesson",letter:"F",word:"Fish",image:"alpha006.png"},
-        {title:"Alphabet Lesson",letter:"G",word:"Grapes",image:"alpha007.png"},
-        {title:"Alphabet Lesson",letter:"H",word:"Hat",image:"alpha008.png"},
-        {title:"Alphabet Lesson",letter:"I",word:"Ice Cream",image:"alpha009.png"},
-        {title:"Alphabet Lesson",letter:"J",word:"Juice",image:"alpha010.png"},
-        {title:"Alphabet Lesson",letter:"K",word:"Kite",image:"alpha011.png"},
-        {title:"Alphabet Lesson",letter:"L",word:"Lion",image:"alpha012.png"},
-        {title:"Alphabet Lesson",letter:"M",word:"Monkey",image:"alpha013.png"},
-        {title:"Alphabet Lesson",letter:"N",word:"Nest",image:"alpha014.png"},
-        {title:"Alphabet Lesson",letter:"O",word:"Orange",image:"alpha015.png"},
-        {title:"Alphabet Lesson",letter:"P",word:"Pig",image:"alpha016.png"},
-        {title:"Alphabet Lesson",letter:"Q",word:"Queen",image:"alpha017.png"},
-        {title:"Alphabet Lesson",letter:"R",word:"Rabbit",image:"alpha018.png"},
-        {title:"Alphabet Lesson",letter:"S",word:"Sun",image:"alpha019.png"},
-        {title:"Alphabet Lesson",letter:"T",word:"Tiger",image:"alpha020.png"},
-        {title:"Alphabet Lesson",letter:"U",word:"Umbrella",image:"alpha021.png"},
-        {title:"Alphabet Lesson",letter:"V",word:"Van",image:"alpha022.png"},
-        {title:"Alphabet Lesson",letter:"W",word:"Whale",image:"alpha023.png"},
-        {title:"Alphabet Lesson",letter:"X",word:"Xylophone",image:"alpha024.png"},
-        {title:"Alphabet Lesson",letter:"Y",word:"Yo-Yo",image:"alpha025.png"},
-        {title:"Alphabet Lesson",letter:"Z",word:"Zebra",image:"alpha026.png"}
+        {title:"Alphabet Lesson",letter:"A",word:"",image:"alpha001.png"},
+        {title:"Alphabet Lesson",letter:"B",word:"",image:"alpha002.png"},
+        {title:"Alphabet Lesson",letter:"C",word:"",image:"alpha003.png"},
+        {title:"Alphabet Lesson",letter:"D",word:"",image:"alpha004.png"},
+        {title:"Alphabet Lesson",letter:"E",word:"",image:"alpha005.png"},
+        {title:"Alphabet Lesson",letter:"F",word:"",image:"alpha006.png"},
+        {title:"Alphabet Lesson",letter:"G",word:"",image:"alpha007.png"},
+        {title:"Alphabet Lesson",letter:"H",word:"",image:"alpha008.png"},
+        {title:"Alphabet Lesson",letter:"I",word:"",image:"alpha009.png"},
+        {title:"Alphabet Lesson",letter:"J",word:"",image:"alpha010.png"},
+        {title:"Alphabet Lesson",letter:"K",word:"",image:"alpha011.png"},
+        {title:"Alphabet Lesson",letter:"L",word:"",image:"alpha012.png"},
+        {title:"Alphabet Lesson",letter:"M",word:"",image:"alpha013.png"},
+        {title:"Alphabet Lesson",letter:"N",word:"",image:"alpha014.png"},
+        {title:"Alphabet Lesson",letter:"O",word:"",image:"alpha015.png"},
+        {title:"Alphabet Lesson",letter:"P",word:"",image:"alpha016.png"},
+        {title:"Alphabet Lesson",letter:"Q",word:"",image:"alpha017.png"},
+        {title:"Alphabet Lesson",letter:"R",word:"",image:"alpha018.png"},
+        {title:"Alphabet Lesson",letter:"S",word:"",image:"alpha019.png"},
+        {title:"Alphabet Lesson",letter:"T",word:"",image:"alpha020.png"},
+        {title:"Alphabet Lesson",letter:"U",word:"",image:"alpha021.png"},
+        {title:"Alphabet Lesson",letter:"V",word:"",image:"alpha022.png"},
+        {title:"Alphabet Lesson",letter:"W",word:"",image:"alpha023.png"},
+        {title:"Alphabet Lesson",letter:"X",word:"",image:"alpha024.png"},
+        {title:"Alphabet Lesson",letter:"Y",word:"",image:"alpha025.png"},
+        {title:"Alphabet Lesson",letter:"Z",word:"",image:"alpha026.png"}
     ],
 
     numbers: [
@@ -1826,32 +1691,6 @@ const lessons = {
 };
 
 const translationMap = {
-    Apple: "Mansanas",
-    Ball: "Bola",
-    Cat: "Pusa",
-    Dog: "Aso",
-    Elephant: "Elepante",
-    Fish: "Isda",
-    Grapes: "Ubas",
-    Hat: "Sumbrero",
-    "Ice Cream": "Sorbetes",
-    Juice: "Katas",
-    Kite: "Saranggola",
-    Lion: "Leon",
-    Monkey: "Unggoy",
-    Nest: "Pugad",
-    Orange: "Kahel",
-    Pig: "Baboy",
-    Queen: "Reyna",
-    Rabbit: "Kuneho",
-    Sun: "Araw",
-    Tiger: "Tigre",
-    Umbrella: "Payong",
-    Van: "Banyahan",
-    Whale: "Balyena",
-    Xylophone: "Silipono",
-    "Yo-Yo": "Yo-Yo",
-    Zebra: "Zebra",
     One: "Isa",
     Two: "Dalawa",
     Three: "Tatlo",
@@ -2071,9 +1910,11 @@ function updateLessonSubtitle() {
 // LESSON VOICE INTERACTION (SPEAK ANSWER)
 // ======================================================
 
-const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
 let lessonSpeechRecognition = null;
 let lessonVoiceListening = false;
+let lessonVoiceGotResult = false;
+let lessonVoiceSession = 0;
+let lessonVoiceListenTimer = null;
 let lessonVoiceRewardedKeys = null;
 
 // Extra spoken forms the recognizer may produce (English + Filipino + near-misses)
@@ -2107,32 +1948,6 @@ const VOICE_ANSWER_ALIASES = {
     Z: ["z", "zee", "zed", "zi", "letter z", "letra z"],
 
     // Alphabet words
-    Apple: ["apple", "apal", "aple", "mansanas", "mansana"],
-    Ball: ["ball", "bol", "bola", "bowl"],
-    Cat: ["cat", "kat", "pusa", "pusang"],
-    Dog: ["dog", "dag", "aso", "dawg"],
-    Elephant: ["elephant", "elefant", "elepante", "elefante"],
-    Fish: ["fish", "fis", "isda", "fishy"],
-    Grapes: ["grapes", "grape", "greps", "ubas", "ubas"],
-    Hat: ["hat", "het", "sombrero"],
-    "Ice Cream": ["ice cream", "icecream", "ice-cream", "ayskrim", "ice", "cream"],
-    Juice: ["juice", "jus", "juce", "katas"],
-    Kite: ["kite", "kayt", "saranggola", "saranggola"],
-    Lion: ["lion", "lyon", "leon", "liyon"],
-    Monkey: ["monkey", "monki", "unggoy", "matzing"],
-    Nest: ["nest", "nes", "pugad"],
-    Orange: ["orange", "oranj", "orenj", "kahel", "dalandan"],
-    Pig: ["pig", "piggy", "baboy"],
-    Queen: ["queen", "kwin", "reyna", "reina"],
-    Rabbit: ["rabbit", "rabit", "kuneho", "bunny"],
-    Sun: ["sun", "son", "araw"],
-    Tiger: ["tiger", "tayger", "tigre"],
-    Umbrella: ["umbrella", "umbrela", "payong"],
-    Van: ["van", "ban", "banyahan"],
-    Whale: ["whale", "weyl", "weil", "balyena", "baleine"],
-    Xylophone: ["xylophone", "zylophone", "silipono", "xylfone", "zylofone"],
-    "Yo-Yo": ["yo-yo", "yoyo", "yo yo", "yo"],
-    Zebra: ["zebra", "zeebra", "zebraa"],
 
     // Numbers
     One: ["one", "1", "won", "isa", "uno", "wan"],
@@ -2331,17 +2146,23 @@ function resetLessonVoiceUi() {
 function awardLessonVoiceStar() {
     if (hasLessonVoiceStarBeenAwarded()) return 0;
     loadStudentStars();
-    quizStars += 1;
+    const gained = 1;
+    quizStars += gained;
     saveStudentStars();
-    recordDailyStarsEarned(1);
+    recordDailyStarsEarned(gained);
     markLessonVoiceStarAwarded();
-    updateQuizStarDisplay(true, 1);
+    updateQuizStarDisplay(true, gained);
     updateCurrentStudentRecord();
-    return 1;
+    return gained;
 }
 
 function stopLessonVoiceListening(updateButton = true) {
     lessonVoiceListening = false;
+    lessonVoiceSession += 1;
+    if (lessonVoiceListenTimer) {
+        clearTimeout(lessonVoiceListenTimer);
+        lessonVoiceListenTimer = null;
+    }
     if (lessonSpeechRecognition) {
         try {
             lessonSpeechRecognition.onresult = null;
@@ -2351,6 +2172,7 @@ function stopLessonVoiceListening(updateButton = true) {
         } catch (err) {
             // ignore
         }
+        lessonSpeechRecognition = null;
     }
     if (updateButton && lessonSpeakBtn) {
         lessonSpeakBtn.classList.remove("is-listening");
@@ -2372,8 +2194,8 @@ function handleLessonVoiceResult(spokenText) {
         const gained = awardLessonVoiceStar();
         const message = gained
             ? (selectedLanguage === "tl"
-                ? `Tama! +1 bituin!`
-                : `Correct! +1 star!`)
+                ? `Tama! +${gained} bituin!`
+                : `Correct! +${gained} star!`)
             : (selectedLanguage === "tl"
                 ? `Tama! (Nakuha mo na ang bituin dito.)`
                 : `Correct! (Star already earned for this item.)`);
@@ -2410,6 +2232,13 @@ async function startLessonVoiceListening() {
         return;
     }
 
+    const microphoneReady = await ensureMicrophoneAccess({ silent: false, notifySuccess: false });
+    if (!microphoneReady) {
+        const msg = getMicrophoneBlockedMessage();
+        setLessonVoiceStatus(msg, "wrong");
+        return;
+    }
+
     if (lessonVoiceListening) {
         stopLessonVoiceListening();
         setLessonVoiceStatus(
@@ -2422,22 +2251,17 @@ async function startLessonVoiceListening() {
     speechSynthesis.cancel();
     stopLessonVoiceListening(false);
 
-    showNotification(
-        selectedLanguage === "tl"
-            ? "🎤 Paki-allow ang mikropono kung lalabas ang tanong ng browser."
-            : "🎤 Please click Allow if your browser asks for the microphone.",
-        VOICE_HEARD_NOTIFICATION_MS
-    );
+    const recognition = new SpeechRecognitionAPI();
+    lessonSpeechRecognition = recognition;
+    recognition.lang = selectedLanguage === "tl" ? "fil-PH" : "en-US";
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 5;
+    recognition.continuous = true;
 
-    await ensureMicrophoneAccess({ silent: true });
-
-    lessonSpeechRecognition = new SpeechRecognitionAPI();
-    lessonSpeechRecognition.lang = selectedLanguage === "tl" ? "fil-PH" : "en-US";
-    lessonSpeechRecognition.interimResults = true;
-    lessonSpeechRecognition.maxAlternatives = 5;
-    lessonSpeechRecognition.continuous = false;
-
+    const session = lessonVoiceSession;
+    lessonVoiceGotResult = false;
     lessonVoiceListening = true;
+
     if (lessonSpeakBtn) {
         lessonSpeakBtn.classList.add("is-listening");
         lessonSpeakBtn.textContent = selectedLanguage === "tl" ? "🛑 Tumigil" : "🛑 Listening...";
@@ -2446,12 +2270,10 @@ async function startLessonVoiceListening() {
         selectedLanguage === "tl" ? "Nakikinig... magsalita ngayon." : "Listening... speak now.",
         "listening"
     );
-    showNotification(
-        selectedLanguage === "tl" ? "🎤 Magsalita ngayon..." : "🎤 Speak now...",
-        VOICE_HEARD_NOTIFICATION_MS
-    );
 
-    lessonSpeechRecognition.onresult = (event) => {
+    recognition.onresult = (event) => {
+        if (session !== lessonVoiceSession) return;
+
         let interimTranscript = "";
         let finalTranscript = "";
         const alternatives = [];
@@ -2470,47 +2292,72 @@ async function startLessonVoiceListening() {
             }
         }
 
-        const liveText = (finalTranscript || interimTranscript).trim();
-        if (liveText) {
-            showVoiceHeardNotification(liveText, !!finalTranscript);
-        }
-
         if (!finalTranscript) return;
 
+        lessonVoiceGotResult = true;
         stopLessonVoiceListening();
 
         const match = alternatives.find(text => isSpokenAnswerCorrect(text));
         handleLessonVoiceResult(match || finalTranscript.trim());
     };
 
-    lessonSpeechRecognition.onerror = (event) => {
+    recognition.onerror = (event) => {
+        if (session !== lessonVoiceSession) return;
+        // Chrome often fires these while still listening; keep the mic open.
+        if (event.error === "no-speech" || event.error === "aborted") return;
+
         stopLessonVoiceListening();
         const msg = getSpeechRecognitionErrorMessage(event.error);
         setLessonVoiceStatus(msg, "wrong");
-        showNotification(msg, event.error === "not-allowed" ? 5000 : VOICE_HEARD_NOTIFICATION_MS);
+        showNotification(msg, event.error === "not-allowed" ? 5000 : VOICE_FEEDBACK_NOTIFICATION_MS);
     };
 
-    lessonSpeechRecognition.onend = () => {
-        if (lessonVoiceListening) {
-            stopLessonVoiceListening();
-            if (lessonVoiceStatus && lessonVoiceStatus.classList.contains("is-listening")) {
+    recognition.onend = () => {
+        if (session !== lessonVoiceSession) return;
+        if (lessonVoiceListening && !lessonVoiceGotResult) {
+            try {
+                recognition.start();
+            } catch (err) {
+                stopLessonVoiceListening();
                 const msg = selectedLanguage === "tl"
                     ? "Walang narinig. Subukan ulit."
                     : "No speech detected. Try again.";
                 setLessonVoiceStatus(msg, "wrong");
-                showNotification(msg, VOICE_HEARD_NOTIFICATION_MS);
+                showNotification(msg, VOICE_FEEDBACK_NOTIFICATION_MS);
             }
         }
     };
 
     try {
-        lessonSpeechRecognition.start();
+        // Must start in the same click as Speak Answer so the browser allows the mic.
+        recognition.start();
+        if (!micAllowNotificationShown) {
+            micAllowNotificationShown = true;
+            showNotification(getMicrophoneAllowMessage(), 4500);
+        } else {
+            showNotification(
+                selectedLanguage === "tl" ? "🎤 Magsalita ngayon..." : "🎤 Speak now...",
+                VOICE_FEEDBACK_NOTIFICATION_MS
+            );
+        }
     } catch (err) {
         stopLessonVoiceListening();
         const msg = getMicrophoneBlockedMessage();
         setLessonVoiceStatus(msg, "wrong");
         showNotification(msg, 5000);
+        return;
     }
+
+    lessonVoiceListenTimer = setTimeout(() => {
+        if (session !== lessonVoiceSession) return;
+        if (!lessonVoiceListening || lessonVoiceGotResult) return;
+        stopLessonVoiceListening();
+        const msg = selectedLanguage === "tl"
+            ? "Walang narinig. Subukan ulit."
+            : "No speech detected. Try again.";
+        setLessonVoiceStatus(msg, "wrong");
+        showNotification(msg, VOICE_FEEDBACK_NOTIFICATION_MS);
+    }, 12000);
 }
 
 function speakLessonText() {
@@ -2569,46 +2416,13 @@ function loadLesson() {
     speakLessonText();
 }
 
-function openLesson(category){
+let selectedLanguage = 'en';
 
+function openLesson(category){
     currentCategory = category;
     currentLesson = 0;
-
-    // ask language before starting lessons
-    pendingLessonCategory = category;
-    if (languageModal) languageModal.style.display = "flex";
+    openLessonContinue(category);
 }
-
-// Handle language modal actions
-let pendingLessonCategory = null;
-let selectedLanguage = localStorage.getItem('lessonLanguage') || 'en';
-
-if (langEnBtn) langEnBtn.addEventListener('click', () => {
-    selectedLanguage = 'en';
-    localStorage.setItem('lessonLanguage', selectedLanguage);
-    if (languageModal) languageModal.style.display = 'none';
-    if (pendingLessonCategory) {
-        openLessonContinue(pendingLessonCategory);
-        pendingLessonCategory = null;
-    }
-});
-
-if (langTlBtn) langTlBtn.addEventListener('click', () => {
-    selectedLanguage = 'tl';
-    localStorage.setItem('lessonLanguage', selectedLanguage);
-    if (languageModal) languageModal.style.display = 'none';
-    if (pendingLessonCategory) {
-        openLessonContinue(pendingLessonCategory);
-        pendingLessonCategory = null;
-    }
-});
-
-if (langCancelBtn) langCancelBtn.addEventListener('click', () => {
-    if (languageModal) languageModal.style.display = 'none';
-    pendingLessonCategory = null;
-});
-
-// note: modal close X removed; modal can be closed via Cancel button only
 
 function openLessonContinue(category){
     currentCategory = category;
@@ -2623,10 +2437,40 @@ function openLessonContinue(category){
 // MENU BUTTONS
 // -------------------------------
 
+function getCompletedLessonCategories() {
+    return JSON.parse(localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))) || {};
+}
+
+function updateQuizMenuButtons() {
+    const completedCategories = getCompletedLessonCategories();
+    quizMenuButtons.forEach(button => {
+        const category = button.dataset.quizCategory;
+        const unlocked = !!completedCategories[category];
+        button.disabled = !unlocked;
+        button.classList.toggle("is-unlocked", unlocked);
+        button.textContent = unlocked ? "Quiz ⭐" : "Quiz 🔒";
+        button.title = unlocked ? "Start quiz" : "Finish the lesson to unlock this quiz";
+    });
+}
+
+function openCategoryQuiz(category) {
+    if (!getCompletedLessonCategories()[category]) return;
+    currentCategory = category;
+    quizCategory = category;
+    showScreen(quizScreen);
+    initializeQuiz();
+}
+
 lessonButtons[0].onclick = () => openLesson("alphabet");
 lessonButtons[1].onclick = () => openLesson("numbers");
 lessonButtons[2].onclick = () => openLesson("colors");
 lessonButtons[3].onclick = () => openLesson("shapes");
+
+quizMenuButtons.forEach(button => {
+    button.addEventListener("click", () => openCategoryQuiz(button.dataset.quizCategory));
+});
+
+updateQuizMenuButtons();
 
 // -------------------------------
 // NEXT
@@ -2920,9 +2764,9 @@ function updateQuizUnlockBox() {
     if (selectedLanguage === "tl") {
         if (titleEl) titleEl.textContent = "Paano Ma-unlock ang Susunod na Level";
         if (quizDifficulty === "easy") {
-            ruleText = `Kailangan mong makuha ang lahat ng ${total} Easy na tanong nang tama para ma-unlock ang Medium.`;
+            ruleText = `Kailangan mong makuha ang lahat ng ${total} Easy na tanong nang tama para ma-unlock ang Normal.`;
         } else if (quizDifficulty === "medium") {
-            ruleText = `Kailangan mong makuha ang lahat ng ${total} Medium na tanong nang tama para ma-unlock ang Hard.`;
+            ruleText = `Kailangan mong makuha ang lahat ng ${total} Normal na tanong nang tama para ma-unlock ang Hard.`;
         } else {
             ruleText = `Huling level: sagutin nang tama ang lahat ng ${total} Hard na tanong.`;
         }
@@ -2934,9 +2778,9 @@ function updateQuizUnlockBox() {
                 : "Unlock Next Level";
         }
         if (quizDifficulty === "easy") {
-            ruleText = `Get all ${total} Easy answers correct to unlock Medium.`;
+            ruleText = `Get all ${total} Easy answers correct to unlock Normal.`;
         } else if (quizDifficulty === "medium") {
-            ruleText = `Get all ${total} Medium answers correct to unlock Hard.`;
+            ruleText = `Get all ${total} Normal answers correct to unlock Hard.`;
         } else {
             ruleText = `Final level: answer all ${total} Hard questions correctly.`;
         }
@@ -2955,6 +2799,7 @@ difficultyButtons.forEach(btn => {
 
 // Current category for quiz
 let quizCategory = "";
+let quizLessonIndex = 0; // Track which lesson the quiz is for (for adaptive learning)
 let quizQuestions = [];
 let currentQuizIndex = 0;
 let quizScore = 0;
@@ -2971,20 +2816,55 @@ function updateQuizStarDisplay(animate = false, gained = 0) {
     if (!animate || !quizStarScoreEl || gained <= 0) return;
 
     quizStarScoreEl.classList.remove("pop");
+    quizStarScoreEl.classList.remove("star-celebration");
     // Force reflow so the animation can replay
     void quizStarScoreEl.offsetWidth;
-    quizStarScoreEl.classList.add("pop");
+    quizStarScoreEl.classList.add("pop", "star-celebration");
 
     if (quizStarScoreEl) {
-        const floater = document.createElement("div");
-        floater.className = "quiz-star-float";
-        floater.textContent = `+${gained} ★`;
-        quizStarScoreEl.appendChild(floater);
-        floater.addEventListener("animationend", () => floater.remove());
+        const reward = document.createElement("div");
+        reward.className = "star-reward-flight";
+        reward.innerHTML = `<span class="star-reward-icon">★</span><strong>+${gained}</strong>`;
+        document.body.appendChild(reward);
+
+        window.setTimeout(() => {
+            const target = quizStarScoreEl.getBoundingClientRect();
+            const targetX = target.left + target.width / 2 - window.innerWidth / 2;
+            const targetY = target.top + target.height / 2 - window.innerHeight / 2;
+            reward.style.setProperty("--fly-x", `${targetX}px`);
+            reward.style.setProperty("--fly-y", `${targetY}px`);
+            reward.classList.add("is-flying");
+        }, 500);
+
+        reward.addEventListener("animationend", () => {
+            if (reward.classList.contains("is-flying")) reward.remove();
+        });
+
+        for (let index = 0; index < 8; index++) {
+            const spark = document.createElement("span");
+            spark.className = "quiz-star-spark";
+            spark.style.setProperty("--spark-angle", `${index * 45}deg`);
+            spark.style.setProperty("--spark-distance", `${34 + (index % 2) * 10}px`);
+            quizStarScoreEl.appendChild(spark);
+            spark.addEventListener("animationend", () => spark.remove());
+        }
+
+        const ring = document.createElement("span");
+        ring.className = "quiz-star-ring";
+        quizStarScoreEl.appendChild(ring);
+        ring.addEventListener("animationend", () => ring.remove());
+
+        for (let index = 0; index < 12; index++) {
+            const ray = document.createElement("span");
+            ray.className = "quiz-star-ray";
+            ray.style.setProperty("--ray-angle", `${index * 30}deg`);
+            quizStarScoreEl.appendChild(ray);
+            ray.addEventListener("animationend", () => ray.remove());
+        }
     }
 
     setTimeout(() => {
-        quizStarScoreEl.classList.remove("pop");
+        quizStarScoreEl.classList.remove("pop", "star-celebration");
     }, 600);
 }
 
@@ -3005,12 +2885,12 @@ function awardQuizStars() {
 
 function saveLessonProgress() {
 
-    let progress = JSON.parse(localStorage.getItem(getNamespacedKey("lessonProgress"))) || {};
+    let progress = JSON.parse(localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))) || {};
 
     progress[currentCategory] = true;
 
     localStorage.setItem(
-        getNamespacedKey("lessonProgress"),
+        getCurrentStudentProgressKey("lessonProgress"),
         JSON.stringify(progress)
     );
 
@@ -3023,12 +2903,12 @@ function saveLessonProgress() {
 function saveStudentProgress() {
 
     let completed =
-        Number(localStorage.getItem(getNamespacedKey("completedLessons"))) || 0;
+        Number(localStorage.getItem(getCurrentStudentProgressKey("completedLessons"))) || 0;
 
     completed++;
 
     localStorage.setItem(
-        getNamespacedKey("completedLessons"),
+        getCurrentStudentProgressKey("completedLessons"),
         completed
     );
 
@@ -3092,6 +2972,7 @@ function initializeQuiz(){
     applyQuizDifficultyUI();
 
     quizCategory = currentCategory;
+    quizLessonIndex = currentLesson; // Track lesson for adaptive learning
     quizScore = 0;
     sessionStarsGained = 0;
     loadStudentStars();
@@ -3107,7 +2988,7 @@ function initializeQuiz(){
             ? quizTitleTranslations[quizCategory] || (quizCategory.charAt(0).toUpperCase() + quizCategory.slice(1) + " Quiz")
             : (quizCategory.charAt(0).toUpperCase() + quizCategory.slice(1) + " Quiz");
 
-    // Sequential stage progression: Easy (5) -> Medium (10) -> Hard (15)
+    // Sequential stage progression: Easy (5) -> Normal (10) -> Hard (15)
     // Must get every answer correct in a stage to unlock the next.
     const stageConfig = [
         { difficulty: 'easy', questionCount: QUIZ_DIFFICULTY.easy.questionCount },
@@ -3183,8 +3064,38 @@ const QUESTION_BANK = {
                 choices: ["One", "Two", "Three"]
             }
         ],
-        medium: [],
-        hard: []
+        medium: [
+            {
+                id: "num-medium-Before-Five-1",
+                promptEN: "Which number comes before Five?",
+                promptTL: "Aling numero ang darating bago ang Lima?",
+                correct: "Four",
+                choices: ["Three", "Four", "Five"]
+            },
+            {
+                id: "num-medium-After-Two-1",
+                promptEN: "Which number comes after Two?",
+                promptTL: "Aling numero ang darating pagkatapos ng Dalawa?",
+                correct: "Three",
+                choices: ["Two", "Three", "Four"]
+            }
+        ],
+        hard: [
+            {
+                id: "num-hard-Greater-Three-1",
+                promptEN: "Which number is greater than Three?",
+                promptTL: "Aling numero ang mas malaki kaysa Tatlo?",
+                correct: "Four",
+                choices: ["Two", "Three", "Four"]
+            },
+            {
+                id: "num-hard-First-Count-1",
+                promptEN: "Which number comes first when counting?",
+                promptTL: "Aling numero ang una sa pagsasahin?",
+                correct: "One",
+                choices: ["One", "Two", "Three"]
+            }
+        ]
     },
     colors: {
         easy: [
@@ -3196,8 +3107,38 @@ const QUESTION_BANK = {
                 choices: ["Red", "Blue", "Green"]
             }
         ],
-        medium: [],
-        hard: []
+        medium: [
+            {
+                id: "col-medium-Grass-1",
+                promptEN: "Which color is commonly associated with grass?",
+                promptTL: "Aling kulay ang karaniwang nauugnay sa damo?",
+                correct: "Green",
+                choices: ["Yellow", "Green", "Brown"]
+            },
+            {
+                id: "col-medium-Carrot-1",
+                promptEN: "Which color is commonly associated with a carrot?",
+                promptTL: "Aling kulay ang karaniwang nauugnay sa carrot?",
+                correct: "Orange",
+                choices: ["Red", "Yellow", "Orange"]
+            }
+        ],
+        hard: [
+            {
+                id: "col-hard-Sky-Ocean-1",
+                promptEN: "Which color is usually associated with the sky and ocean?",
+                promptTL: "Aling kulay ang karaniwang nauugnay sa kalangitan at karagatan?",
+                correct: "Blue",
+                choices: ["Green", "Blue", "Purple"]
+            },
+            {
+                id: "col-hard-Clear-Sky-1",
+                promptEN: "Which color is usually associated with the sky on a clear day?",
+                promptTL: "Aling kulay ang karaniwang nauugnay sa kalangitan sa malinaw na araw?",
+                correct: "Blue",
+                choices: ["Blue", "White", "Gray"]
+            }
+        ]
     },
     shapes: {
         easy: [
@@ -3519,8 +3460,8 @@ function getExpectedQuestionCountForDifficulty(difficulty) {
 
 function getNextDifficultyAfterCompletion(currentDifficulty, stageScore) {
     // Spec:
-    // Easy passed with exactly 5/5 correct -> starts Medium
-    // Medium passed with exactly 10/10 correct -> starts Hard
+    // Easy passed with exactly 5/5 correct -> starts Normal
+    // Normal passed with exactly 10/10 correct -> starts Hard
     // Even 1 wrong answer -> ends quiz (no advance)
     const expected = getExpectedQuestionCountForDifficulty(currentDifficulty);
 
@@ -3539,6 +3480,59 @@ function getNextDifficultyAfterCompletion(currentDifficulty, stageScore) {
     return 'end';
 }
 
+// ======================================================
+// ADAPTIVE LEARNING SYSTEM (80% threshold)
+// ======================================================
+
+const ADAPTIVE_LEARNING_THRESHOLD = 80; // 80% score required to auto-advance
+
+function getNextLessonCategory(currentCategory) {
+    const categoryOrder = ['alphabet', 'numbers', 'colors', 'shapes'];
+    const currentIndex = categoryOrder.indexOf(currentCategory);
+    
+    if (currentIndex === -1 || currentIndex >= categoryOrder.length - 1) {
+        return null; // No more categories
+    }
+    
+    return categoryOrder[currentIndex + 1];
+}
+
+function getNextLessonPath(category, lessonIndex) {
+    // Check if there are more lessons in the current category
+    if (lessonIndex < lessons[category].length - 1) {
+        return { category, lessonIndex: lessonIndex + 1 };
+    }
+    
+    // Move to next category's first lesson
+    const nextCategory = getNextLessonCategory(category);
+    if (nextCategory) {
+        return { category: nextCategory, lessonIndex: 0 };
+    }
+    
+    return null; // Completed all lessons
+}
+
+function calculateQuizAccuracy(score, total) {
+    return total > 0 ? Math.round((score / total) * 100) : 0;
+}
+
+function shouldAutoProgressLesson(accuracy) {
+    return accuracy >= ADAPTIVE_LEARNING_THRESHOLD;
+}
+
+function autoProgressToNextLesson(currentCat, currentLessonIdx) {
+    const nextPath = getNextLessonPath(currentCat, currentLessonIdx);
+    
+    if (!nextPath) {
+        return false; // No more lessons available
+    }
+    
+    currentCategory = nextPath.category;
+    currentLesson = nextPath.lessonIndex;
+    
+    return true;
+}
+
 function finishQuiz(){
 
     const stageScore = quizStageState ? (quizStageState.stageScore || 0) : quizScore;
@@ -3548,7 +3542,7 @@ function finishQuiz(){
         quizStageState &&
         quizStageState.stageIndex < quizStageState.stageConfig.length - 1;
 
-    // Perfect stage score required to unlock Medium or Hard.
+    // Perfect stage score required to unlock Normal or Hard.
     if (canAdvance) {
 
         quizStageState.stageIndex++;
@@ -3578,10 +3572,10 @@ function finishQuiz(){
 
         const unlockMessage = selectedLanguage === 'tl'
             ? (nextDifficulty === 'medium'
-                ? "Perpekto! Susunod: Medium level!"
+                ? "Perpekto! Susunod: Normal level!"
                 : "Perpekto! Susunod: Hard level!")
             : (nextDifficulty === 'medium'
-                ? "Perfect! Next up: Medium level!"
+                ? "Perfect! Next up: Normal level!"
                 : "Perfect! Next up: Hard level!");
         showNotification(unlockMessage);
 
@@ -3605,22 +3599,36 @@ function finishQuiz(){
         ? `Pinal na Iskor: ${quizScore} / ${sessionTotal}`
         : `Final Score: ${quizScore} / ${sessionTotal}`;
 
+    // Calculate accuracy for adaptive learning
+    const accuracy = calculateQuizAccuracy(quizScore, sessionTotal);
+    const isAdaptiveProgressEligible = shouldAutoProgressLesson(accuracy);
+
     let finishMessage;
     const didNotAdvance = stageScore < stageTotal && quizDifficulty !== 'hard';
+    
     if (didNotAdvance) {
         finishMessage = selectedLanguage === 'tl'
             ? `Kailangan mong makuha ang lahat ng tama (${stageScore}/${stageTotal}) para makapunta sa susunod na level.`
             : `You need a perfect score (${stageScore}/${stageTotal}) to unlock the next level.`;
+    } else if (isAdaptiveProgressEligible) {
+        // Adaptive learning: 80%+ triggers automatic next lesson progression
+        finishMessage = selectedLanguage === 'tl'
+            ? `Kahanga-hanga! ${accuracy}% accuracy! 🎉 Pag-aabutan ka sa susunod na leksyon...`
+            : `Excellent! ${accuracy}% accuracy! 🎉 Moving to the next lesson...`;
     } else {
         finishMessage = selectedLanguage === 'tl'
             ? `Magaling, ${localStorage.getItem("studentName") || "Estudyante"}! Nakakuha ka ng ${quizStars} bituin!`
             : `Great work, ${localStorage.getItem("studentName") || "Student"}! You earned ${quizStars} stars!`;
     }
 
-    const noticeDuration = didNotAdvance ? 10000 : 2800;
+    const noticeDuration = didNotAdvance ? 10000 : (isAdaptiveProgressEligible ? 3500 : 2800);
     showNotification(finishMessage, noticeDuration);
     if (didNotAdvance) {
         speakText(finishMessage);
+    } else if (isAdaptiveProgressEligible) {
+        speakText(selectedLanguage === 'tl' 
+            ? `Magandang gawa! Pag-aabutan ka sa susunod na leksyon.` 
+            : `Great job! Moving to the next lesson.`);
     }
 
     currentScoreEl.textContent = String(quizScore);
@@ -3637,7 +3645,24 @@ function finishQuiz(){
     localStorage.setItem('quizDifficulty', 'easy');
 
     setTimeout(() => {
-        showScreen(menuScreen);
+        // ADAPTIVE LEARNING: Auto-progression when accuracy >= 80%
+        if (isAdaptiveProgressEligible && autoProgressToNextLesson(quizCategory, quizLessonIndex)) {
+            // Successfully progressed to next lesson
+            const nextLessonTitle = selectedLanguage === 'tl'
+                ? titleTranslations[currentCategory] || currentCategory
+                : (currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1));
+            
+            const progressMessage = selectedLanguage === 'tl'
+                ? `Abot-kamay na ang bagong aralin: ${nextLessonTitle}!`
+                : `Now learning: ${nextLessonTitle}!`;
+            showNotification(progressMessage, 2000);
+            
+            loadLesson();
+            showScreen(lessonScreen);
+        } else {
+            // No adaptive progression - return to menu
+            showScreen(menuScreen);
+        }
     }, noticeDuration);
 }
 
@@ -3723,7 +3748,7 @@ function showProgress(){
 
     const progress =
         JSON.parse(
-            localStorage.getItem(getNamespacedKey("lessonProgress"))
+            localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))
         ) || {};
 
     console.log(progress);
@@ -3740,7 +3765,7 @@ function completedCategories(){
 
     const progress =
         JSON.parse(
-            localStorage.getItem(getNamespacedKey("lessonProgress"))
+            localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))
         ) || {};
 
     return Object.keys(progress).length;
