@@ -241,6 +241,12 @@ h1{
     gap:18px;
 }
 
+.teacher-form-actions{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
 .input-wrapper{
     position:relative;
     width:100%;
@@ -248,12 +254,32 @@ h1{
 
 .input-wrapper input{
     width:100%;
-    padding:18px;
+    padding:18px 60px 18px 18px;
     border-radius:16px;
     border:2px solid #d8e9ff;
     font-size:18px;
     outline:none;
     transition:all 0.3s ease;
+}
+
+.password-toggle-btn{
+    position:absolute;
+    right:12px;
+    top:50%;
+    transform:translateY(-50%);
+    border:none;
+    background:transparent;
+    color:#2463eb;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    padding:6px 8px;
+    border-radius:8px;
+    z-index:2;
+}
+
+.password-toggle-btn:hover{
+    background:rgba(36, 99, 235, 0.08);
 }
 
 .input-wrapper input:focus{
@@ -330,6 +356,24 @@ h1{
     color:#556680;
     font-size:16px;
     text-align:center;
+}
+
+.secondary-btn{
+    width:100%;
+    padding:14px 18px;
+    border:none;
+    border-radius:16px;
+    background:#eaf3ff;
+    color:#1d3557;
+    font-size:18px;
+    font-weight:700;
+    cursor:pointer;
+    transition:all 0.25s ease;
+}
+
+.secondary-btn:hover{
+    background:#dfeeff;
+    transform:translateY(-2px);
 }
 
 .teacher-form .back-btn{
@@ -1003,6 +1047,37 @@ h1{
 .lesson-btn:hover{
 
     background:#00a383;
+}
+
+.quiz-menu-btn{
+    width:100%;
+    margin-top:10px;
+    padding:12px 14px;
+    border:2px solid #ffb703;
+    border-radius:15px;
+    background:#fff8dc;
+    color:#a26400;
+    font-size:18px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.quiz-menu-btn:not(:disabled):hover{
+    background:#ffb703;
+    color:#fff;
+    transform:translateY(-2px);
+}
+
+.quiz-menu-btn:disabled{
+    border-color:#d7dce5;
+    background:#f1f3f5;
+    color:#8b98a9;
+    cursor:not-allowed;
+}
+
+.quiz-menu-btn.is-unlocked{
+    box-shadow:0 8px 16px rgba(255,183,3,.2);
 }
 
 /* =====================================================
@@ -1771,9 +1846,9 @@ footer{
     display:flex;
     justify-content:center;
     align-items:center;
-    gap:12px;
+    gap:6px;
     flex-wrap:wrap;
-    margin-bottom:8px;
+    margin-bottom:4px;
     flex-shrink:0;
 }
 
@@ -1797,7 +1872,7 @@ footer{
 
 .lesson-voice-status{
     min-height:22px;
-    margin:0 0 8px;
+    margin:0 0 4px;
     font-size:clamp(16px, 2.4vh, 20px);
     font-weight:700;
     color:#1d3557;
@@ -1840,9 +1915,9 @@ footer{
 
     justify-content:center;
 
-    gap:12px;
+    gap:6px;
 
-    margin-bottom:10px;
+    margin-bottom:4px;
 
     flex-shrink:0;
 
@@ -1885,8 +1960,13 @@ footer{
 #lessonHomeBtn{
 
     background:#00b894;
-    padding:12px 28px;
+    margin-top:4px;
+    width:min(100%, 280px);
+    max-width:100%;
+    box-sizing:border-box;
+    padding:12px 18px;
     font-size:clamp(15px, 2.2vh, 18px);
+    white-space:nowrap;
     flex-shrink:0;
 
 }
@@ -1965,6 +2045,7 @@ footer{
 
         padding:16px 16px 14px;
         max-height:calc(100vh - 16px);
+        overflow-y:auto;
 
     }
 
@@ -2003,6 +2084,8 @@ footer{
         flex-direction:row;
         flex-wrap:wrap;
         width:100%;
+        gap:6px;
+        margin-bottom:2px;
 
     }
 
@@ -2164,6 +2247,46 @@ footer{
     animation:starCountBump .55s ease;
 }
 
+.quiz-star-score.star-celebration{
+    box-shadow:0 0 0 5px rgba(255,214,10,.16),0 16px 36px rgba(255,183,3,.48);
+}
+
+.star-reward-flight{
+    position:fixed;
+    top:50%;
+    left:50%;
+    z-index:2500;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:18px 26px;
+    border:3px solid #ffb703;
+    border-radius:24px;
+    background:linear-gradient(145deg,#fffdf0,#ffe08a);
+    color:#a85f00;
+    font-size:34px;
+    line-height:1;
+    box-shadow:0 16px 38px rgba(255,183,3,.45),0 0 0 8px rgba(255,214,10,.18);
+    pointer-events:none;
+    transform:translate(-50%,-50%) scale(1);
+    animation:starRewardAppear .5s cubic-bezier(.2,.9,.25,1) both;
+}
+
+.star-reward-flight.is-flying{
+    animation:starRewardFly .75s cubic-bezier(.55,.05,.2,1) forwards;
+}
+
+.star-reward-icon{
+    color:#ffb703;
+    font-size:58px;
+    text-shadow:0 3px 0 #e58b00,0 0 16px rgba(255,183,3,.7);
+    animation:starRewardIcon .5s ease-in-out infinite alternate;
+}
+
+.star-reward-flight strong{
+    font-size:42px;
+}
+
 .quiz-star-float{
     position:absolute;
     top:50%;
@@ -2191,6 +2314,33 @@ footer{
     pointer-events:none;
     transform:rotate(var(--spark-angle)) translateY(-8px) scale(.2);
     animation:starSpark .65s cubic-bezier(.2,.8,.3,1) forwards;
+}
+
+.quiz-star-ring{
+    position:absolute;
+    top:50%;
+    left:50%;
+    width:100%;
+    aspect-ratio:1;
+    border:3px solid rgba(255,183,3,.72);
+    border-radius:50%;
+    pointer-events:none;
+    transform:translate(-50%,-50%) scale(.4);
+    animation:starRing .7s ease-out forwards;
+}
+
+.quiz-star-ray{
+    position:absolute;
+    top:50%;
+    left:50%;
+    width:5px;
+    height:13px;
+    border-radius:999px;
+    background:#ff8a4c;
+    pointer-events:none;
+    transform:rotate(var(--ray-angle)) translateY(-24px) scaleY(.2);
+    transform-origin:50% 24px;
+    animation:starRay .7s cubic-bezier(.2,.8,.3,1) forwards;
 }
 
 @keyframes starIdle{
@@ -2232,10 +2382,38 @@ footer{
     }
 }
 
+@keyframes starRewardAppear{
+    0%{ opacity:0; transform:translate(-50%,-50%) scale(.35); }
+    70%{ opacity:1; transform:translate(-50%,-50%) scale(1.12); }
+    100%{ opacity:1; transform:translate(-50%,-50%) scale(1); }
+}
+
+@keyframes starRewardIcon{
+    from{ transform:rotate(-10deg) scale(1); }
+    to{ transform:rotate(10deg) scale(1.12); }
+}
+
+@keyframes starRewardFly{
+    0%{ opacity:1; transform:translate(-50%,-50%) scale(1) rotate(0deg); }
+    65%{ opacity:1; transform:translate(calc(-50% + var(--fly-x) * .72),calc(-50% + var(--fly-y) * .72)) scale(.7) rotate(250deg); }
+    100%{ opacity:0; transform:translate(calc(-50% + var(--fly-x)),calc(-50% + var(--fly-y))) scale(.22) rotate(360deg); }
+}
+
 @keyframes starSpark{
     0%{ opacity:0; transform:rotate(var(--spark-angle)) translateY(-8px) scale(.2); }
     25%{ opacity:1; }
     100%{ opacity:0; transform:rotate(var(--spark-angle)) translateY(calc(var(--spark-distance) * -1)) scale(1); }
+}
+
+@keyframes starRing{
+    0%{ opacity:.9; transform:translate(-50%,-50%) scale(.35); }
+    100%{ opacity:0; transform:translate(-50%,-50%) scale(2.1); }
+}
+
+@keyframes starRay{
+    0%{ opacity:0; transform:rotate(var(--ray-angle)) translateY(-22px) scaleY(.2); }
+    25%{ opacity:1; }
+    100%{ opacity:0; transform:rotate(var(--ray-angle)) translateY(-50px) scaleY(1); }
 }
 
 /* =====================================================
@@ -2678,6 +2856,21 @@ footer{
         font-size:18px;
     }
 
+    .star-reward-flight{
+        gap:8px;
+        padding:14px 20px;
+        border-radius:20px;
+        font-size:26px;
+    }
+
+    .star-reward-icon{
+        font-size:44px;
+    }
+
+    .star-reward-flight strong{
+        font-size:32px;
+    }
+
     #quizTitle{
 
         font-size:38px;
@@ -2821,8 +3014,10 @@ footer{
 
 #lessonHomeBtn{
     min-height:58px;
-    padding:14px 32px;
-    font-size:20px;
+    width:min(100%, 300px);
+    margin-top:2px;
+    padding:14px 18px;
+    font-size:clamp(17px, 2.6vw, 20px);
 }
 
 #quizTitle{
