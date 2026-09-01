@@ -1,3 +1,6 @@
+
+
+
 // ======================================================
 // QUIZLAND ADVENTURE
 // SCRIPT.JS
@@ -26,8 +29,6 @@ const teacherFormTitle = document.getElementById("teacherFormTitle");
 const teacherFormSubtitle = document.getElementById("teacherFormSubtitle");
 const teacherSwitchText = document.getElementById("teacherSwitchText");
 const teacherSubmitBtn = document.getElementById("teacherSubmitBtn");
-const teacherForgotPasswordBtn = document.getElementById("teacherForgotPasswordBtn");
-const teacherLogoutUnlockBtn = document.getElementById("teacherLogoutUnlockBtn");
 const teacherDashboard = document.getElementById("teacherDashboard");
 const teacherNameDisplay = document.getElementById("teacherNameDisplay");
 const teacherCompletedLessons = document.getElementById("teacherCompletedLessons");
@@ -61,314 +62,14 @@ const sfxToggle = document.getElementById("sfxToggle");
 const sfxVolume = document.getElementById("sfxVolume");
 const sfxVolumeValue = document.getElementById("sfxVolumeValue");
 const voiceNarrationToggle = document.getElementById("voiceNarrationToggle");
+const microphoneToggle = document.getElementById("microphoneToggle");
+const microphoneAllowBtn = document.getElementById("microphoneAllowBtn");
+const microphoneStatus = document.getElementById("microphoneStatus");
+const microphoneExtraRow = document.getElementById("microphoneExtraRow");
 const notificationBox = document.getElementById("notificationBox");
 const bgMusicElement = document.getElementById("bgMusic");
 const popSound = document.getElementById("popSound");
 const bgAudio = bgMusicElement || null;
-
-const QUIZLAND_SUPABASE = window.QUIZLAND_SUPABASE || {};
-let quizlandSupabaseClient = null;
-
-function initSupabaseClient() {
-    if (!window.supabase) {
-        console.warn("Supabase JS client is not loaded yet.");
-        return null;
-    }
-
-    if (!QUIZLAND_SUPABASE.enabled) {
-        console.info("Supabase is disabled. Falling back to localStorage.");
-        return null;
-    }
-
-    if (!QUIZLAND_SUPABASE.url || !QUIZLAND_SUPABASE.anonKey) {
-        console.warn("Supabase URL or anon key is missing. Please update supabase-config.js.");
-        return null;
-    }
-
-    if (!quizlandSupabaseClient) {
-        quizlandSupabaseClient = window.supabase.createClient(
-            QUIZLAND_SUPABASE.url,
-            QUIZLAND_SUPABASE.anonKey
-        );
-    }
-
-    return quizlandSupabaseClient;
-}
-
-function isSupabaseConnected() {
-    return !!initSupabaseClient();
-}
-
-async function readSupabaseTable(tableName, select = "*", options = {}) {
-    const client = initSupabaseClient();
-    if (!client) return null;
-
-    let query = client.from(tableName).select(select);
-
-    if (options.filter) {
-        options.filter.forEach(([column, operator, value]) => {
-            query = query.filter(column, operator, value);
-        });
-    }
-
-    if (options.orderBy) {
-        const [column, ascending = false] = options.orderBy;
-        query = query.order(column, { ascending });
-    }
-
-    const { data, error } = await query;
-    if (error) {
-        console.error(`Supabase read error for ${tableName}:`, error.message);
-        return null;
-    }
-
-    return data;
-}
-
-async function upsertSupabaseRow(tableName, row, conflictColumn = "id") {
-    const client = initSupabaseClient();
-    if (!client) return null;
-
-    const { data, error } = await client
-        .from(tableName)
-        .upsert(row, { onConflict: conflictColumn })
-        .select();
-
-    if (error) {
-        console.error(`Supabase upsert error for ${tableName}:`, error.message);
-        return null;
-    }
-
-    return data;
-}
-
-async function insertSupabaseRow(tableName, row) {
-    const client = initSupabaseClient();
-    if (!client) return null;
-
-    const { data, error } = await client
-        .from(tableName)
-        .insert(row)
-        .select();
-
-    if (error) {
-        console.error(`Supabase insert error for ${tableName}:`, error.message);
-        return null;
-    }
-
-    return data;
-}
-
-function syncSupabaseStatusToConsole() {
-    const client = initSupabaseClient();
-    if (client) {
-        console.log("Supabase connected successfully.");
-    }
-}
-
-function getSupabaseTableName(key) {
-    const tableMap = (QUIZLAND_SUPABASE.tables || {});
-    const mapped = tableMap[key] || key;
-    if (mapped === "teacherProfiles") return "teacher_profiles";
-    if (mapped === "students") return "students";
-    if (mapped === "lessonProgress") return "lesson_progress";
-    if (mapped === "quizHistory") return "quiz_history";
-    if (mapped === "dailyStars") return "daily_stars";
-    return mapped;
-}
-
-async function syncTeacherProfileToSupabase(email, fullName, password) {
-    const client = initSupabaseClient();
-    if (!client) return null;
-
-    const tableName = getSupabaseTableName("teacherProfiles");
-    const payload = {
-        email,
-        full_name: fullName,
-        password
-    };
-
-    const { data, error } = await client
-        .from(tableName)
-        .insert(payload)
-        .select();
-
-    if (error) {
-        console.error("Supabase teacher profile save failed:", error.message, error);
-        return {
-            error: error.message,
-            tableName
-        };
-    }
-
-    if (data && data[0]) {
-        localStorage.setItem("teacherSupabaseId", data[0].id);
-    }
-
-    return data && data[0] ? data[0] : null;
-}
-
-async function syncStudentProfileToSupabase() {
-    const client = initSupabaseClient();
-    if (!client) return null;
-
-    const student = localStorage.getItem("studentName") || "Unknown";
-    const avatarIndex = Number(localStorage.getItem("avatar")) || 1;
-    const teacherId = localStorage.getItem("teacherSupabaseId") || null;
-    const studentId = localStorage.getItem("studentSupabaseId") || null;
-    const progressKey = getCurrentStudentProgressKey("lessonProgress");
-    const lessonProgress = JSON.parse(localStorage.getItem(progressKey)) || {};
-    const completedLessons = Number(localStorage.getItem(getCurrentStudentProgressKey("completedLessons"))) || 0;
-    const totalCategories = Object.keys(lessons).length;
-    const categoriesDone = Object.keys(lessonProgress).length;
-    const progressPercent = totalCategories > 0 ? Math.round((categoriesDone / totalCategories) * 100) : 0;
-    const lastQuizScoreKey = getNamespacedKey(`lastQuizScore_${encodeURIComponent(student)}`);
-    const lastQuizTotalKey = getNamespacedKey(`lastQuizTotal_${encodeURIComponent(student)}`);
-    const lastQuizScore = Number(localStorage.getItem(lastQuizScoreKey)) || 0;
-    const lastQuizTotal = Number(localStorage.getItem(lastQuizTotalKey)) || 0;
-    const accuracy = lastQuizTotal > 0 ? Math.round((lastQuizScore / lastQuizTotal) * 100) : 0;
-    const starsKey = getNamespacedKey(`totalStars_${encodeURIComponent(student)}`);
-    const stars = Number(localStorage.getItem(starsKey)) || 0;
-
-    const tableName = getSupabaseTableName("students");
-    const payload = {
-        name: student,
-        avatar: avatarIndex,
-        teacher_id: teacherId,
-        completed_lessons: completedLessons,
-        categories_done: categoriesDone,
-        progress_percent: progressPercent,
-        accuracy,
-        stars,
-        updated_at: new Date().toISOString()
-    };
-
-    if (studentId) {
-        payload.id = studentId;
-        const { data, error } = await client
-            .from(tableName)
-            .upsert(payload, { onConflict: "id" })
-            .select();
-
-        if (error) {
-            console.error("Supabase student profile update failed:", error.message);
-            return null;
-        }
-
-        if (data && data[0]) {
-            localStorage.setItem("studentSupabaseId", data[0].id);
-            return data[0];
-        }
-
-        return null;
-    }
-
-    const { data, error } = await client
-        .from(tableName)
-        .insert(payload)
-        .select();
-
-    if (error) {
-        console.error("Supabase student profile insert failed:", error.message);
-        return null;
-    }
-
-    if (data && data[0]) {
-        localStorage.setItem("studentSupabaseId", data[0].id);
-    }
-
-    return data && data[0] ? data[0] : null;
-}
-
-async function syncLessonProgressToSupabase(category) {
-    const client = initSupabaseClient();
-    if (!client) return null;
-
-    const studentId = localStorage.getItem("studentSupabaseId");
-    if (!studentId) return null;
-
-    const tableName = getSupabaseTableName("lessonProgress");
-    const payload = {
-        student_id: studentId,
-        category,
-        completed: true,
-        updated_at: new Date().toISOString()
-    };
-
-    const { data, error } = await client
-        .from(tableName)
-        .insert(payload)
-        .select();
-
-    if (error) {
-        console.error("Supabase lesson progress save failed:", error.message);
-        return null;
-    }
-
-    return data;
-}
-
-async function syncQuizHistoryToSupabase(student, entry) {
-    const client = initSupabaseClient();
-    if (!client) return null;
-
-    const studentId = localStorage.getItem("studentSupabaseId");
-    if (!studentId) return null;
-
-    const tableName = getSupabaseTableName("quizHistory");
-    const payload = {
-        student_id: studentId,
-        category: entry.category || currentCategory || "quiz",
-        score: Number(entry.score) || 0,
-        total: Number(entry.total) || 0,
-        accuracy: Number(entry.accuracy) || 0,
-        stars_gained: Number(entry.starsGained) || 0,
-        stars_total: Number(entry.starsTotal) || 0,
-        created_at: new Date(entry.date || Date.now()).toISOString()
-    };
-
-    const { data, error } = await client
-        .from(tableName)
-        .insert(payload)
-        .select();
-
-    if (error) {
-        console.error("Supabase quiz history save failed:", error.message);
-        return null;
-    }
-
-    return data;
-}
-
-async function syncDailyStarsToSupabase(gained) {
-    const client = initSupabaseClient();
-    if (!client) return null;
-
-    const teacherId = localStorage.getItem("teacherSupabaseId") || null;
-    const studentId = localStorage.getItem("studentSupabaseId") || null;
-    if (!teacherId && !studentId) return null;
-
-    const tableName = getSupabaseTableName("dailyStars");
-    const payload = {
-        teacher_id: teacherId,
-        student_id: studentId,
-        date: new Date().toISOString().slice(0, 10),
-        stars: Number(gained) || 0,
-        created_at: new Date().toISOString()
-    };
-
-    const { data, error } = await client
-        .from(tableName)
-        .insert(payload)
-        .select();
-
-    if (error) {
-        console.error("Supabase daily stars save failed:", error.message);
-        return null;
-    }
-
-    return data;
-}
 
 // ---------- STUDENT ----------
 const studentName = document.getElementById("studentName");
@@ -392,10 +93,7 @@ const lessonVoiceStatus = document.getElementById("lessonVoiceStatus");
 const previousLesson = document.getElementById("previousLesson");
 const nextLesson = document.getElementById("nextLesson");
 const lessonHomeBtn = document.getElementById("lessonHomeBtn");
-const languageModal = document.getElementById("languageModal");
-const langEnBtn = document.getElementById("langEnBtn");
-const langTlBtn = document.getElementById("langTlBtn");
-const langCancelBtn = document.getElementById("langCancelBtn");
+
 
 let selectedAvatar = null;
 let quizStars = 0;
@@ -513,17 +211,6 @@ teacherBackHome.addEventListener("click", () => {
 
 });
 
-teacherForgotPasswordBtn.addEventListener("click", handleTeacherForgotPassword);
-
-teacherLogoutUnlockBtn.addEventListener("click", () => {
-    currentTeacherUsername = "Teacher";
-    clearTeacherSession();
-    setTeacherMode("login");
-    teacherLoginForm.reset();
-    showScreen(homeScreen);
-    showNotification("Logged out successfully.");
-});
-
 teacherToggleMode.addEventListener("click", () => {
 
     setTeacherMode(teacherMode === "login" ? "register" : "login");
@@ -532,14 +219,14 @@ teacherToggleMode.addEventListener("click", () => {
 
 });
 
-teacherLoginForm.addEventListener("submit", async (event) => {
+teacherLoginForm.addEventListener("submit", (event) => {
 
     event.preventDefault();
     if (teacherMode === "register") {
-        await handleTeacherRegister();
+        handleTeacherRegister();
     } else {
         // login + unlock both verify password
-        await handleTeacherLogin();
+        handleTeacherLogin();
     }
 
 });
@@ -558,21 +245,6 @@ teacherLoginForm.addEventListener("submit", async (event) => {
             }
         });
     }
-});
-
-document.querySelectorAll(".password-toggle-btn").forEach(button => {
-    button.addEventListener("click", () => {
-        const targetId = button.dataset.toggleTarget;
-        const targetInput = targetId ? document.getElementById(targetId) : null;
-
-        if (!targetInput) return;
-
-        const isPassword = targetInput.type === "password";
-        targetInput.type = isPassword ? "text" : "password";
-        button.textContent = isPassword ? "Hide" : "Show";
-        button.setAttribute("aria-label", isPassword ? "Hide password" : "Show password");
-        targetInput.focus();
-    });
 });
 
 
@@ -642,58 +314,9 @@ function setTeacherMode(mode){
     teacherEmail.closest(".input-wrapper").classList.toggle("teacher-hidden", isUnlock);
     teacherConfirmPassword.closest(".input-wrapper").classList.toggle("teacher-hidden", !isRegister);
     teacherFullName.closest(".input-wrapper").classList.toggle("teacher-hidden", !isRegister);
-    if (teacherForgotPasswordBtn) {
-        teacherForgotPasswordBtn.classList.toggle("teacher-hidden", !isUnlock);
-    }
-    if (teacherLogoutUnlockBtn) {
-        teacherLogoutUnlockBtn.classList.toggle("teacher-hidden", !isUnlock);
-    }
     if (teacherSwitchRow) {
         teacherSwitchRow.classList.toggle("teacher-hidden", isUnlock);
     }
-}
-
-function handleTeacherForgotPassword() {
-    const email = getTeacherSession();
-
-    if (!email) {
-        showNotification("Please log in first to reset your password.");
-        return;
-    }
-
-    const users = getTeacherUsers();
-    const user = users[email];
-
-    if (!user) {
-        showNotification("No registered teacher account was found for this email.");
-        return;
-    }
-
-    showNotification("A password reset email has been sent to " + email + ".", 4500);
-
-    const newPassword = window.prompt("Enter a new password for " + email + ":", "");
-    if (newPassword === null) {
-        return;
-    }
-
-    const trimmedPassword = newPassword.trim();
-
-    if (!trimmedPassword) {
-        showNotification("Password reset was cancelled.");
-        return;
-    }
-
-    user.password = trimmedPassword;
-    users[email] = user;
-    saveTeacherUsers(users);
-    teacherPassword.value = "";
-    if (teacherConfirmPassword) {
-        teacherConfirmPassword.value = "";
-    }
-    setTeacherMode("login");
-    teacherEmail.value = email;
-    teacherEmail.focus();
-    showNotification("Password updated successfully. Please sign in with your new password.", 4500);
 }
 
 function getTeacherUsers(){
@@ -740,7 +363,7 @@ function restoreTeacherSession(){
     return true;
 }
 
-async function handleTeacherRegister(){
+function handleTeacherRegister(){
     const email = teacherEmail.value.trim().toLowerCase();
     const password = teacherPassword.value;
     const confirmPassword = teacherConfirmPassword.value;
@@ -756,22 +379,21 @@ async function handleTeacherRegister(){
         return;
     }
 
-    const client = initSupabaseClient();
-    if (!client) {
-        setTeacherError("Supabase is not configured. Please add your URL and anon key.");
+    const users = getTeacherUsers();
+    const userKey = email;
+
+    if (users[userKey]) {
+        setTeacherError("This email is already registered.");
         return;
     }
 
-    const supabaseProfile = await syncTeacherProfileToSupabase(email, fullName, password);
-    if (!supabaseProfile || (supabaseProfile.error && supabaseProfile.error) || !supabaseProfile.id) {
-        const message = supabaseProfile && supabaseProfile.error
-            ? "Registration blocked by Supabase policy. Allow INSERT on teacher_profiles and refresh the page."
-            : "Registration failed in Supabase. Check your table permissions.";
-        setTeacherError(message);
-        return;
-    }
+    users[userKey] = {
+        email: email,
+        fullName: fullName,
+        password: password
+    };
 
-    localStorage.setItem("teacherSupabaseId", supabaseProfile.id);
+    saveTeacherUsers(users);
     setTeacherMode("login");
     showScreen(teacherScreen);
     teacherEmail.value = email;
@@ -782,55 +404,33 @@ async function handleTeacherRegister(){
     showNotification("Registration successful. Please login with your new email.");
 }
 
-async function handleTeacherLogin(){
+function handleTeacherLogin(){
     const isUnlock = teacherMode === "unlock";
     const email = (isUnlock ? getTeacherSession() : teacherEmail.value.trim().toLowerCase()) || "";
     const password = teacherPassword.value;
 
     if (isUnlock) {
         if (!password) {
-            showNotification("Please enter the password.", 3000);
+            setTeacherError("Please enter the password.");
             teacherPassword.focus();
             return;
         }
     } else if (!email || !password) {
-        showNotification("Please enter both email and password.", 3000);
+        setTeacherError("Please enter both email and password.");
         return;
     }
 
-    const client = initSupabaseClient();
-    if (!client) {
-        showNotification(isUnlock ? "Incorrect password." : "Invalid email or password.", 3000);
+    const users = getTeacherUsers();
+    const user = users[email];
+
+    if (!user || user.password !== password) {
+        setTeacherError(isUnlock ? "Incorrect password." : "Invalid email or password.");
         teacherPassword.value = "";
         teacherPassword.focus();
         return;
     }
 
-    const tableName = getSupabaseTableName("teacherProfiles");
-    const { data, error } = await client
-        .from(tableName)
-        .select("*")
-        .eq("email", email)
-        .limit(1);
-
-    if (error || !data || !data[0]) {
-        showNotification(isUnlock ? "Incorrect password." : "Invalid email or password.", 3000);
-        teacherPassword.value = "";
-        teacherPassword.focus();
-        return;
-    }
-
-    const user = data[0];
-    const storedPassword = user.password || "";
-    if (storedPassword !== password) {
-        showNotification(isUnlock ? "Incorrect password." : "Invalid email or password.", 3000);
-        teacherPassword.value = "";
-        teacherPassword.focus();
-        return;
-    }
-
-    currentTeacherUsername = user.full_name || user.email || "Teacher";
-    localStorage.setItem("teacherSupabaseId", user.id);
+    currentTeacherUsername = user.fullName || user.email;
     saveTeacherSession(email);
     teacherPassword.value = "";
     showTeacherDashboard();
@@ -941,7 +541,6 @@ function updateCurrentStudentRecord() {
     }
 
     saveStudentRecords(records);
-    syncStudentProfileToSupabase();
 }
 
 function getQuizHistoryKey(student) {
@@ -960,7 +559,6 @@ function appendQuizHistoryEntry(student, entry) {
     const history = getStudentQuizHistory(student);
     history.unshift(entry);
     saveStudentQuizHistory(student, history);
-    syncQuizHistoryToSupabase(student, entry);
 }
 
 function formatQuizHistoryDate(timestamp) {
@@ -1008,7 +606,6 @@ function recordDailyStarsEarned(gained) {
     const day = toDateKey();
     store[day] = (Number(store[day]) || 0) + Number(gained);
     saveDailyStarsStore(store);
-    syncDailyStarsToSupabase(gained);
 }
 
 function ensureDailyStarsBackfill() {
@@ -1125,6 +722,59 @@ function renderTeacherCharts(records) {
     });
 }
 
+function renderTeacherNeedsInterpretation(records) {
+    const container = document.getElementById("teacherNeedsInterpretation");
+    if (!container) return;
+
+    if (!records.length) {
+        container.innerHTML = '<div class="teacher-needs-empty">No students tracked yet. Students will appear here when they begin learning.</div>';
+        return;
+    }
+
+    const needsStudents = records
+        .map(record => {
+            const progress = Number(record.progressPercent) || 0;
+            const accuracy = Number(record.accuracy) || 0;
+            const stars = Number(record.stars) || 0;
+            const needsMorePractice = progress < 60 || accuracy < 70 || stars === 0;
+
+            return needsMorePractice ? {
+                ...record,
+                progress,
+                accuracy,
+                stars
+            } : null;
+        })
+        .filter(Boolean)
+        .sort((a, b) => {
+            const aScore = (Number(a.progress) || 0) + (Number(a.accuracy) || 0);
+            const bScore = (Number(b.progress) || 0) + (Number(b.accuracy) || 0);
+            return aScore - bScore;
+        });
+
+    if (!needsStudents.length) {
+        container.innerHTML = '<div class="teacher-needs-empty">All students are progressing well. No one needs extra lesson practice right now.</div>';
+        return;
+    }
+
+    const summary = needsStudents
+        .map(student => `${student.name} (${student.progress}% progress, ${student.accuracy}% accuracy)`)
+        .join(", ");
+
+    const items = needsStudents.map(student => `
+        <div class="teacher-needs-item">
+            <div class="teacher-needs-name">${student.name}</div>
+            <div class="teacher-needs-meta">Progress: ${student.progress}% • Accuracy: ${student.accuracy}% • Stars: ${student.stars}</div>
+            <div class="teacher-needs-note">Needs more practice to master this lesson.</div>
+        </div>
+    `).join("");
+
+    container.innerHTML = `
+        <p class="teacher-needs-summary">This is students who need to master the lesson: ${summary}.</p>
+        <div class="teacher-needs-list">${items}</div>
+    `;
+}
+
 function renderQuizHistory(studentName) {
     if (!teacherQuizHistoryTable) return;
     const tbody = teacherQuizHistoryTable.querySelector("tbody");
@@ -1181,6 +831,7 @@ function renderTeacherStudentProgress() {
     }
 
     renderTeacherCharts(records);
+    renderTeacherNeedsInterpretation(records);
 
     if (!records.length) {
         tbody.innerHTML = `<tr class="quiz-history-empty"><td colspan="6">No students tracked yet.</td></tr>`;
@@ -1586,7 +1237,7 @@ function speakText(text, options = {}) {
 }
 
 function isMicrophoneEnabled() {
-    return true;
+    return microphoneToggle ? microphoneToggle.checked : true;
 }
 
 // ======================================================
@@ -1807,6 +1458,76 @@ if (voiceNarrationToggle) {
     });
 }
 
+// ======================================================
+// MICROPHONE SETTINGS
+// ======================================================
+
+function saveMicrophoneEnabled(enabled) {
+    localStorage.setItem("microphoneEnabled", enabled ? "true" : "false");
+}
+
+function loadMicrophoneEnabled() {
+    const saved = localStorage.getItem("microphoneEnabled");
+    return saved === null ? true : saved === "true";
+}
+
+function updateMicrophoneStatus() {
+    if (!microphoneStatus) return;
+
+    const statusMap = {
+        "granted": { text: "✓ Allowed", class: "mic-status--granted" },
+        "denied": { text: "✗ Denied", class: "mic-status--denied" },
+        "prompt": { text: "? Ask permission", class: "mic-status--prompt" },
+        "unknown": { text: "Checking...", class: "mic-status--unknown" }
+    };
+
+    const status = statusMap[micPermissionState] || statusMap["unknown"];
+    microphoneStatus.textContent = status.text;
+    microphoneStatus.className = "mic-status " + status.class;
+
+    // Show/hide the Allow button based on permission state
+    if (microphoneAllowBtn) {
+        microphoneAllowBtn.style.display = 
+            micPermissionState === "granted" ? "none" : "block";
+    }
+}
+
+if (microphoneToggle) {
+    // Load saved state
+    microphoneToggle.checked = loadMicrophoneEnabled();
+
+    microphoneToggle.addEventListener("change", () => {
+        saveMicrophoneEnabled(microphoneToggle.checked);
+        if (microphoneToggle.checked) {
+            showNotification(
+                selectedLanguage === "tl"
+                    ? "🎤 Mikropono ay naka-on."
+                    : "🎤 Microphone is on."
+            );
+        } else {
+            showNotification(
+                selectedLanguage === "tl"
+                    ? "🎤 Mikropono ay naka-off."
+                    : "🎤 Microphone is off."
+            );
+        }
+    });
+}
+
+if (microphoneAllowBtn) {
+    microphoneAllowBtn.addEventListener("click", async () => {
+        const result = await ensureMicrophoneAccess({ silent: false, notifySuccess: true });
+        updateMicrophoneStatus();
+    });
+}
+
+// Initialize microphone status on page load
+setTimeout(() => {
+    checkMicrophonePermissionState().then(() => {
+        updateMicrophoneStatus();
+    });
+}, 100);
+
 const VOICE_FEEDBACK_NOTIFICATION_MS = 2000;
 
 function showNotification(message, duration = 2800) {
@@ -1954,32 +1675,32 @@ document.addEventListener("click", () => {
 const lessons = {
 
     alphabet: [
-        {title:"Alphabet Lesson",letter:"A",word:"Apple",image:"alpha001.png"},
-        {title:"Alphabet Lesson",letter:"B",word:"Ball",image:"alpha002.png"},
-        {title:"Alphabet Lesson",letter:"C",word:"Cat",image:"alpha003.png"},
-        {title:"Alphabet Lesson",letter:"D",word:"Dog",image:"alpha004.png"},
-        {title:"Alphabet Lesson",letter:"E",word:"Elephant",image:"alpha005.png"},
-        {title:"Alphabet Lesson",letter:"F",word:"Fish",image:"alpha006.png"},
-        {title:"Alphabet Lesson",letter:"G",word:"Grapes",image:"alpha007.png"},
-        {title:"Alphabet Lesson",letter:"H",word:"Hat",image:"alpha008.png"},
-        {title:"Alphabet Lesson",letter:"I",word:"Ice Cream",image:"alpha009.png"},
-        {title:"Alphabet Lesson",letter:"J",word:"Juice",image:"alpha010.png"},
-        {title:"Alphabet Lesson",letter:"K",word:"Kite",image:"alpha011.png"},
-        {title:"Alphabet Lesson",letter:"L",word:"Lion",image:"alpha012.png"},
-        {title:"Alphabet Lesson",letter:"M",word:"Monkey",image:"alpha013.png"},
-        {title:"Alphabet Lesson",letter:"N",word:"Nest",image:"alpha014.png"},
-        {title:"Alphabet Lesson",letter:"O",word:"Orange",image:"alpha015.png"},
-        {title:"Alphabet Lesson",letter:"P",word:"Pig",image:"alpha016.png"},
-        {title:"Alphabet Lesson",letter:"Q",word:"Queen",image:"alpha017.png"},
-        {title:"Alphabet Lesson",letter:"R",word:"Rabbit",image:"alpha018.png"},
-        {title:"Alphabet Lesson",letter:"S",word:"Sun",image:"alpha019.png"},
-        {title:"Alphabet Lesson",letter:"T",word:"Tiger",image:"alpha020.png"},
-        {title:"Alphabet Lesson",letter:"U",word:"Umbrella",image:"alpha021.png"},
-        {title:"Alphabet Lesson",letter:"V",word:"Van",image:"alpha022.png"},
-        {title:"Alphabet Lesson",letter:"W",word:"Whale",image:"alpha023.png"},
-        {title:"Alphabet Lesson",letter:"X",word:"Xylophone",image:"alpha024.png"},
-        {title:"Alphabet Lesson",letter:"Y",word:"Yo-Yo",image:"alpha025.png"},
-        {title:"Alphabet Lesson",letter:"Z",word:"Zebra",image:"alpha026.png"}
+        {title:"Alphabet Lesson",letter:"A",word:"",image:"alpha001.png"},
+        {title:"Alphabet Lesson",letter:"B",word:"",image:"alpha002.png"},
+        {title:"Alphabet Lesson",letter:"C",word:"",image:"alpha003.png"},
+        {title:"Alphabet Lesson",letter:"D",word:"",image:"alpha004.png"},
+        {title:"Alphabet Lesson",letter:"E",word:"",image:"alpha005.png"},
+        {title:"Alphabet Lesson",letter:"F",word:"",image:"alpha006.png"},
+        {title:"Alphabet Lesson",letter:"G",word:"",image:"alpha007.png"},
+        {title:"Alphabet Lesson",letter:"H",word:"",image:"alpha008.png"},
+        {title:"Alphabet Lesson",letter:"I",word:"",image:"alpha009.png"},
+        {title:"Alphabet Lesson",letter:"J",word:"",image:"alpha010.png"},
+        {title:"Alphabet Lesson",letter:"K",word:"",image:"alpha011.png"},
+        {title:"Alphabet Lesson",letter:"L",word:"",image:"alpha012.png"},
+        {title:"Alphabet Lesson",letter:"M",word:"",image:"alpha013.png"},
+        {title:"Alphabet Lesson",letter:"N",word:"",image:"alpha014.png"},
+        {title:"Alphabet Lesson",letter:"O",word:"",image:"alpha015.png"},
+        {title:"Alphabet Lesson",letter:"P",word:"",image:"alpha016.png"},
+        {title:"Alphabet Lesson",letter:"Q",word:"",image:"alpha017.png"},
+        {title:"Alphabet Lesson",letter:"R",word:"",image:"alpha018.png"},
+        {title:"Alphabet Lesson",letter:"S",word:"",image:"alpha019.png"},
+        {title:"Alphabet Lesson",letter:"T",word:"",image:"alpha020.png"},
+        {title:"Alphabet Lesson",letter:"U",word:"",image:"alpha021.png"},
+        {title:"Alphabet Lesson",letter:"V",word:"",image:"alpha022.png"},
+        {title:"Alphabet Lesson",letter:"W",word:"",image:"alpha023.png"},
+        {title:"Alphabet Lesson",letter:"X",word:"",image:"alpha024.png"},
+        {title:"Alphabet Lesson",letter:"Y",word:"",image:"alpha025.png"},
+        {title:"Alphabet Lesson",letter:"Z",word:"",image:"alpha026.png"}
     ],
 
     numbers: [
@@ -2024,32 +1745,6 @@ const lessons = {
 };
 
 const translationMap = {
-    Apple: "Mansanas",
-    Ball: "Bola",
-    Cat: "Pusa",
-    Dog: "Aso",
-    Elephant: "Elepante",
-    Fish: "Isda",
-    Grapes: "Ubas",
-    Hat: "Sumbrero",
-    "Ice Cream": "Sorbetes",
-    Juice: "Katas",
-    Kite: "Saranggola",
-    Lion: "Leon",
-    Monkey: "Unggoy",
-    Nest: "Pugad",
-    Orange: "Kahel",
-    Pig: "Baboy",
-    Queen: "Reyna",
-    Rabbit: "Kuneho",
-    Sun: "Araw",
-    Tiger: "Tigre",
-    Umbrella: "Payong",
-    Van: "Banyahan",
-    Whale: "Balyena",
-    Xylophone: "Silipono",
-    "Yo-Yo": "Yo-Yo",
-    Zebra: "Zebra",
     One: "Isa",
     Two: "Dalawa",
     Three: "Tatlo",
@@ -2307,32 +2002,6 @@ const VOICE_ANSWER_ALIASES = {
     Z: ["z", "zee", "zed", "zi", "letter z", "letra z"],
 
     // Alphabet words
-    Apple: ["apple", "apal", "aple", "mansanas", "mansana"],
-    Ball: ["ball", "bol", "bola", "bowl"],
-    Cat: ["cat", "kat", "pusa", "pusang"],
-    Dog: ["dog", "dag", "aso", "dawg"],
-    Elephant: ["elephant", "elefant", "elepante", "elefante"],
-    Fish: ["fish", "fis", "isda", "fishy"],
-    Grapes: ["grapes", "grape", "greps", "ubas", "ubas"],
-    Hat: ["hat", "het", "sombrero"],
-    "Ice Cream": ["ice cream", "icecream", "ice-cream", "ayskrim", "ice", "cream"],
-    Juice: ["juice", "jus", "juce", "katas"],
-    Kite: ["kite", "kayt", "saranggola", "saranggola"],
-    Lion: ["lion", "lyon", "leon", "liyon"],
-    Monkey: ["monkey", "monki", "unggoy", "matzing"],
-    Nest: ["nest", "nes", "pugad"],
-    Orange: ["orange", "oranj", "orenj", "kahel", "dalandan"],
-    Pig: ["pig", "piggy", "baboy"],
-    Queen: ["queen", "kwin", "reyna", "reina"],
-    Rabbit: ["rabbit", "rabit", "kuneho", "bunny"],
-    Sun: ["sun", "son", "araw"],
-    Tiger: ["tiger", "tayger", "tigre"],
-    Umbrella: ["umbrella", "umbrela", "payong"],
-    Van: ["van", "ban", "banyahan"],
-    Whale: ["whale", "weyl", "weil", "balyena", "baleine"],
-    Xylophone: ["xylophone", "zylophone", "silipono", "xylfone", "zylofone"],
-    "Yo-Yo": ["yo-yo", "yoyo", "yo yo", "yo"],
-    Zebra: ["zebra", "zeebra", "zebraa"],
 
     // Numbers
     One: ["one", "1", "won", "isa", "uno", "wan"],
@@ -2801,46 +2470,13 @@ function loadLesson() {
     speakLessonText();
 }
 
-function openLesson(category){
+let selectedLanguage = 'en';
 
+function openLesson(category){
     currentCategory = category;
     currentLesson = 0;
-
-    // ask language before starting lessons
-    pendingLessonCategory = category;
-    if (languageModal) languageModal.style.display = "flex";
+    openLessonContinue(category);
 }
-
-// Handle language modal actions
-let pendingLessonCategory = null;
-let selectedLanguage = localStorage.getItem('lessonLanguage') || 'en';
-
-if (langEnBtn) langEnBtn.addEventListener('click', () => {
-    selectedLanguage = 'en';
-    localStorage.setItem('lessonLanguage', selectedLanguage);
-    if (languageModal) languageModal.style.display = 'none';
-    if (pendingLessonCategory) {
-        openLessonContinue(pendingLessonCategory);
-        pendingLessonCategory = null;
-    }
-});
-
-if (langTlBtn) langTlBtn.addEventListener('click', () => {
-    selectedLanguage = 'tl';
-    localStorage.setItem('lessonLanguage', selectedLanguage);
-    if (languageModal) languageModal.style.display = 'none';
-    if (pendingLessonCategory) {
-        openLessonContinue(pendingLessonCategory);
-        pendingLessonCategory = null;
-    }
-});
-
-if (langCancelBtn) langCancelBtn.addEventListener('click', () => {
-    if (languageModal) languageModal.style.display = 'none';
-    pendingLessonCategory = null;
-});
-
-// note: modal close X removed; modal can be closed via Cancel button only
 
 function openLessonContinue(category){
     currentCategory = category;
@@ -3182,9 +2818,9 @@ function updateQuizUnlockBox() {
     if (selectedLanguage === "tl") {
         if (titleEl) titleEl.textContent = "Paano Ma-unlock ang Susunod na Level";
         if (quizDifficulty === "easy") {
-            ruleText = `Kailangan mong makuha ang lahat ng ${total} Easy na tanong nang tama para ma-unlock ang Medium.`;
+            ruleText = `Kailangan mong makuha ang lahat ng ${total} Easy na tanong nang tama para ma-unlock ang Normal.`;
         } else if (quizDifficulty === "medium") {
-            ruleText = `Kailangan mong makuha ang lahat ng ${total} Medium na tanong nang tama para ma-unlock ang Hard.`;
+            ruleText = `Kailangan mong makuha ang lahat ng ${total} Normal na tanong nang tama para ma-unlock ang Hard.`;
         } else {
             ruleText = `Huling level: sagutin nang tama ang lahat ng ${total} Hard na tanong.`;
         }
@@ -3196,9 +2832,9 @@ function updateQuizUnlockBox() {
                 : "Unlock Next Level";
         }
         if (quizDifficulty === "easy") {
-            ruleText = `Get all ${total} Easy answers correct to unlock Medium.`;
+            ruleText = `Get all ${total} Easy answers correct to unlock Normal.`;
         } else if (quizDifficulty === "medium") {
-            ruleText = `Get all ${total} Medium answers correct to unlock Hard.`;
+            ruleText = `Get all ${total} Normal answers correct to unlock Hard.`;
         } else {
             ruleText = `Final level: answer all ${total} Hard questions correctly.`;
         }
@@ -3217,6 +2853,7 @@ difficultyButtons.forEach(btn => {
 
 // Current category for quiz
 let quizCategory = "";
+let quizLessonIndex = 0; // Track which lesson the quiz is for (for adaptive learning)
 let quizQuestions = [];
 let currentQuizIndex = 0;
 let quizScore = 0;
@@ -3311,8 +2948,6 @@ function saveLessonProgress() {
         JSON.stringify(progress)
     );
 
-    syncLessonProgressToSupabase(currentCategory);
-
 }
 
 // -------------------------------
@@ -3391,6 +3026,7 @@ function initializeQuiz(){
     applyQuizDifficultyUI();
 
     quizCategory = currentCategory;
+    quizLessonIndex = currentLesson; // Track lesson for adaptive learning
     quizScore = 0;
     sessionStarsGained = 0;
     loadStudentStars();
@@ -3406,7 +3042,7 @@ function initializeQuiz(){
             ? quizTitleTranslations[quizCategory] || (quizCategory.charAt(0).toUpperCase() + quizCategory.slice(1) + " Quiz")
             : (quizCategory.charAt(0).toUpperCase() + quizCategory.slice(1) + " Quiz");
 
-    // Sequential stage progression: Easy (5) -> Medium (10) -> Hard (15)
+    // Sequential stage progression: Easy (5) -> Normal (10) -> Hard (15)
     // Must get every answer correct in a stage to unlock the next.
     const stageConfig = [
         { difficulty: 'easy', questionCount: QUIZ_DIFFICULTY.easy.questionCount },
@@ -3482,8 +3118,38 @@ const QUESTION_BANK = {
                 choices: ["One", "Two", "Three"]
             }
         ],
-        medium: [],
-        hard: []
+        medium: [
+            {
+                id: "num-medium-Before-Five-1",
+                promptEN: "Which number comes before Five?",
+                promptTL: "Aling numero ang darating bago ang Lima?",
+                correct: "Four",
+                choices: ["Three", "Four", "Five"]
+            },
+            {
+                id: "num-medium-After-Two-1",
+                promptEN: "Which number comes after Two?",
+                promptTL: "Aling numero ang darating pagkatapos ng Dalawa?",
+                correct: "Three",
+                choices: ["Two", "Three", "Four"]
+            }
+        ],
+        hard: [
+            {
+                id: "num-hard-Greater-Three-1",
+                promptEN: "Which number is greater than Three?",
+                promptTL: "Aling numero ang mas malaki kaysa Tatlo?",
+                correct: "Four",
+                choices: ["Two", "Three", "Four"]
+            },
+            {
+                id: "num-hard-First-Count-1",
+                promptEN: "Which number comes first when counting?",
+                promptTL: "Aling numero ang una sa pagsasahin?",
+                correct: "One",
+                choices: ["One", "Two", "Three"]
+            }
+        ]
     },
     colors: {
         easy: [
@@ -3495,8 +3161,38 @@ const QUESTION_BANK = {
                 choices: ["Red", "Blue", "Green"]
             }
         ],
-        medium: [],
-        hard: []
+        medium: [
+            {
+                id: "col-medium-Grass-1",
+                promptEN: "Which color is commonly associated with grass?",
+                promptTL: "Aling kulay ang karaniwang nauugnay sa damo?",
+                correct: "Green",
+                choices: ["Yellow", "Green", "Brown"]
+            },
+            {
+                id: "col-medium-Carrot-1",
+                promptEN: "Which color is commonly associated with a carrot?",
+                promptTL: "Aling kulay ang karaniwang nauugnay sa carrot?",
+                correct: "Orange",
+                choices: ["Red", "Yellow", "Orange"]
+            }
+        ],
+        hard: [
+            {
+                id: "col-hard-Sky-Ocean-1",
+                promptEN: "Which color is usually associated with the sky and ocean?",
+                promptTL: "Aling kulay ang karaniwang nauugnay sa kalangitan at karagatan?",
+                correct: "Blue",
+                choices: ["Green", "Blue", "Purple"]
+            },
+            {
+                id: "col-hard-Clear-Sky-1",
+                promptEN: "Which color is usually associated with the sky on a clear day?",
+                promptTL: "Aling kulay ang karaniwang nauugnay sa kalangitan sa malinaw na araw?",
+                correct: "Blue",
+                choices: ["Blue", "White", "Gray"]
+            }
+        ]
     },
     shapes: {
         easy: [
@@ -3818,8 +3514,8 @@ function getExpectedQuestionCountForDifficulty(difficulty) {
 
 function getNextDifficultyAfterCompletion(currentDifficulty, stageScore) {
     // Spec:
-    // Easy passed with exactly 5/5 correct -> starts Medium
-    // Medium passed with exactly 10/10 correct -> starts Hard
+    // Easy passed with exactly 5/5 correct -> starts Normal
+    // Normal passed with exactly 10/10 correct -> starts Hard
     // Even 1 wrong answer -> ends quiz (no advance)
     const expected = getExpectedQuestionCountForDifficulty(currentDifficulty);
 
@@ -3838,6 +3534,59 @@ function getNextDifficultyAfterCompletion(currentDifficulty, stageScore) {
     return 'end';
 }
 
+// ======================================================
+// ADAPTIVE LEARNING SYSTEM (80% threshold)
+// ======================================================
+
+const ADAPTIVE_LEARNING_THRESHOLD = 80; // 80% score required to auto-advance
+
+function getNextLessonCategory(currentCategory) {
+    const categoryOrder = ['alphabet', 'numbers', 'colors', 'shapes'];
+    const currentIndex = categoryOrder.indexOf(currentCategory);
+    
+    if (currentIndex === -1 || currentIndex >= categoryOrder.length - 1) {
+        return null; // No more categories
+    }
+    
+    return categoryOrder[currentIndex + 1];
+}
+
+function getNextLessonPath(category, lessonIndex) {
+    // Check if there are more lessons in the current category
+    if (lessonIndex < lessons[category].length - 1) {
+        return { category, lessonIndex: lessonIndex + 1 };
+    }
+    
+    // Move to next category's first lesson
+    const nextCategory = getNextLessonCategory(category);
+    if (nextCategory) {
+        return { category: nextCategory, lessonIndex: 0 };
+    }
+    
+    return null; // Completed all lessons
+}
+
+function calculateQuizAccuracy(score, total) {
+    return total > 0 ? Math.round((score / total) * 100) : 0;
+}
+
+function shouldAutoProgressLesson(accuracy) {
+    return accuracy >= ADAPTIVE_LEARNING_THRESHOLD;
+}
+
+function autoProgressToNextLesson(currentCat, currentLessonIdx) {
+    const nextPath = getNextLessonPath(currentCat, currentLessonIdx);
+    
+    if (!nextPath) {
+        return false; // No more lessons available
+    }
+    
+    currentCategory = nextPath.category;
+    currentLesson = nextPath.lessonIndex;
+    
+    return true;
+}
+
 function finishQuiz(){
 
     const stageScore = quizStageState ? (quizStageState.stageScore || 0) : quizScore;
@@ -3847,7 +3596,7 @@ function finishQuiz(){
         quizStageState &&
         quizStageState.stageIndex < quizStageState.stageConfig.length - 1;
 
-    // Perfect stage score required to unlock Medium or Hard.
+    // Perfect stage score required to unlock Normal or Hard.
     if (canAdvance) {
 
         quizStageState.stageIndex++;
@@ -3877,10 +3626,10 @@ function finishQuiz(){
 
         const unlockMessage = selectedLanguage === 'tl'
             ? (nextDifficulty === 'medium'
-                ? "Perpekto! Susunod: Medium level!"
+                ? "Perpekto! Susunod: Normal level!"
                 : "Perpekto! Susunod: Hard level!")
             : (nextDifficulty === 'medium'
-                ? "Perfect! Next up: Medium level!"
+                ? "Perfect! Next up: Normal level!"
                 : "Perfect! Next up: Hard level!");
         showNotification(unlockMessage);
 
@@ -3904,22 +3653,36 @@ function finishQuiz(){
         ? `Pinal na Iskor: ${quizScore} / ${sessionTotal}`
         : `Final Score: ${quizScore} / ${sessionTotal}`;
 
+    // Calculate accuracy for adaptive learning
+    const accuracy = calculateQuizAccuracy(quizScore, sessionTotal);
+    const isAdaptiveProgressEligible = shouldAutoProgressLesson(accuracy);
+
     let finishMessage;
     const didNotAdvance = stageScore < stageTotal && quizDifficulty !== 'hard';
+    
     if (didNotAdvance) {
         finishMessage = selectedLanguage === 'tl'
             ? `Kailangan mong makuha ang lahat ng tama (${stageScore}/${stageTotal}) para makapunta sa susunod na level.`
             : `You need a perfect score (${stageScore}/${stageTotal}) to unlock the next level.`;
+    } else if (isAdaptiveProgressEligible) {
+        // Adaptive learning: 80%+ triggers automatic next lesson progression
+        finishMessage = selectedLanguage === 'tl'
+            ? `Kahanga-hanga! ${accuracy}% accuracy! 🎉 Pag-aabutan ka sa susunod na leksyon...`
+            : `Excellent! ${accuracy}% accuracy! 🎉 Moving to the next lesson...`;
     } else {
         finishMessage = selectedLanguage === 'tl'
             ? `Magaling, ${localStorage.getItem("studentName") || "Estudyante"}! Nakakuha ka ng ${quizStars} bituin!`
             : `Great work, ${localStorage.getItem("studentName") || "Student"}! You earned ${quizStars} stars!`;
     }
 
-    const noticeDuration = didNotAdvance ? 10000 : 2800;
+    const noticeDuration = didNotAdvance ? 10000 : (isAdaptiveProgressEligible ? 3500 : 2800);
     showNotification(finishMessage, noticeDuration);
     if (didNotAdvance) {
         speakText(finishMessage);
+    } else if (isAdaptiveProgressEligible) {
+        speakText(selectedLanguage === 'tl' 
+            ? `Magandang gawa! Pag-aabutan ka sa susunod na leksyon.` 
+            : `Great job! Moving to the next lesson.`);
     }
 
     currentScoreEl.textContent = String(quizScore);
@@ -3936,7 +3699,24 @@ function finishQuiz(){
     localStorage.setItem('quizDifficulty', 'easy');
 
     setTimeout(() => {
-        showScreen(menuScreen);
+        // ADAPTIVE LEARNING: Auto-progression when accuracy >= 80%
+        if (isAdaptiveProgressEligible && autoProgressToNextLesson(quizCategory, quizLessonIndex)) {
+            // Successfully progressed to next lesson
+            const nextLessonTitle = selectedLanguage === 'tl'
+                ? titleTranslations[currentCategory] || currentCategory
+                : (currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1));
+            
+            const progressMessage = selectedLanguage === 'tl'
+                ? `Abot-kamay na ang bagong aralin: ${nextLessonTitle}!`
+                : `Now learning: ${nextLessonTitle}!`;
+            showNotification(progressMessage, 2000);
+            
+            loadLesson();
+            showScreen(lessonScreen);
+        } else {
+            // No adaptive progression - return to menu
+            showScreen(menuScreen);
+        }
     }, noticeDuration);
 }
 
@@ -4068,3 +3848,13 @@ window.addEventListener("load",()=>{
 // ======================================================
 // END OF PART 2
 // ======================================================
+
+
+
+
+
+
+
+
+
+
