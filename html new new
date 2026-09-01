@@ -262,6 +262,14 @@
 
             <section class="tdash-panel tdash-panel--wide">
                 <div class="tdash-panel-head">
+                    <h3>Students Who Need More Practice</h3>
+                    <p>This is students who need to master the lesson.</p>
+                </div>
+                <div id="teacherNeedsInterpretation" class="teacher-needs-interpretation" aria-live="polite"></div>
+            </section>
+
+            <section class="tdash-panel tdash-panel--wide">
+                <div class="tdash-panel-head">
                     <h3>Student Progress Tracker</h3>
                     <p>Name, avatar, progress, accuracy, stars, and quiz history</p>
                 </div>
