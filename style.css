@@ -617,6 +617,67 @@ h1{
     max-width:72px;
 }
 
+.teacher-needs-interpretation{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
+.teacher-needs-summary{
+    margin:0;
+    color:#1d3557;
+    font-size:15px;
+    font-weight:600;
+    line-height:1.6;
+}
+
+.teacher-needs-list{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+    gap:12px;
+}
+
+.teacher-needs-item{
+    background:linear-gradient(135deg, rgba(255, 196, 0, 0.08), rgba(58, 134, 255, 0.08));
+    border:1px solid rgba(255, 166, 0, 0.18);
+    border-radius:18px;
+    padding:14px 16px;
+}
+
+.teacher-needs-name{
+    display:inline-block;
+    margin-bottom:4px;
+    padding:6px 10px;
+    border-radius:10px;
+    background:linear-gradient(135deg,#ffb703,#ff8a4c);
+    color:#fff;
+    font-weight:900;
+    letter-spacing:0.02em;
+    box-shadow:0 6px 16px rgba(255,140,0,.2);
+}
+
+.teacher-needs-meta,
+.teacher-needs-note{
+    color:#53657b;
+    font-size:13px;
+    line-height:1.5;
+}
+
+.teacher-needs-note{
+    margin-top:4px;
+    color:#b25b00;
+    font-weight:600;
+}
+
+.teacher-needs-empty{
+    padding:18px 16px;
+    border-radius:16px;
+    background:rgba(58,134,255,.06);
+    border:1px dashed rgba(58,134,255,.24);
+    color:#53657b;
+    font-size:14px;
+}
+
 .bar-chart-empty{
     width:100%;
     min-height:180px;
