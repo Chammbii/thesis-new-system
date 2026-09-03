@@ -31,14 +31,10 @@ const teacherSwitchText = document.getElementById("teacherSwitchText");
 const teacherSubmitBtn = document.getElementById("teacherSubmitBtn");
 const teacherDashboard = document.getElementById("teacherDashboard");
 const teacherNameDisplay = document.getElementById("teacherNameDisplay");
-const teacherCompletedLessons = document.getElementById("teacherCompletedLessons");
-const teacherProgressCategories = document.getElementById("teacherProgressCategories");
 const teacherLogoutBtn = document.getElementById("teacherLogoutBtn");
 const teacherDashboardHomeBtn = document.getElementById("teacherDashboardHomeBtn");
 const teacherDashboardRefreshBtn = document.getElementById("teacherDashboardRefreshBtn");
 const teacherStudentProgressTable = document.getElementById("teacherStudentProgressTable");
-const teacherStudentCount = document.getElementById("teacherStudentCount");
-const teacherTotalStars = document.getElementById("teacherTotalStars");
 const teacherProgressChart = document.getElementById("teacherProgressChart");
 const teacherStarsChart = document.getElementById("teacherStarsChart");
 const teacherDailyStarsChart = document.getElementById("teacherDailyStarsChart");
@@ -780,7 +776,7 @@ function renderQuizHistory(studentName) {
         if (quizHistorySubtitle) {
             quizHistorySubtitle.textContent = "Select a student to view every quiz attempt.";
         }
-        tbody.innerHTML = `<tr class="quiz-history-empty"><td colspan="5">No student selected yet.</td></tr>`;
+        tbody.innerHTML = `<tr class="quiz-history-empty"><td colspan="6">No student selected yet.</td></tr>`;
         return;
     }
 
@@ -790,7 +786,7 @@ function renderQuizHistory(studentName) {
 
     const history = getStudentQuizHistory(studentName);
     if (!history.length) {
-        tbody.innerHTML = `<tr class="quiz-history-empty"><td colspan="5">No quiz history yet for ${studentName}.</td></tr>`;
+        tbody.innerHTML = `<tr class="quiz-history-empty"><td colspan="6">No quiz history yet for ${studentName}.</td></tr>`;
         return;
     }
 
@@ -800,12 +796,19 @@ function renderQuizHistory(studentName) {
             row.classList.add("is-latest");
         }
         const category = (entry.category || "quiz").charAt(0).toUpperCase() + (entry.category || "quiz").slice(1);
+        const difficultyLabels = {
+            easy: "Easy",
+            medium: "Normal",
+            hard: "Hard"
+        };
+        const levelStopped = difficultyLabels[entry.levelStopped] || "Not recorded";
         row.innerHTML = `
             <td>${formatQuizHistoryDate(entry.date)}${index === 0 ? '<span class="latest-history-badge">Latest</span>' : ""}</td>
             <td>${category}</td>
             <td>${entry.score} / ${entry.total}</td>
             <td>${entry.accuracy}%</td>
             <td>+${entry.starsGained || 0} ★</td>
+            <td>${levelStopped}</td>
         `;
         tbody.appendChild(row);
     });
@@ -819,12 +822,6 @@ function renderTeacherStudentProgress() {
     const totalCategories = Object.keys(lessons).length;
 
     records.sort((a, b) => b.updatedAt - a.updatedAt);
-
-    if (teacherStudentCount) teacherStudentCount.textContent = String(records.length);
-    if (teacherTotalStars) {
-        const totalStars = records.reduce((sum, record) => sum + (Number(record.stars) || 0), 0);
-        teacherTotalStars.textContent = String(totalStars);
-    }
 
     renderTeacherCharts(records);
     renderTeacherNeedsInterpretation(records);
@@ -921,12 +918,6 @@ function removeStudentRecord(studentName) {
 function showTeacherDashboard(){
     showScreen(teacherDashboard);
     teacherNameDisplay.textContent = currentTeacherUsername;
-
-    const completed = Number(localStorage.getItem(getCurrentStudentProgressKey("completedLessons"))) || 0;
-    teacherCompletedLessons.textContent = completed;
-
-    const progress = JSON.parse(localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))) || {};
-    teacherProgressCategories.textContent = Object.keys(progress).length;
 
     renderTeacherStudentProgress();
 }
@@ -3734,6 +3725,7 @@ function saveQuizSummary(sessionTotal) {
     appendQuizHistoryEntry(student, {
         date: Date.now(),
         category: quizCategory || currentCategory || "quiz",
+        levelStopped: quizDifficulty,
         score: quizScore,
         total,
         accuracy,
