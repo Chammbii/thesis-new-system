@@ -35,6 +35,16 @@ const teacherLogoutBtn = document.getElementById("teacherLogoutBtn");
 const teacherDashboardHomeBtn = document.getElementById("teacherDashboardHomeBtn");
 const teacherDashboardRefreshBtn = document.getElementById("teacherDashboardRefreshBtn");
 const teacherDashboardPrintBtn = document.getElementById("teacherDashboardPrintBtn");
+const teacherCustomizeBtn = document.getElementById("teacherCustomizeBtn");
+const teacherCustomizeModal = document.getElementById("teacherCustomizeModal");
+const teacherCustomizeForm = document.getElementById("teacherCustomizeForm");
+const teacherCustomizeCloseBtn = document.getElementById("teacherCustomizeCloseBtn");
+const customQuestionCategory = document.getElementById("customQuestionCategory");
+const customQuestionDifficulty = document.getElementById("customQuestionDifficulty");
+const customQuestionPrompt = document.getElementById("customQuestionPrompt");
+const customQuestionCorrect = document.getElementById("customQuestionCorrect");
+const customQuestionList = document.getElementById("customQuestionList");
+const customQuestionMessage = document.getElementById("customQuestionMessage");
 const teacherPrintModal = document.getElementById("teacherPrintModal");
 const teacherPrintStudent = document.getElementById("teacherPrintStudent");
 const teacherPrintCancelBtn = document.getElementById("teacherPrintCancelBtn");
@@ -347,6 +357,100 @@ if (teacherPrintConfirmBtn) {
             : records.filter(record => record.name === selectedName));
         closeTeacherPrintModal();
         window.print();
+    });
+}
+
+function getCustomQuestionsKey() {
+    return getNamespacedKey("customQuizQuestions");
+}
+
+function getCustomQuizQuestions() {
+    return JSON.parse(localStorage.getItem(getCustomQuestionsKey())) || [];
+}
+
+function saveCustomQuizQuestions(questions) {
+    localStorage.setItem(getCustomQuestionsKey(), JSON.stringify(questions));
+}
+
+function renderCustomQuestionList() {
+    if (!customQuestionList) return;
+    const questions = getCustomQuizQuestions();
+    customQuestionList.innerHTML = questions.length
+        ? questions.map(question => `
+            <div class="custom-question-item">
+                <div><strong>${escapePrintText(question.promptEN)}</strong><span>${escapePrintText(question.category)} · ${escapePrintText(question.difficulty)}</span></div>
+                <button class="tdash-btn tdash-btn--danger" type="button" data-custom-question-id="${escapePrintText(question.id)}">Remove</button>
+            </div>`).join("")
+        : '<p class="custom-question-empty">No custom questions added yet.</p>';
+
+    customQuestionList.querySelectorAll("[data-custom-question-id]").forEach(button => {
+        button.addEventListener("click", () => {
+            saveCustomQuizQuestions(getCustomQuizQuestions().filter(question => question.id !== button.dataset.customQuestionId));
+            renderCustomQuestionList();
+        });
+    });
+}
+
+function openTeacherCustomizeModal() {
+    if (!teacherCustomizeModal) return;
+    renderCustomQuestionList();
+    teacherCustomizeModal.hidden = false;
+    customQuestionPrompt?.focus();
+}
+
+function closeTeacherCustomizeModal() {
+    if (teacherCustomizeModal) teacherCustomizeModal.hidden = true;
+}
+
+if (teacherCustomizeBtn) teacherCustomizeBtn.addEventListener("click", openTeacherCustomizeModal);
+if (teacherCustomizeCloseBtn) teacherCustomizeCloseBtn.addEventListener("click", closeTeacherCustomizeModal);
+if (teacherCustomizeForm) {
+    teacherCustomizeForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        const choiceInputs = [...teacherCustomizeForm.querySelectorAll(".custom-choice")];
+        const imageInputs = [...teacherCustomizeForm.querySelectorAll(".custom-choice-image")];
+        const choices = choiceInputs.map(input => input.value.trim()).filter(Boolean);
+        const correct = customQuestionCorrect.value.trim();
+        const uniqueChoices = [...new Set(choices)];
+        if (!uniqueChoices.includes(correct)) {
+            customQuestionMessage.textContent = "The correct answer must be one of the choices.";
+            return;
+        }
+
+        const choiceImages = {};
+        for (let index = 0; index < choiceInputs.length; index++) {
+            const choice = choiceInputs[index].value.trim();
+            const file = imageInputs[index]?.files[0];
+            if (choice && file) {
+                choiceImages[choice] = await readImageAsDataUrl(file);
+            }
+        }
+
+        const questions = getCustomQuizQuestions();
+        questions.push({
+            id: `custom-${Date.now()}`,
+            category: customQuestionCategory.value,
+            difficulty: customQuestionDifficulty.value,
+            promptEN: customQuestionPrompt.value.trim(),
+            promptTL: customQuestionPrompt.value.trim(),
+            word: correct,
+            choices: uniqueChoices,
+            choiceImages,
+            custom: true
+        });
+        saveCustomQuizQuestions(questions);
+        teacherCustomizeForm.reset();
+        customQuestionMessage.textContent = "Question added to the selected quiz level.";
+        renderCustomQuestionList();
+    });
+}
+
+function readImageAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
     });
 }
 
@@ -3281,7 +3385,13 @@ const QUESTION_BANK = {
 
 function generateQuizQuestions(category, difficulty, overrideCount){
 
-    const items = lessons[category];
+    const customItems = getCustomQuizQuestions().filter(question =>
+        question.category === category && question.difficulty === difficulty
+    );
+    const items = [
+        ...customItems,
+        ...(lessons[category] || [])
+    ];
     const pool = [...items];
     const cfg = QUIZ_DIFFICULTY[difficulty] || QUIZ_DIFFICULTY.easy;
     const questionCount = Math.max(1, overrideCount || cfg.questionCount);
@@ -3293,17 +3403,26 @@ function generateQuizQuestions(category, difficulty, overrideCount){
         .sort((a, b) => a.sort - b.sort)
         .map(entry => entry.item);
 
-    const selected = [];
+    const selected = customItems.slice(0, questionCount);
     while (selected.length < questionCount) {
         const batch = shuffledPool();
         for (const item of batch) {
             if (selected.length >= questionCount) break;
-            selected.push(item);
+            if (!selected.includes(item)) selected.push(item);
         }
         if (!batch.length) break;
     }
 
     return selected.map((item, idx) => {
+        if (item.custom) {
+            return {
+                prompt: selectedLanguage === "tl" ? item.promptTL : item.promptEN,
+                correct: item.word,
+                choices: buildCustomQuizChoices(item, category, difficulty),
+                choiceImages: item.choiceImages || {}
+            };
+        }
+
         const promptVariant = idx % 3;
         const localizedWord = translateWord(item.word);
         let enPrompt;
@@ -3366,6 +3485,20 @@ function generateQuizQuestions(category, difficulty, overrideCount){
             choices: buildQuizChoices(item.word, items, difficulty)
         };
     });
+}
+
+function buildCustomQuizChoices(item, category, difficulty) {
+    const targetCount = { easy: 3, medium: 6, hard: 10 }[difficulty] || 3;
+    const choices = [...new Set(item.choices || [])];
+    const fallbackChoices = (lessons[category] || [])
+        .map(lesson => lesson.word)
+        .filter(word => word && !choices.includes(word));
+
+    while (choices.length < targetCount && fallbackChoices.length) {
+        choices.push(fallbackChoices.shift());
+    }
+
+    return choices.slice(0, targetCount).sort(() => Math.random() - 0.5);
 }
 
 function buildQuizChoices(correctWord, items, difficulty){
@@ -3453,7 +3586,10 @@ function loadQuizQuestion(){
         hard: 10
     };
 
-    const requiredChoiceCount = requiredChoiceCountByDifficulty[quizDifficulty] || requiredChoiceCountByDifficulty.easy;
+    const requiredChoiceCount = Math.min(
+        requiredChoiceCountByDifficulty[quizDifficulty] || requiredChoiceCountByDifficulty.easy,
+        question.choices.length
+    );
 
     answerButtons.forEach((button, index) => {
         const isUsed = index < requiredChoiceCount;
@@ -3467,13 +3603,17 @@ function loadQuizQuestion(){
         button.dataset.choice = answerWord;
 
         const answerItem = answerWord
-            ? lessons[currentCategory].find(item => item.word === answerWord)
+            ? (lessons[currentCategory] || []).find(item => item.word === answerWord)
             : null;
         const imageDiv = button.querySelector(".answer-image");
+        const answerLabel = button.querySelector(".answer-label");
+        const customImage = question.choiceImages?.[answerWord];
+
+        if (answerLabel) answerLabel.textContent = answerWord;
 
         if (imageDiv) {
-            if (isUsed && answerItem && answerItem.image) {
-                imageDiv.style.backgroundImage = `url('${answerItem.image}')`;
+            if (isUsed && (customImage || answerItem?.image)) {
+                imageDiv.style.backgroundImage = `url('${customImage || answerItem.image}')`;
                 imageDiv.style.backgroundSize = "cover";
                 imageDiv.style.backgroundPosition = "center";
             } else {
@@ -3507,7 +3647,13 @@ function confirmQuizAnswer(){
     quizAnswered = true;
     const selected = selectedQuizChoice;
     const correct = quizQuestions[currentQuizIndex].correct;
-    const isCorrect = selected === correct;
+    const normalizeAnswer = value => String(value ?? "").trim().toLowerCase();
+    const selectedNumber = Number(normalizeAnswer(selected));
+    const correctNumber = Number(normalizeAnswer(correct));
+    const isNumericMatch = Number.isFinite(selectedNumber)
+        && Number.isFinite(correctNumber)
+        && selectedNumber === correctNumber;
+    const isCorrect = normalizeAnswer(selected) === normalizeAnswer(correct) || isNumericMatch;
 
     // Alternate correct feedback prompts so it feels more interactive
     if (typeof quizCorrectFeedbackToggle === 'undefined') {
