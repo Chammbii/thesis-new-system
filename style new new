@@ -500,73 +500,19 @@ h1{
     color:#c1121f;
 }
 
-.tdash-stats{
-    display:grid;
-    grid-template-columns:repeat(4,minmax(0,1fr));
-    gap:16px;
-}
-
-.tdash-stat{
-    display:flex;
-    align-items:center;
-    gap:14px;
-    padding:20px 18px;
-    border-radius:22px;
-    background:rgba(255,255,255,.92);
-    box-shadow:0 12px 28px rgba(29,53,87,.1);
-    border:1px solid rgba(255,255,255,.8);
-}
-
-.tdash-stat-icon{
-    width:48px;
-    height:48px;
-    border-radius:16px;
-    display:grid;
-    place-items:center;
-    color:#fff;
-    background:linear-gradient(145deg,#57cc99,#3a86ff);
-    flex-shrink:0;
-}
-
-.tdash-stat:nth-child(2) .tdash-stat-icon{
-    background:linear-gradient(145deg,#ffb703,#ff8a4c);
-}
-
-.tdash-stat:nth-child(3) .tdash-stat-icon{
-    background:linear-gradient(145deg,#4cc9f0,#4361ee);
-}
-
-.tdash-stat:nth-child(4) .tdash-stat-icon{
-    background:linear-gradient(145deg,#ffd60a,#f4a261);
-}
-
-.tdash-stat-number{
-    font-size:32px;
-    font-weight:800;
-    color:#1d3557;
-    line-height:1;
-}
-
-.tdash-stat-label{
-    margin-top:4px;
-    font-size:13px;
-    color:#6b7c90;
-    font-weight:600;
+.tdash-panel{
+    padding:24px;
+    border-radius:24px;
+    background:rgba(255,255,255,.94);
+    box-shadow:0 14px 34px rgba(29,53,87,.1);
+    border:1px solid rgba(255,255,255,.75);
+    text-align:left;
 }
 
 .tdash-charts{
     display:grid;
     grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:18px;
-}
-
-.tdash-panel{
-    background:rgba(255,255,255,.94);
-    border-radius:26px;
-    padding:22px;
-    box-shadow:0 14px 34px rgba(29,53,87,.1);
-    border:1px solid rgba(255,255,255,.75);
-    text-align:left;
+    gap:22px;
 }
 
 .tdash-panel--wide{
@@ -877,10 +823,6 @@ h1{
 }
 
 @media(max-width:900px){
-    .tdash-stats{
-        grid-template-columns:repeat(2,minmax(0,1fr));
-    }
-
     .tdash-charts{
         grid-template-columns:1fr;
     }
@@ -891,10 +833,6 @@ h1{
 }
 
 @media(max-width:560px){
-    .tdash-stats{
-        grid-template-columns:1fr;
-    }
-
     .tdash-header h2{
         font-size:28px;
     }
