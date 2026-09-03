@@ -199,6 +199,7 @@
                 </div>
                 <div class="tdash-header-actions">
                     <button id="teacherDashboardRefreshBtn" class="tdash-btn tdash-btn--refresh" type="button">Refresh</button>
+                    <button id="teacherDashboardPrintBtn" class="tdash-btn tdash-btn--soft" type="button">Print</button>
                     <button id="teacherDashboardHomeBtn" class="tdash-btn tdash-btn--ghost" type="button">Home</button>
                     <button id="teacherLogoutBtn" class="tdash-btn tdash-btn--solid" type="button">Logout</button>
                 </div>
@@ -286,6 +287,22 @@
             </section>
 
         </div>
+
+        <div id="teacherPrintModal" class="teacher-print-modal" hidden>
+            <div class="teacher-print-card" role="dialog" aria-modal="true" aria-labelledby="teacherPrintTitle">
+                <h3 id="teacherPrintTitle">Print Student Progress</h3>
+                <label for="teacherPrintStudent">Choose a student</label>
+                <select id="teacherPrintStudent">
+                    <option value="all">All students</option>
+                </select>
+                <div class="teacher-print-actions">
+                    <button id="teacherPrintCancelBtn" class="tdash-btn tdash-btn--ghost" type="button">Cancel</button>
+                    <button id="teacherPrintConfirmBtn" class="tdash-btn tdash-btn--solid" type="button">Print Progress</button>
+                </div>
+            </div>
+        </div>
+
+        <section id="teacherPrintReport" class="teacher-print-report" aria-hidden="true"></section>
 
     </section>
 
