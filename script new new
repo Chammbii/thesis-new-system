@@ -757,10 +757,6 @@ function renderTeacherNeedsInterpretation(records) {
         return;
     }
 
-    const summary = needsStudents
-        .map(student => `${student.name} (${student.progress}% progress, ${student.accuracy}% accuracy)`)
-        .join(", ");
-
     const items = needsStudents.map(student => `
         <div class="teacher-needs-item">
             <div class="teacher-needs-name">${student.name}</div>
@@ -770,7 +766,7 @@ function renderTeacherNeedsInterpretation(records) {
     `).join("");
 
     container.innerHTML = `
-        <p class="teacher-needs-summary">This is students who need to master the lesson: ${summary}.</p>
+        <p class="teacher-needs-summary">This is students who need to master the lesson: </p>
         <div class="teacher-needs-list">${items}</div>
     `;
 }
