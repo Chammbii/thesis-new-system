@@ -34,6 +34,12 @@ const teacherNameDisplay = document.getElementById("teacherNameDisplay");
 const teacherLogoutBtn = document.getElementById("teacherLogoutBtn");
 const teacherDashboardHomeBtn = document.getElementById("teacherDashboardHomeBtn");
 const teacherDashboardRefreshBtn = document.getElementById("teacherDashboardRefreshBtn");
+const teacherDashboardPrintBtn = document.getElementById("teacherDashboardPrintBtn");
+const teacherPrintModal = document.getElementById("teacherPrintModal");
+const teacherPrintStudent = document.getElementById("teacherPrintStudent");
+const teacherPrintCancelBtn = document.getElementById("teacherPrintCancelBtn");
+const teacherPrintConfirmBtn = document.getElementById("teacherPrintConfirmBtn");
+const teacherPrintReport = document.getElementById("teacherPrintReport");
 const teacherStudentProgressTable = document.getElementById("teacherStudentProgressTable");
 const teacherProgressChart = document.getElementById("teacherProgressChart");
 const teacherStarsChart = document.getElementById("teacherStarsChart");
@@ -264,6 +270,83 @@ if (teacherDashboardRefreshBtn) {
     teacherDashboardRefreshBtn.addEventListener("click", () => {
         showTeacherDashboard();
         showNotification("Dashboard refreshed.");
+    });
+}
+
+function escapePrintText(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function openTeacherPrintModal() {
+    if (!teacherPrintModal || !teacherPrintStudent) return;
+    const records = getStudentRecords().sort((a, b) => a.name.localeCompare(b.name));
+    teacherPrintStudent.innerHTML = '<option value="all">All students</option>';
+    records.forEach(record => {
+        const option = document.createElement("option");
+        option.value = record.name;
+        option.textContent = record.name;
+        teacherPrintStudent.appendChild(option);
+    });
+    teacherPrintModal.hidden = false;
+    teacherPrintStudent.focus();
+}
+
+function closeTeacherPrintModal() {
+    if (teacherPrintModal) teacherPrintModal.hidden = true;
+}
+
+function buildTeacherPrintReport(records) {
+    const totalCategories = Object.keys(lessons).length;
+    const reports = records.map(record => {
+        const history = getStudentQuizHistory(record.name);
+        const historyRows = history.length
+            ? history.map(entry => `
+                <tr>
+                    <td>${escapePrintText(formatQuizHistoryDate(entry.date))}</td>
+                    <td>${escapePrintText(entry.category || "Quiz")}</td>
+                    <td>${escapePrintText(`${entry.score} / ${entry.total}`)}</td>
+                    <td>${escapePrintText(`${entry.accuracy}%`)}</td>
+                    <td>${escapePrintText(entry.levelStopped ? ({ easy: "Easy", medium: "Normal", hard: "Hard" }[entry.levelStopped] || "Not recorded") : "Not recorded")}</td>
+                </tr>`).join("")
+            : '<tr><td colspan="5">No quiz history recorded.</td></tr>';
+
+        return `
+            <article class="teacher-print-student">
+                <h2>${escapePrintText(record.name)}</h2>
+                <p>Progress: ${escapePrintText(`${record.categoriesDone || 0}/${totalCategories} categories (${record.progressPercent || 0}%)`)} | Accuracy: ${escapePrintText(`${record.accuracy || 0}%`)} | Stars: ${escapePrintText(record.stars || 0)}</p>
+                <table>
+                    <thead><tr><th>Date</th><th>Category</th><th>Score</th><th>Accuracy</th><th>Level Stopped</th></tr></thead>
+                    <tbody>${historyRows}</tbody>
+                </table>
+            </article>`;
+    }).join("");
+
+    teacherPrintReport.innerHTML = `
+        <h1>QuizLand Student Progress</h1>
+        <p>Teacher: ${escapePrintText(currentTeacherUsername)} | Printed: ${escapePrintText(formatQuizHistoryDate(Date.now()))}</p>
+        ${reports || "<p>No student records available.</p>"}`;
+}
+
+if (teacherDashboardPrintBtn) {
+    teacherDashboardPrintBtn.addEventListener("click", openTeacherPrintModal);
+}
+if (teacherPrintCancelBtn) {
+    teacherPrintCancelBtn.addEventListener("click", closeTeacherPrintModal);
+}
+if (teacherPrintConfirmBtn) {
+    teacherPrintConfirmBtn.addEventListener("click", () => {
+        const records = getStudentRecords();
+        const selectedName = teacherPrintStudent ? teacherPrintStudent.value : "all";
+        buildTeacherPrintReport(selectedName === "all"
+            ? records
+            : records.filter(record => record.name === selectedName));
+        closeTeacherPrintModal();
+        window.print();
     });
 }
 
