@@ -26,7 +26,7 @@
 
         <audio id="popSound" src="popclick.mp3" preload="auto"></audio>
 <!-- bg audio -->
-        <audio id="bgMusic" loop preload="auto" src="bgMusic.mp3"></audio>
+        <audio id="bgMusi" loop preload="auto" src="bgMusic.mp3"></audio>
 
 
    
@@ -204,37 +204,6 @@
                 </div>
             </header>
 
-            <div class="tdash-stats">
-                <div class="tdash-stat">
-                    <span class="tdash-stat-icon" aria-hidden="true"><i class="fa-solid fa-book-open"></i></span>
-                    <div>
-                        <div class="tdash-stat-number" id="teacherCompletedLessons">0</div>
-                        <div class="tdash-stat-label">Lessons Completed</div>
-                    </div>
-                </div>
-                <div class="tdash-stat">
-                    <span class="tdash-stat-icon" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></span>
-                    <div>
-                        <div class="tdash-stat-number" id="teacherProgressCategories">0</div>
-                        <div class="tdash-stat-label">Categories Done</div>
-                    </div>
-                </div>
-                <div class="tdash-stat">
-                    <span class="tdash-stat-icon" aria-hidden="true"><i class="fa-solid fa-children"></i></span>
-                    <div>
-                        <div class="tdash-stat-number" id="teacherStudentCount">0</div>
-                        <div class="tdash-stat-label">Students Tracked</div>
-                    </div>
-                </div>
-                <div class="tdash-stat">
-                    <span class="tdash-stat-icon" aria-hidden="true"><i class="fa-solid fa-star"></i></span>
-                    <div>
-                        <div class="tdash-stat-number" id="teacherTotalStars">0</div>
-                        <div class="tdash-stat-label">Stars Earned</div>
-                    </div>
-                </div>
-            </div>
-
             <div class="tdash-charts">
                 <section class="tdash-panel">
                     <div class="tdash-panel-head">
@@ -304,11 +273,12 @@
                                 <th>Score</th>
                                 <th>Accuracy</th>
                                 <th>Stars Gained</th>
+                                <th>Level Stopped</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr class="quiz-history-empty">
-                                <td colspan="5">No student selected yet.</td>
+                                <td colspan="6">No student selected yet.</td>
                             </tr>
                         </tbody>
                     </table>
