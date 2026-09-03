@@ -26,7 +26,7 @@
 
         <audio id="popSound" src="popclick.mp3" preload="auto"></audio>
 <!-- bg audio -->
-        <audio id="bgMusi" loop preload="auto" src="bgMusic.mp3"></audio>
+        <audio id="bgMusic" loop preload="auto" src="bgMusic.mp3"></audio>
 
 
    
@@ -238,14 +238,14 @@
             <div class="tdash-charts">
                 <section class="tdash-panel">
                     <div class="tdash-panel-head">
-                        <h3>Progress by Student</h3>
+                        <h3>Progress of Student</h3>
                         <p>Lesson category completion (%)</p>
                     </div>
                     <div id="teacherProgressChart" class="bar-chart" aria-label="Student progress bar chart"></div>
                 </section>
                 <section class="tdash-panel">
                     <div class="tdash-panel-head">
-                        <h3>Stars by Student</h3>
+                        <h3>Stars of Student</h3>
                         <p>Total stars each child earned</p>
                     </div>
                     <div id="teacherStarsChart" class="bar-chart" aria-label="Student stars bar chart"></div>
@@ -254,7 +254,7 @@
 
             <section class="tdash-panel tdash-panel--wide">
                 <div class="tdash-panel-head">
-                    <h3>Stars Earned by Day</h3>
+                    <h3>Stars earned of the day</h3>
                     <p>Total stars all students earned each day (last 14 days)</p>
                 </div>
                 <div id="teacherDailyStarsChart" class="bar-chart bar-chart--daily" aria-label="Daily stars earned bar chart"></div>
@@ -262,8 +262,8 @@
 
             <section class="tdash-panel tdash-panel--wide">
                 <div class="tdash-panel-head">
-                    <h3>Students Who Need More Practice</h3>
-                    <p>This is students who need to master the lesson.</p>
+                    <h3>Student that needs more practice</h3>
+
                 </div>
                 <div id="teacherNeedsInterpretation" class="teacher-needs-interpretation" aria-live="polite"></div>
             </section>
