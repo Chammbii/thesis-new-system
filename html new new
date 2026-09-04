@@ -26,7 +26,7 @@
 
         <audio id="popSound" src="popclick.mp3" preload="auto"></audio>
 <!-- bg audio -->
-        <audio id="bgMusic" loop preload="auto" src="bgMusic.mp3"></audio>
+        <audio id="bgMusi" loop preload="auto" src="bgMusic.mp3"></audio>
 
 
    
@@ -199,41 +199,12 @@
                 </div>
                 <div class="tdash-header-actions">
                     <button id="teacherDashboardRefreshBtn" class="tdash-btn tdash-btn--refresh" type="button">Refresh</button>
+                    <button id="teacherCustomizeBtn" class="tdash-btn tdash-btn--soft" type="button">Customize</button>
+                    <button id="teacherDashboardPrintBtn" class="tdash-btn tdash-btn--soft" type="button">Print</button>
                     <button id="teacherDashboardHomeBtn" class="tdash-btn tdash-btn--ghost" type="button">Home</button>
                     <button id="teacherLogoutBtn" class="tdash-btn tdash-btn--solid" type="button">Logout</button>
                 </div>
             </header>
-
-            <div class="tdash-stats">
-                <div class="tdash-stat">
-                    <span class="tdash-stat-icon" aria-hidden="true"><i class="fa-solid fa-book-open"></i></span>
-                    <div>
-                        <div class="tdash-stat-number" id="teacherCompletedLessons">0</div>
-                        <div class="tdash-stat-label">Lessons Completed</div>
-                    </div>
-                </div>
-                <div class="tdash-stat">
-                    <span class="tdash-stat-icon" aria-hidden="true"><i class="fa-solid fa-layer-group"></i></span>
-                    <div>
-                        <div class="tdash-stat-number" id="teacherProgressCategories">0</div>
-                        <div class="tdash-stat-label">Categories Done</div>
-                    </div>
-                </div>
-                <div class="tdash-stat">
-                    <span class="tdash-stat-icon" aria-hidden="true"><i class="fa-solid fa-children"></i></span>
-                    <div>
-                        <div class="tdash-stat-number" id="teacherStudentCount">0</div>
-                        <div class="tdash-stat-label">Students Tracked</div>
-                    </div>
-                </div>
-                <div class="tdash-stat">
-                    <span class="tdash-stat-icon" aria-hidden="true"><i class="fa-solid fa-star"></i></span>
-                    <div>
-                        <div class="tdash-stat-number" id="teacherTotalStars">0</div>
-                        <div class="tdash-stat-label">Stars Earned</div>
-                    </div>
-                </div>
-            </div>
 
             <div class="tdash-charts">
                 <section class="tdash-panel">
@@ -304,17 +275,83 @@
                                 <th>Score</th>
                                 <th>Accuracy</th>
                                 <th>Stars Gained</th>
+                                <th>Level Stopped</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr class="quiz-history-empty">
-                                <td colspan="5">No student selected yet.</td>
+                                <td colspan="6">No student selected yet.</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </section>
 
+        </div>
+
+        <div id="teacherPrintModal" class="teacher-print-modal" hidden>
+            <div class="teacher-print-card" role="dialog" aria-modal="true" aria-labelledby="teacherPrintTitle">
+                <h3 id="teacherPrintTitle">Print Student Progress</h3>
+                <label for="teacherPrintStudent">Choose a student</label>
+                <select id="teacherPrintStudent">
+                    <option value="all">All students</option>
+                </select>
+                <div class="teacher-print-actions">
+                    <button id="teacherPrintCancelBtn" class="tdash-btn tdash-btn--ghost" type="button">Cancel</button>
+                    <button id="teacherPrintConfirmBtn" class="tdash-btn tdash-btn--solid" type="button">Print Progress</button>
+                </div>
+            </div>
+        </div>
+
+        <section id="teacherPrintReport" class="teacher-print-report" aria-hidden="true"></section>
+
+        <div id="teacherCustomizeModal" class="teacher-customize-modal" hidden>
+            <div class="teacher-customize-card" role="dialog" aria-modal="true" aria-labelledby="teacherCustomizeTitle">
+                <h3 id="teacherCustomizeTitle">Customize Quiz Questions</h3>
+                <form id="teacherCustomizeForm" class="teacher-customize-form">
+                    <label for="customQuestionCategory">Category</label>
+                    <select id="customQuestionCategory" required>
+                        <option value="alphabet">Alphabet</option>
+                        <option value="numbers">Numbers</option>
+                        <option value="colors">Colors</option>
+                        <option value="shapes">Shapes</option>
+                    </select>
+                    <label for="customQuestionDifficulty">Level</label>
+                    <select id="customQuestionDifficulty" required>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Normal</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                    <label for="customQuestionPrompt">Question</label>
+                    <input id="customQuestionPrompt" type="text" maxlength="160" placeholder="Which answer is correct?" required>
+                    <label for="customQuestionCorrect">Correct answer</label>
+                    <input id="customQuestionCorrect" type="text" maxlength="80" placeholder="Correct answer" required>
+                    <label>Multiple-choice answers</label>
+                    <div class="custom-choice-fields">
+                        <div class="custom-choice-field">
+                            <input class="custom-choice" type="text" maxlength="80" placeholder="Answer 1" required>
+                            <input class="custom-choice-image" type="file" accept="image/*" aria-label="Photo for answer 1">
+                        </div>
+                        <div class="custom-choice-field">
+                            <input class="custom-choice" type="text" maxlength="80" placeholder="Answer 2" required>
+                            <input class="custom-choice-image" type="file" accept="image/*" aria-label="Photo for answer 2">
+                        </div>
+                        <div class="custom-choice-field">
+                            <input class="custom-choice" type="text" maxlength="80" placeholder="Answer 3" required>
+                            <input class="custom-choice-image" type="file" accept="image/*" aria-label="Photo for answer 3">
+                        </div>
+                    </div>
+                    <p id="customQuestionMessage" class="teacher-customize-message" aria-live="polite"></p>
+                    <div class="teacher-customize-actions">
+                        <button id="teacherCustomizeCloseBtn" class="tdash-btn tdash-btn--ghost" type="button">Close</button>
+                        <button class="tdash-btn tdash-btn--solid" type="submit">Add Question</button>
+                    </div>
+                </form>
+                <div>
+                    <h4>Added Questions</h4>
+                    <div id="customQuestionList" class="custom-question-list"></div>
+                </div>
+            </div>
         </div>
 
     </section>
@@ -740,60 +777,70 @@
             <button class="answer-card" id="answer1">
 
                 <div class="answer-image"></div>
+                <span class="answer-label"></span>
 
             </button>
 
             <button class="answer-card" id="answer2">
 
                 <div class="answer-image"></div>
+                <span class="answer-label"></span>
 
             </button>
 
             <button class="answer-card" id="answer3">
 
                 <div class="answer-image"></div>
+                <span class="answer-label"></span>
 
             </button>
 
             <button class="answer-card" id="answer4">
 
                 <div class="answer-image"></div>
+                <span class="answer-label"></span>
 
             </button>
 
             <button class="answer-card" id="answer5">
 
                 <div class="answer-image"></div>
+                <span class="answer-label"></span>
                 
             </button>
 
             <button class="answer-card" id="answer6">
 
                 <div class="answer-image"></div>
+                <span class="answer-label"></span>
 
             </button>
 
             <button class="answer-card" id="answer7">
 
                 <div class="answer-image"></div>
+                <span class="answer-label"></span>
 
             </button>
 
             <button class="answer-card" id="answer8">
 
                 <div class="answer-image"></div>
+                <span class="answer-label"></span>
 
             </button>
 
             <button class="answer-card" id="answer9">
 
                 <div class="answer-image"></div>
+                <span class="answer-label"></span>
 
             </button>
 
             <button class="answer-card" id="answer10">
 
                 <div class="answer-image"></div>
+                <span class="answer-label"></span>
 
             </button>
 
