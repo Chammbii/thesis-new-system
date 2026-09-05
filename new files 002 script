@@ -57,6 +57,7 @@ const teacherDailyStarsChart = document.getElementById("teacherDailyStarsChart")
 const teacherQuizHistoryTable = document.getElementById("teacherQuizHistoryTable");
 const quizHistorySubtitle = document.getElementById("quizHistorySubtitle");
 const teacherStudentTrackerCount = document.getElementById("teacherStudentTrackerCount");
+const teacherStudentSort = document.getElementById("teacherStudentSort");
 let selectedHistoryStudent = null;
 let sessionStarsGained = 0;
 
@@ -728,6 +729,7 @@ function updateCurrentStudentRecord() {
 
     const records = getStudentRecords();
     let record = records.find(r => r.name === student);
+    const now = Date.now();
 
     if (!record) {
         record = {
@@ -738,17 +740,26 @@ function updateCurrentStudentRecord() {
             progressPercent,
             accuracy,
             stars,
-            updatedAt: Date.now()
+            updatedAt: now,
+            progressHistory: [{ progressPercent, updatedAt: now }]
         };
         records.push(record);
     } else {
+        const progressHistory = Array.isArray(record.progressHistory) && record.progressHistory.length
+            ? record.progressHistory
+            : [{ progressPercent: Number(record.progressPercent) || 0, updatedAt: Number(record.updatedAt) || now }];
+        const lastProgress = progressHistory[progressHistory.length - 1];
+        if (Number(lastProgress.progressPercent) !== progressPercent) {
+            progressHistory.push({ progressPercent, updatedAt: now });
+        }
         record.avatar = avatarIndex;
         record.completedLessons = completedLessons;
         record.categoriesDone = categoriesDone;
         record.progressPercent = progressPercent;
         record.accuracy = accuracy;
         record.stars = stars;
-        record.updatedAt = Date.now();
+        record.updatedAt = now;
+        record.progressHistory = progressHistory.slice(-20);
     }
 
     saveStudentRecords(records);
@@ -1056,7 +1067,16 @@ function renderTeacherStudentProgress() {
         teacherStudentTrackerCount.textContent = `${studentCount} ${studentCount === 1 ? "student" : "students"} tracked`;
     }
 
-    records.sort((a, b) => b.updatedAt - a.updatedAt);
+    const sortMode = teacherStudentSort?.value || "recent";
+    records.sort((a, b) => {
+        if (sortMode === "surname") {
+            return getSurname(a.name).localeCompare(getSurname(b.name)) || a.name.localeCompare(b.name);
+        }
+        if (sortMode === "stars") {
+            return (Number(b.stars) || 0) - (Number(a.stars) || 0) || a.name.localeCompare(b.name);
+        }
+        return (Number(b.updatedAt) || 0) - (Number(a.updatedAt) || 0);
+    });
 
     renderTeacherCharts(records);
     renderTeacherNeedsInterpretation(records);
@@ -1084,7 +1104,15 @@ function renderTeacherStudentProgress() {
         avatarTd.appendChild(img);
 
         const progressTd = document.createElement("td");
-        progressTd.textContent = `${record.categoriesDone}/${totalCategories} (${record.progressPercent}%)`;
+        const progressHistory = Array.isArray(record.progressHistory) && record.progressHistory.length
+            ? record.progressHistory
+            : [{ progressPercent: Number(record.progressPercent) || 0, updatedAt: record.updatedAt }];
+        const firstProgress = progressHistory[0];
+        const latestProgress = progressHistory[progressHistory.length - 1];
+        progressTd.innerHTML = `
+            <strong>${record.categoriesDone}/${totalCategories} (${record.progressPercent}%)</strong>
+            <span class="progress-history-line">Before: ${Number(firstProgress.progressPercent) || 0}% · ${formatProgressDate(firstProgress.updatedAt)}</span>
+            <span class="progress-history-line">After: ${Number(latestProgress.progressPercent) || 0}% · ${formatProgressDate(latestProgress.updatedAt)}</span>`;
 
         const latestActivity = getStudentQuizHistory(record.name)[0];
         const latestScoreTd = document.createElement("td");
@@ -1142,6 +1170,26 @@ function renderTeacherStudentProgress() {
     if (selectedHistoryStudent) {
         renderQuizHistory(selectedHistoryStudent);
     }
+}
+
+function getSurname(name) {
+    const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+    return parts.length ? parts[parts.length - 1].toLowerCase() : "";
+}
+
+function formatProgressDate(timestamp) {
+    const date = new Date(Number(timestamp) || Date.now());
+    return date.toLocaleString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+    });
+}
+
+if (teacherStudentSort) {
+    teacherStudentSort.addEventListener("change", renderTeacherStudentProgress);
 }
 
 function removeStudentRecord(studentName) {
