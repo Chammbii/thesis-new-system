@@ -795,6 +795,25 @@ h1{
     font-weight:800;
 }
 
+.teacher-student-sort-label{
+    display:inline-block;
+    margin:12px 8px 0 0;
+    color:#53657b;
+    font-size:13px;
+    font-weight:700;
+}
+
+.teacher-student-sort{
+    margin-top:8px;
+    padding:8px 10px;
+    border:1px solid #c9d7e8;
+    border-radius:10px;
+    color:#1d3557;
+    background:#f7fbff;
+    font:inherit;
+    font-size:13px;
+}
+
 .bar-chart{
     display:flex;
     align-items:flex-end;
@@ -1041,6 +1060,19 @@ h1{
     color:#9a6b19;
     font-size:12px;
     font-weight:600;
+}
+
+#teacherStudentProgressTable td:nth-child(3) strong,
+#teacherStudentProgressTable td:nth-child(3) span{
+    display:block;
+}
+
+.progress-history-line{
+    margin-top:4px;
+    color:#718198;
+    font-size:11px;
+    line-height:1.35;
+    white-space:nowrap;
 }
 
 .tdash-row-actions{
