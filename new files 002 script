@@ -3802,7 +3802,7 @@ function getNextDifficultyAfterCompletion(currentDifficulty, stageScore) {
 // ADAPTIVE LEARNING SYSTEM (80% threshold)
 // ======================================================
 
-const ADAPTIVE_LEARNING_THRESHOLD = 80; // 80% score required to auto-advance
+const ADAPTIVE_LEARNING_THRESHOLD = 80;
 
 function getNextLessonCategory(currentCategory) {
     const categoryOrder = ['alphabet', 'numbers', 'colors', 'shapes'];
@@ -3830,16 +3830,25 @@ function getNextLessonPath(category, lessonIndex) {
     return null; // Completed all lessons
 }
 
+function getAdaptiveLessonPath(category, lessonIndex, accuracy) {
+    if (accuracy < ADAPTIVE_LEARNING_THRESHOLD) {
+        const nextCategory = getNextLessonCategory(category);
+        return nextCategory ? { category: nextCategory, lessonIndex: 0 } : null;
+    }
+
+    return getNextLessonPath(category, lessonIndex);
+}
+
 function calculateQuizAccuracy(score, total) {
     return total > 0 ? Math.round((score / total) * 100) : 0;
 }
 
-function shouldAutoProgressLesson(accuracy) {
-    return accuracy >= ADAPTIVE_LEARNING_THRESHOLD;
+function shouldMoveToNextCategory(accuracy) {
+    return accuracy < ADAPTIVE_LEARNING_THRESHOLD;
 }
 
-function autoProgressToNextLesson(currentCat, currentLessonIdx) {
-    const nextPath = getNextLessonPath(currentCat, currentLessonIdx);
+function autoProgressToNextLesson(currentCat, currentLessonIdx, accuracy) {
+    const nextPath = getAdaptiveLessonPath(currentCat, currentLessonIdx, accuracy);
     
     if (!nextPath) {
         return false; // No more lessons available
@@ -3919,7 +3928,7 @@ function finishQuiz(){
 
     // Calculate accuracy for adaptive learning
     const accuracy = calculateQuizAccuracy(quizScore, sessionTotal);
-    const isAdaptiveProgressEligible = shouldAutoProgressLesson(accuracy);
+    const shouldMoveToNextCategoryAfterQuiz = shouldMoveToNextCategory(accuracy);
 
     let finishMessage;
     const didNotAdvance = stageScore < stageTotal && quizDifficulty !== 'hard';
@@ -3928,25 +3937,25 @@ function finishQuiz(){
         finishMessage = selectedLanguage === 'tl'
             ? `Kailangan mong makuha ang lahat ng tama (${stageScore}/${stageTotal}) para makapunta sa susunod na level.`
             : `You need a perfect score (${stageScore}/${stageTotal}) to unlock the next level.`;
-    } else if (isAdaptiveProgressEligible) {
-        // Adaptive learning: 80%+ triggers automatic next lesson progression
+    } else if (shouldMoveToNextCategoryAfterQuiz) {
+        // Scores below 80% move the student to the next category.
         finishMessage = selectedLanguage === 'tl'
-            ? `Kahanga-hanga! ${accuracy}% accuracy! 🎉 Pag-aabutan ka sa susunod na leksyon...`
-            : `Excellent! ${accuracy}% accuracy! 🎉 Moving to the next lesson...`;
+            ? `${accuracy}% accuracy. Pupunta tayo sa susunod na kategorya...`
+            : `${accuracy}% accuracy. Moving to the next category...`;
     } else {
         finishMessage = selectedLanguage === 'tl'
-            ? `Magaling, ${localStorage.getItem("studentName") || "Estudyante"}! Nakakuha ka ng ${quizStars} bituin!`
-            : `Great work, ${localStorage.getItem("studentName") || "Student"}! You earned ${quizStars} stars!`;
+            ? `${accuracy}% accuracy. Magpapatuloy tayo sa kasalukuyang kategorya.`
+            : `${accuracy}% accuracy. Continuing in the current category.`;
     }
 
-    const noticeDuration = didNotAdvance ? 10000 : (isAdaptiveProgressEligible ? 3500 : 2800);
+    const noticeDuration = didNotAdvance ? 10000 : 2800;
     showNotification(finishMessage, noticeDuration);
     if (didNotAdvance) {
         speakText(finishMessage);
-    } else if (isAdaptiveProgressEligible) {
+    } else if (shouldMoveToNextCategoryAfterQuiz) {
         speakText(selectedLanguage === 'tl' 
-            ? `Magandang gawa! Pag-aabutan ka sa susunod na leksyon.` 
-            : `Great job! Moving to the next lesson.`);
+            ? `Magandang gawa! Pupunta tayo sa susunod na kategorya.` 
+            : `Moving to the next category.`);
     }
 
     currentScoreEl.textContent = String(quizScore);
@@ -3963,8 +3972,7 @@ function finishQuiz(){
     localStorage.setItem('quizDifficulty', 'easy');
 
     setTimeout(() => {
-        // ADAPTIVE LEARNING: Auto-progression when accuracy >= 80%
-        if (isAdaptiveProgressEligible && autoProgressToNextLesson(quizCategory, quizLessonIndex)) {
+        if (autoProgressToNextLesson(quizCategory, quizLessonIndex, accuracy)) {
             // Successfully progressed to next lesson
             const nextLessonTitle = selectedLanguage === 'tl'
                 ? titleTranslations[currentCategory] || currentCategory
