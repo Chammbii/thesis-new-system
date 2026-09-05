@@ -1,1 +1,872 @@
+<!DOCTYPE html>
+<!-- <html lang="en"> -->
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>QuizLand</title>
+
+      <!-- Favicon / Tab Logo -->
+  <link rel="icon" type="image/png" class = logo  href="logo.png">
+
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+
+        <audio id="popSound" src="popclick.mp3" preload="auto"></audio>
+<!-- bg audio -->
+        <audio id="bgMusi" loop preload="auto" src="bgMusic.mp3"></audio>
+
+
+   
+</head>
+
+<body>  
+
+    <!-- ===================================================== -->
+    <!-- HOME SCREEN -->
+    <!-- ===================================================== -->
+
+    <section id="homeScreen" class="screen active">
+
+        <div class="home-container">
+
+
+
+            <p class="subtitle">
+                Learn • Play • Earn Stars 
+            </p>
+
+            <div class="button-group">
+
+                <button id="startBtn" class="main-btn">
+                    <i class="fa-solid fa-play"></i>
+                    Start Learning
+                </button>
+
+                <button id="teacherBtn" class="main-btn">
+                    <i class="fa-solid fa-user-tie"></i>
+                    Teacher Login
+                </button>
+
+                <button id="settingsBtn" class="main-btn">
+                    <i class="fa-solid fa-gear"></i>
+                    Settings
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- LESSON SCREEN -->
+    <!-- STUDENT PROFILE -->
+    <!-- ===================================================== -->
+
+    <section id="profileScreen" class="screen">
+
+        <div class="profile-container">
+
+            <h2>Student Profile</h2>
+
+            <p>
+                Enter your name and choose your favorite avatar.
+            </p>
+
+            <input
+                type="text"
+                id="studentName"
+                placeholder="Enter your name">
+
+            <h3>Select Avatar</h3>
+
+            <div class="avatar-grid">
+
+                <div class="avatar-card">
+                    <img src="avatar001.png">
+                </div>
+
+                <div class="avatar-card">
+                    <img src="avatar002.png">
+                </div>
+
+                <div class="avatar-card">
+                    <img src="avatar003.png">
+                </div>
+
+                <div class="avatar-card">
+                    <img src="avatar004.png">
+                </div>
+
+            </div>
+
+            <button id="continueBtn" class="main-btn">
+                Continue
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- ===================================================== -->
+    <!-- TEACHER LOGIN SCREEN -->
+    <!-- ===================================================== -->
+
+    <section id="teacherScreen" class="screen">
+
+        <div class="teacher-container">
+
+            <div class="teacher-card">
+
+                <h2 id="teacherFormTitle">Teacher Login</h2>
+
+                <p id="teacherFormSubtitle">Enter your teacher credentials to access the dashboard.</p>
+
+                <form id="teacherLoginForm" class="teacher-form">
+
+                    <div class="input-wrapper">
+                        <input type="email" id="teacherEmail" placeholder="Email">
+                        <span class="input-error-icon" aria-hidden="true">⚠</span>
+                        <div class="input-error-message"></div>
+                    </div>
+
+                    <div class="input-wrapper">
+                        <input type="password" id="teacherPassword" placeholder="Password">
+                        <button type="button" class="password-toggle-btn" data-toggle-target="teacherPassword" aria-label="Show password">Show</button>
+                        <span class="input-error-icon" aria-hidden="true">⚠</span>
+                        <div class="input-error-message"></div>
+                    </div>
+
+                    <div class="input-wrapper teacher-hidden">
+                        <input type="password" id="teacherConfirmPassword" placeholder="Confirm Password">
+                        <button type="button" class="password-toggle-btn" data-toggle-target="teacherConfirmPassword" aria-label="Show password">Show</button>
+                        <span class="input-error-icon" aria-hidden="true">⚠</span>
+                        <div class="input-error-message"></div>
+                    </div>
+
+                    <div class="input-wrapper teacher-hidden">
+                        <input type="text" id="teacherFullName" placeholder="Full Name">
+                        <span class="input-error-icon" aria-hidden="true">⚠</span>
+                        <div class="input-error-message"></div>
+                    </div>
+
+                    <div class="teacher-form-actions">
+                        <button type="submit" class="main-btn" id="teacherSubmitBtn">Login</button>
+                        <button type="button" id="teacherForgotPasswordBtn" class="secondary-btn teacher-hidden">Forgot Password</button>
+                        <button type="button" id="teacherLogoutUnlockBtn" class="secondary-btn teacher-hidden">Logout</button>
+                    </div>
+
+                    <p class="teacher-switch">
+                        <span id="teacherSwitchText">Don't have an account?</span>
+                        <button type="button" id="teacherToggleMode" class="main-btn">Register</button>
+                    </p>
+
+                    <button type="button" id="teacherBackHome" class="back-btn">← Back to Home</button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section id="teacherDashboard" class="screen">
+
+        <div class="tdash">
+
+            <header class="tdash-header">
+                <div class="tdash-header-copy">
+                    <p class="tdash-eyebrow">QuizLand Teacher</p>
+                    <h2>Classroom Dashboard</h2>
+                    <p class="tdash-welcome">Welcome back, <span id="teacherNameDisplay">Teacher</span>.</p>
+                </div>
+                <div class="tdash-header-actions">
+                    <button id="teacherDashboardRefreshBtn" class="tdash-btn tdash-btn--refresh" type="button">Refresh</button>
+                    <button id="teacherCustomizeBtn" class="tdash-btn tdash-btn--soft" type="button">Customize</button>
+                    <button id="teacherDashboardPrintBtn" class="tdash-btn tdash-btn--soft" type="button">Print</button>
+                    <button id="teacherDashboardHomeBtn" class="tdash-btn tdash-btn--ghost" type="button">Home</button>
+                    <button id="teacherLogoutBtn" class="tdash-btn tdash-btn--solid" type="button">Logout</button>
+                </div>
+            </header>
+
+            <div class="tdash-charts">
+                <section class="tdash-panel">
+                    <div class="tdash-panel-head">
+                        <h3>Progress of Student</h3>
+                        <p>Lesson category completion (%)</p>
+                    </div>
+                    <div id="teacherProgressChart" class="bar-chart" aria-label="Student progress bar chart"></div>
+                </section>
+                <section class="tdash-panel">
+                    <div class="tdash-panel-head">
+                        <h3>Stars of Student</h3>
+                        <p>Total stars each child earned</p>
+                    </div>
+                    <div id="teacherStarsChart" class="bar-chart" aria-label="Student stars bar chart"></div>
+                </section>
+            </div>
+
+            <section class="tdash-panel tdash-panel--wide">
+                <div class="tdash-panel-head">
+                    <h3>Stars earned of the day</h3>
+                    <p>Total stars all students earned each day (last 14 days)</p>
+                </div>
+                <div id="teacherDailyStarsChart" class="bar-chart bar-chart--daily" aria-label="Daily stars earned bar chart"></div>
+            </section>
+
+            <section class="tdash-panel tdash-panel--wide">
+                <div class="tdash-panel-head">
+                    <h3>Student that needs more practice</h3>
+
+                </div>
+                <div id="teacherNeedsInterpretation" class="teacher-needs-interpretation" aria-live="polite"></div>
+            </section>
+
+            <section class="tdash-panel tdash-panel--wide">
+                <div class="tdash-panel-head">
+                    <h3>Student Progress Tracker</h3>
+                    <p>Name, avatar, progress, accuracy, stars, and quiz history</p>
+                    <p id="teacherStudentTrackerCount" class="teacher-student-count" aria-live="polite">0 students tracked</p>
+                </div>
+                <div class="teacher-progress-table">
+                    <table id="teacherStudentProgressTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Avatar</th>
+                                <th>Progress</th>
+                                <th>Latest Activity Score</th>
+                                <th>Stars</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="tdash-panel tdash-panel--wide" id="quizHistoryPanel">
+                <div class="tdash-panel-head">
+                    <h3>Quiz History</h3>
+                    <p id="quizHistorySubtitle">Select a student to view every quiz attempt.</p>
+                </div>
+                <div class="quiz-history-table-wrap">
+                    <table id="teacherQuizHistoryTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Score</th>
+                                <th>Accuracy</th>
+                                <th>Stars Gained</th>
+                                <th>Level Stopped</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="quiz-history-empty">
+                                <td colspan="6">No student selected yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </div>
+
+        <div id="teacherPrintModal" class="teacher-print-modal" hidden>
+            <div class="teacher-print-card" role="dialog" aria-modal="true" aria-labelledby="teacherPrintTitle">
+                <h3 id="teacherPrintTitle">Print Student Progress</h3>
+                <label for="teacherPrintStudent">Choose a student</label>
+                <select id="teacherPrintStudent">
+                    <option value="all">All students</option>
+                </select>
+                <div class="teacher-print-actions">
+                    <button id="teacherPrintCancelBtn" class="tdash-btn tdash-btn--ghost" type="button">Cancel</button>
+                    <button id="teacherPrintConfirmBtn" class="tdash-btn tdash-btn--solid" type="button">Print Progress</button>
+                </div>
+            </div>
+        </div>
+
+        <section id="teacherPrintReport" class="teacher-print-report" aria-hidden="true"></section>
+
+        <div id="teacherCustomizeModal" class="teacher-customize-modal" hidden>
+            <div class="teacher-customize-card" role="dialog" aria-modal="true" aria-labelledby="teacherCustomizeTitle">
+                <h3 id="teacherCustomizeTitle">Customize Quiz Questions</h3>
+                <form id="teacherCustomizeForm" class="teacher-customize-form">
+                    <label for="customQuestionCategory">Category</label>
+                    <select id="customQuestionCategory" required>
+                        <option value="alphabet">Alphabet</option>
+                        <option value="numbers">Numbers</option>
+                        <option value="colors">Colors</option>
+                        <option value="shapes">Shapes</option>
+                    </select>
+                    <label for="customQuestionDifficulty">Level</label>
+                    <select id="customQuestionDifficulty" required>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Normal</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                    <label for="customQuestionPrompt">Question</label>
+                    <input id="customQuestionPrompt" type="text" maxlength="160" placeholder="Which answer is correct?" required>
+                    <label for="customQuestionCorrect">Correct answer</label>
+                    <input id="customQuestionCorrect" type="text" maxlength="80" placeholder="Correct answer" required>
+                    <label>Multiple-choice answers</label>
+                    <div class="custom-choice-fields">
+                        <div class="custom-choice-field">
+                            <input class="custom-choice" type="text" maxlength="80" placeholder="Answer 1" required>
+                            <input class="custom-choice-image" type="file" accept="image/*" aria-label="Photo for answer 1">
+                        </div>
+                        <div class="custom-choice-field">
+                            <input class="custom-choice" type="text" maxlength="80" placeholder="Answer 2" required>
+                            <input class="custom-choice-image" type="file" accept="image/*" aria-label="Photo for answer 2">
+                        </div>
+                        <div class="custom-choice-field">
+                            <input class="custom-choice" type="text" maxlength="80" placeholder="Answer 3" required>
+                            <input class="custom-choice-image" type="file" accept="image/*" aria-label="Photo for answer 3">
+                        </div>
+                    </div>
+                    <p id="customQuestionMessage" class="teacher-customize-message" aria-live="polite"></p>
+                    <div class="teacher-customize-actions">
+                        <button id="teacherCustomizeCloseBtn" class="tdash-btn tdash-btn--ghost" type="button">Close</button>
+                        <button class="tdash-btn tdash-btn--solid" type="submit">Add Question</button>
+                    </div>
+                </form>
+                <div>
+                    <h4>Added Questions</h4>
+                    <div id="customQuestionList" class="custom-question-list"></div>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+
+    <!-- ===================================================== -->
+    <!-- LEARNING MENU -->
+    <!-- ===================================================== -->
+
+    <section id="menuScreen" class="screen">
+
+        <div class="menu-container">
+
+            <h2>Choose What You Want To Learn</h2>
+
+            <div class="lesson-grid">
+
+                <!-- Alphabet -->
+
+                <div class="lesson-card">
+
+                    <img src="alphabetlesson.png">
+
+                    <h3>Alphabet</h3>
+
+                    <button class="lesson-btn">
+                        Start
+                    </button>
+                    <button class="quiz-menu-btn" data-quiz-category="alphabet" type="button" disabled>
+                        Quiz 🔒
+                    </button>
+
+                </div>
+
+                <!-- Numbers -->
+
+                <div class="lesson-card">
+
+                    <img src="numberlesson.png">
+
+                    <h3>Numbers</h3>
+
+                    <button class="lesson-btn">
+                        Start
+                    </button>
+                    <button class="quiz-menu-btn" data-quiz-category="numbers" type="button" disabled>
+                        Quiz 🔒
+                    </button>
+
+                </div>
+
+                <!-- Colors -->
+
+                <div class="lesson-card">
+
+                    <img src="colorlesson.png">
+
+                    <h3>Colors</h3>
+
+                    <button class="lesson-btn">
+                        Start
+                    </button>
+                    <button class="quiz-menu-btn" data-quiz-category="colors" type="button" disabled>
+                        Quiz 🔒
+                    </button>
+
+                </div>
+
+                <!-- Shapes -->
+
+                <div class="lesson-card">
+
+                    <img src="shapelesson.png">
+
+                    <h3>Shapes</h3>
+
+                    <button class="lesson-btn">
+                        Start
+                    </button>
+                    <button class="quiz-menu-btn" data-quiz-category="shapes" type="button" disabled>
+                        Quiz 🔒
+                    </button>
+
+                </div>
+
+            </div>
+
+            <button id="backHome" class="back-btn">
+                ← Back to Home
+            </button>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ===================================================== -->
+    <!-- SETTINGS POPUP -->
+    <!-- ===================================================== -->
+
+    <div id="settingsModal" class="modal">
+
+        <div class="modal-content settings-panel">
+
+            <button type="button" class="settings-close" id="settingsCloseBtn" aria-label="Close settings">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <header class="settings-header">
+                <div class="settings-header-icon" aria-hidden="true">
+                    <i class="fa-solid fa-sliders"></i>
+                </div>
+                <div class="settings-header-text">
+                    <h2>Settings</h2>
+                    <p>Tune sound, voice, and display for your adventure.</p>
+                </div>
+            </header>
+
+            <div class="settings-body">
+
+                <section class="settings-section" aria-labelledby="settingsSoundTitle">
+                    <h3 id="settingsSoundTitle" class="settings-section-title">
+                        <i class="fa-solid fa-music"></i>
+                        Sound
+                    </h3>
+
+                    <div class="setting-row">
+                        <div class="setting-copy">
+                            <span class="setting-label">Background Music</span>
+                            <span class="setting-hint">Play soft music while learning</span>
+                        </div>
+                        <label class="switch" for="bgMusicToggle">
+                            <input id="bgMusicToggle" type="checkbox" checked>
+                            <span class="switch-track" aria-hidden="true"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-row setting-row--stack">
+                        <div class="setting-copy setting-copy--inline">
+                            <span class="setting-label">Music Volume</span>
+                            <span class="setting-value" id="bgMusicVolumeValue">60%</span>
+                        </div>
+                        <input id="bgMusicVolume" class="setting-range" type="range" min="0" max="100" value="60">
+                    </div>
+
+                    <div class="setting-row">
+                        <div class="setting-copy">
+                            <span class="setting-label">Sound Effects</span>
+                            <span class="setting-hint">Clicks and playful feedback sounds</span>
+                        </div>
+                        <label class="switch" for="sfxToggle">
+                            <input id="sfxToggle" type="checkbox" checked>
+                            <span class="switch-track" aria-hidden="true"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-row setting-row--stack">
+                        <div class="setting-copy setting-copy--inline">
+                            <span class="setting-label">Effects Volume</span>
+                            <span class="setting-value" id="sfxVolumeValue">80%</span>
+                        </div>
+                        <input id="sfxVolume" class="setting-range" type="range" min="0" max="100" value="80">
+                    </div>
+                </section>
+
+                <section class="settings-section" aria-labelledby="settingsLearningTitle">
+                    <h3 id="settingsLearningTitle" class="settings-section-title">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        Learning
+                    </h3>
+
+                    <div class="setting-row">
+                        <div class="setting-copy">
+                            <span class="setting-label">Voice Narration</span>
+                            <span class="setting-hint">Hear lesson and quiz prompts aloud</span>
+                        </div>
+                        <label class="switch" for="voiceNarrationToggle">
+                            <input id="voiceNarrationToggle" type="checkbox" checked>
+                            <span class="switch-track" aria-hidden="true"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-row">
+                        <div class="setting-copy">
+                            <span class="setting-label">Microphone</span>
+                            <span class="setting-hint">Use your voice for Speak Answer in lessons</span>
+                        </div>
+                        <label class="switch" for="microphoneToggle">
+                            <input id="microphoneToggle" type="checkbox" checked>
+                            <span class="switch-track" aria-hidden="true"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-row setting-row--mic-extra" id="microphoneExtraRow">
+                        <div class="mic-setting-controls">
+                            <span id="microphoneStatus" class="mic-status mic-status--unknown">Checking...</span>
+                            <button type="button" id="microphoneAllowBtn" class="mic-allow-btn">
+                                <i class="fa-solid fa-microphone"></i>
+                                Allow Microphone
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="settings-section" aria-labelledby="settingsDisplayTitle">
+                    <h3 id="settingsDisplayTitle" class="settings-section-title">
+                        <i class="fa-solid fa-display"></i>
+                        Display
+                    </h3>
+
+                    <div class="setting-row">
+                        <div class="setting-copy">
+                            <span class="setting-label">Fullscreen</span>
+                            <span class="setting-hint">Fill the whole screen for focus mode</span>
+                        </div>
+                        <label class="switch" for="fullscreenToggle">
+                            <input id="fullscreenToggle" type="checkbox">
+                            <span class="switch-track" aria-hidden="true"></span>
+                        </label>
+                    </div>
+                </section>
+
+            </div>
+
+            <footer class="settings-footer">
+                <button type="button" class="settings-done-btn" id="settingsDoneBtn">
+                    Done
+                </button>
+            </footer>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ===================================================== -->
+    <!-- FOOTER -->
+    <!-- ===================================================== -->
+
+ 
+
+    <!-- ===================================================== -->
+<!-- LESSON SCREEN -->
+<!-- ===================================================== -->
+
+<section id="lessonScreen" class="screen">
+
+    <div class="lesson-container">
+
+        <!-- Progress -->
+
+        <div class="lesson-progress">
+
+            <div id="progressFill" class="progress-fill"></div>
+
+        </div>
+
+        <!-- Lesson Title -->
+
+        <h2 id="lessonTitle">
+
+            Alphabet Lesson
+
+        </h2>
+
+        <!-- Lesson Image -->
+
+        <div class="lesson-image">
+
+            <img
+                id="lessonImage"
+                src="images/alphabet/apple.png"
+                alt="Lesson Image">
+
+        </div>
+
+        <!-- Letter / Number -->
+
+        <h1 id="lessonLetter">
+
+            A
+
+        </h1>
+
+        <!-- Word -->
+
+        <h2 id="lessonWord"></h2>
+
+        <p id="lessonFeedback" class="lesson-feedback">
+            Lesson 1 of 26
+        </p>
+
+        <!-- Voice Buttons -->
+
+        <div class="lesson-voice-actions">
+            <button id="voiceBtn" class="voice-btn" type="button">
+                🔊 Listen
+            </button>
+            <button id="lessonSpeakBtn" class="voice-btn voice-btn--speak" type="button">
+                🎤 Speak Answer
+            </button>
+        </div>
+
+        <p id="lessonVoiceStatus" class="lesson-voice-status" aria-live="polite"></p>
+
+        <!-- Navigation -->
+
+        <div class="lesson-navigation">
+
+            <button id="previousLesson" class="lesson-nav-btn">
+
+                ⬅ Previous
+
+            </button>
+
+            <button id="nextLesson" class="lesson-nav-btn">
+
+                Next ➜
+
+            </button>
+
+        </div>
+
+        <!-- Home -->
+
+        <button id="lessonHomeBtn" class="back-btn">
+
+            🏠 Back to Menu
+
+        </button>
+
+    </div>
+
+</section>
+
+<!-- ===================================================== -->
+<!-- QUIZ SCREEN -->
+<!-- ===================================================== -->
+
+<section id="quizScreen" class="screen">
+
+    <div class="quiz-container">
+
+        <!-- Progress -->
+
+        <div class="quiz-progress">
+
+            <div id="quizProgressFill" class="progress-fill"></div>
+
+        </div>
+
+        <!-- Quiz Title -->
+
+        <h2 id="quizTitle">
+
+            Alphabet Quiz
+
+        </h2>
+
+        <!-- Difficulty -->
+
+        <div class="quiz-difficulty">
+            <div class="quiz-difficulty-label">Difficulty</div>
+            <div class="quiz-difficulty-buttons" role="group" aria-label="Quiz difficulty">
+                <button type="button" class="difficulty-btn" data-difficulty="easy" disabled>Easy</button>
+                <button type="button" class="difficulty-btn" data-difficulty="medium" disabled>Normal</button>
+                <button type="button" class="difficulty-btn" data-difficulty="hard" disabled>Hard</button>
+
+
+            </div>
+        </div>
+
+        <div id="quizUnlockBox" class="quiz-unlock-box" role="status" aria-live="polite">
+            <div class="quiz-unlock-title">Unlock Next Level</div>
+            <p id="quizUnlockRule" class="quiz-unlock-rule">
+                Get all 5 Easy answers correct to unlock Medium.
+            </p>
+            <p id="quizUnlockProgress" class="quiz-unlock-progress">
+                Progress: 0 / 5 correct
+            </p>
+        </div>
+
+        <!-- Score -->
+
+        <div class="quiz-score">
+
+
+            Score:
+            <span id="currentScore">0</span>
+
+        </div>
+
+        <!-- Question Number -->
+
+        <p id="questionNumber">
+
+            Question 1 of 5
+
+        </p>
+
+        <!-- Question -->
+
+        <h1 id="quizQuestion">
+
+            Which one is Apple?
+
+        </h1>
+
+        <!-- Voice -->
+
+        <button id="quizVoiceBtn" class="voice-btn">
+
+            🔊 Read Question
+
+        </button>
+
+        <!-- Answer Cards -->
+
+        <div class="answer-grid" id="quizAnswerGrid">
+
+            <button class="answer-card" id="answer1">
+
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
+
+            </button>
+
+            <button class="answer-card" id="answer2">
+
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
+
+            </button>
+
+            <button class="answer-card" id="answer3">
+
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
+
+            </button>
+
+            <button class="answer-card" id="answer4">
+
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
+
+            </button>
+
+            <button class="answer-card" id="answer5">
+
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
+                
+            </button>
+
+            <button class="answer-card" id="answer6">
+
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
+
+            </button>
+
+            <button class="answer-card" id="answer7">
+
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
+
+            </button>
+
+            <button class="answer-card" id="answer8">
+
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
+
+            </button>
+
+            <button class="answer-card" id="answer9">
+
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
+
+            </button>
+
+            <button class="answer-card" id="answer10">
+
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
+
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+<div id="notificationBox" class="notification-box"></div>
+
+<!-- Global student HUD (stars + settings) -->
+<div id="quizStarScore" class="quiz-star-score" aria-live="polite" hidden>
+    <span class="quiz-star-icon" aria-hidden="true">★</span>
+    <span id="quizStarCount" class="quiz-star-count">0</span>
+    <span class="quiz-star-label">Stars</span>
+</div>
+
+<button type="button" id="floatingSettingsBtn" class="floating-settings-btn" aria-label="Open settings" hidden>
+    <i class="fa-solid fa-gear"></i>
+</button>
+
+</body>
+
+   
+ <script src="script.js"></script>
+
+</html>
