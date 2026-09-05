@@ -342,6 +342,38 @@ function buildTeacherPrintReport(records) {
         ${reports || "<p>No student records available.</p>"}`;
 }
 
+function getSelectedTeacherPrintRecords() {
+    const records = getStudentRecords();
+    const selectedName = teacherPrintStudent ? teacherPrintStudent.value : "all";
+    return selectedName === "all"
+        ? records
+        : records.filter(record => record.name === selectedName);
+}
+
+function downloadTeacherPrintReport() {
+    buildTeacherPrintReport(getSelectedTeacherPrintRecords());
+    const reportStyles = `
+        body{font-family:Arial,sans-serif;color:#111;margin:32px}
+        h1{font-size:24px;margin:0 0 6px}
+        body>p{color:#444;margin:0 0 24px}
+        article{margin-bottom:28px;page-break-inside:avoid}
+        h2{font-size:19px;margin:0 0 6px}
+        article p{margin:0 0 12px}
+        table{width:100%;border-collapse:collapse;font-size:12px}
+        th,td{padding:7px;border:1px solid #bbb;text-align:left}
+        th{background:#eee}`;
+    const documentHtml = `<!doctype html><html><head><meta charset="UTF-8"><title>QuizLand Student Progress</title><style>${reportStyles}</style></head><body>${teacherPrintReport.innerHTML}</body></html>`;
+    const blob = new Blob([documentHtml], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "quizland-student-progress.html";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+}
+
 if (teacherDashboardPrintBtn) {
     teacherDashboardPrintBtn.addEventListener("click", openTeacherPrintModal);
 }
@@ -350,13 +382,8 @@ if (teacherPrintCancelBtn) {
 }
 if (teacherPrintConfirmBtn) {
     teacherPrintConfirmBtn.addEventListener("click", () => {
-        const records = getStudentRecords();
-        const selectedName = teacherPrintStudent ? teacherPrintStudent.value : "all";
-        buildTeacherPrintReport(selectedName === "all"
-            ? records
-            : records.filter(record => record.name === selectedName));
+        downloadTeacherPrintReport();
         closeTeacherPrintModal();
-        window.print();
     });
 }
 
@@ -909,6 +936,21 @@ function renderTeacherNeedsInterpretation(records) {
     const container = document.getElementById("teacherNeedsInterpretation");
     if (!container) return;
 
+    const lessonLabels = {
+        alphabet: "Alphabet",
+        numbers: "Numbers",
+        colors: "Colors",
+        shapes: "Shapes"
+    };
+
+    function getUnfinishedLessons(studentName) {
+        const progressKey = getNamespacedKey(`student_${encodeURIComponent(studentName)}_lessonProgress`);
+        const progress = JSON.parse(localStorage.getItem(progressKey)) || {};
+        return Object.keys(lessons)
+            .filter(category => !progress[category])
+            .map(category => lessonLabels[category] || category);
+    }
+
     if (!records.length) {
         container.innerHTML = '<div class="teacher-needs-empty">No students tracked yet. Students will appear here when they begin learning.</div>';
         return;
@@ -944,12 +986,12 @@ function renderTeacherNeedsInterpretation(records) {
         <div class="teacher-needs-item">
             <div class="teacher-needs-name">${student.name}</div>
             <div class="teacher-needs-meta">Progress: ${student.progress}% • Accuracy: ${student.accuracy}% • Stars: ${student.stars}</div>
-            <div class="teacher-needs-note">Needs more practice to master this lesson.</div>
+            <div class="teacher-needs-note">Needs more practice to master: ${getUnfinishedLessons(student.name).join(", ") || "the current lesson"}.</div>
         </div>
     `).join("");
 
     container.innerHTML = `
-        <p class="teacher-needs-summary">This is students who need to master the lesson: </p>
+        <p class="teacher-needs-summary">This is students that need to master the lesson:</p>
         <div class="teacher-needs-list">${items}</div>
     `;
 }
@@ -1849,32 +1891,32 @@ document.addEventListener("click", () => {
 const lessons = {
 
     alphabet: [
-        {title:"Alphabet Lesson",letter:"A",word:"",image:"alpha001.png"},
-        {title:"Alphabet Lesson",letter:"B",word:"",image:"alpha002.png"},
-        {title:"Alphabet Lesson",letter:"C",word:"",image:"alpha003.png"},
-        {title:"Alphabet Lesson",letter:"D",word:"",image:"alpha004.png"},
-        {title:"Alphabet Lesson",letter:"E",word:"",image:"alpha005.png"},
-        {title:"Alphabet Lesson",letter:"F",word:"",image:"alpha006.png"},
-        {title:"Alphabet Lesson",letter:"G",word:"",image:"alpha007.png"},
-        {title:"Alphabet Lesson",letter:"H",word:"",image:"alpha008.png"},
-        {title:"Alphabet Lesson",letter:"I",word:"",image:"alpha009.png"},
-        {title:"Alphabet Lesson",letter:"J",word:"",image:"alpha010.png"},
-        {title:"Alphabet Lesson",letter:"K",word:"",image:"alpha011.png"},
-        {title:"Alphabet Lesson",letter:"L",word:"",image:"alpha012.png"},
-        {title:"Alphabet Lesson",letter:"M",word:"",image:"alpha013.png"},
-        {title:"Alphabet Lesson",letter:"N",word:"",image:"alpha014.png"},
-        {title:"Alphabet Lesson",letter:"O",word:"",image:"alpha015.png"},
-        {title:"Alphabet Lesson",letter:"P",word:"",image:"alpha016.png"},
-        {title:"Alphabet Lesson",letter:"Q",word:"",image:"alpha017.png"},
-        {title:"Alphabet Lesson",letter:"R",word:"",image:"alpha018.png"},
-        {title:"Alphabet Lesson",letter:"S",word:"",image:"alpha019.png"},
-        {title:"Alphabet Lesson",letter:"T",word:"",image:"alpha020.png"},
-        {title:"Alphabet Lesson",letter:"U",word:"",image:"alpha021.png"},
-        {title:"Alphabet Lesson",letter:"V",word:"",image:"alpha022.png"},
-        {title:"Alphabet Lesson",letter:"W",word:"",image:"alpha023.png"},
-        {title:"Alphabet Lesson",letter:"X",word:"",image:"alpha024.png"},
-        {title:"Alphabet Lesson",letter:"Y",word:"",image:"alpha025.png"},
-        {title:"Alphabet Lesson",letter:"Z",word:"",image:"alpha026.png"}
+        {title:"Alphabet Lesson",letter:"A",word:"A",image:"alpha001.png"},
+        {title:"Alphabet Lesson",letter:"B",word:"B",image:"alpha002.png"},
+        {title:"Alphabet Lesson",letter:"C",word:"C",image:"alpha003.png"},
+        {title:"Alphabet Lesson",letter:"D",word:"D",image:"alpha004.png"},
+        {title:"Alphabet Lesson",letter:"E",word:"E",image:"alpha005.png"},
+        {title:"Alphabet Lesson",letter:"F",word:"F",image:"alpha006.png"},
+        {title:"Alphabet Lesson",letter:"G",word:"G",image:"alpha007.png"},
+        {title:"Alphabet Lesson",letter:"H",word:"H",image:"alpha008.png"},
+        {title:"Alphabet Lesson",letter:"I",word:"I",image:"alpha009.png"},
+        {title:"Alphabet Lesson",letter:"J",word:"J",image:"alpha010.png"},
+        {title:"Alphabet Lesson",letter:"K",word:"K",image:"alpha011.png"},
+        {title:"Alphabet Lesson",letter:"L",word:"L",image:"alpha012.png"},
+        {title:"Alphabet Lesson",letter:"M",word:"M",image:"alpha013.png"},
+        {title:"Alphabet Lesson",letter:"N",word:"N",image:"alpha014.png"},
+        {title:"Alphabet Lesson",letter:"O",word:"O",image:"alpha015.png"},
+        {title:"Alphabet Lesson",letter:"P",word:"P",image:"alpha016.png"},
+        {title:"Alphabet Lesson",letter:"Q",word:"Q",image:"alpha017.png"},
+        {title:"Alphabet Lesson",letter:"R",word:"R",image:"alpha018.png"},
+        {title:"Alphabet Lesson",letter:"S",word:"S",image:"alpha019.png"},
+        {title:"Alphabet Lesson",letter:"T",word:"T",image:"alpha020.png"},
+        {title:"Alphabet Lesson",letter:"U",word:"U",image:"alpha021.png"},
+        {title:"Alphabet Lesson",letter:"V",word:"V",image:"alpha022.png"},
+        {title:"Alphabet Lesson",letter:"W",word:"W",image:"alpha023.png"},
+        {title:"Alphabet Lesson",letter:"X",word:"X",image:"alpha024.png"},
+        {title:"Alphabet Lesson",letter:"Y",word:"Y",image:"alpha025.png"},
+        {title:"Alphabet Lesson",letter:"Z",word:"Z",image:"alpha026.png"}
     ],
 
     numbers: [
