@@ -244,6 +244,12 @@
                     <h3>Student Progress Tracker</h3>
                     <p>Name, avatar, progress, accuracy, stars, and quiz history</p>
                     <p id="teacherStudentTrackerCount" class="teacher-student-count" aria-live="polite">0 students tracked</p>
+                    <label class="teacher-student-sort-label" for="teacherStudentSort">Sort students</label>
+                    <select id="teacherStudentSort" class="teacher-student-sort">
+                        <option value="recent">Recently updated</option>
+                        <option value="surname">Surname A-Z</option>
+                        <option value="stars">Highest stars</option>
+                    </select>
                 </div>
                 <div class="teacher-progress-table">
                     <table id="teacherStudentProgressTable">
