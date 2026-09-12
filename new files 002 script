@@ -3824,14 +3824,14 @@ function getExpectedQuestionCountForDifficulty(difficulty) {
     return cfg.questionCount;
 }
 
-function getNextDifficultyAfterCompletion(currentDifficulty, stageScore) {
+function getNextDifficultyAfterCompletion(currentDifficulty, stageScore, questionCount) {
     // Spec:
     // Easy passed with exactly 5/5 correct -> starts Normal
     // Normal passed with exactly 10/10 correct -> starts Hard
     // Even 1 wrong answer -> ends quiz (no advance)
-    const expected = getExpectedQuestionCountForDifficulty(currentDifficulty);
+    const expected = questionCount || getExpectedQuestionCountForDifficulty(currentDifficulty);
 
-    if (stageScore !== expected) {
+    if (stageScore < expected) {
         return 'end';
     }
 
@@ -3911,16 +3911,29 @@ function autoProgressToNextLesson(currentCat, currentLessonIdx, accuracy) {
 function finishQuiz(){
 
     const stageScore = quizStageState ? (quizStageState.stageScore || 0) : quizScore;
-    const nextDifficulty = getNextDifficultyAfterCompletion(quizDifficulty, stageScore);
+    const stageTotal = quizStageState
+        ? quizStageState.stageConfig[quizStageState.stageIndex].questionCount
+        : quizQuestions.length;
+    const nextDifficulty = getNextDifficultyAfterCompletion(quizDifficulty, stageScore, stageTotal);
+    const difficultyStageIndex = {
+        easy: 0,
+        medium: 1,
+        hard: 2
+    };
+    const currentStageIndex = difficultyStageIndex[quizDifficulty];
+    const nextStageIndex = Number.isInteger(currentStageIndex)
+        ? currentStageIndex + 1
+        : -1;
     const canAdvance =
         nextDifficulty !== 'end' &&
         quizStageState &&
-        quizStageState.stageIndex < quizStageState.stageConfig.length - 1;
+        nextStageIndex >= 0 &&
+        nextStageIndex < quizStageState.stageConfig.length;
 
     // Perfect stage score required to unlock Normal or Hard.
     if (canAdvance) {
 
-        quizStageState.stageIndex++;
+        quizStageState.stageIndex = nextStageIndex;
         quizStageState.stageScore = 0;
 
         quizDifficulty = quizStageState.stageConfig[quizStageState.stageIndex].difficulty;
@@ -3960,7 +3973,6 @@ function finishQuiz(){
     }
 
     // Incomplete stage or Hard finished: end entire quiz session
-    const stageTotal = quizQuestions.length;
     const sessionTotal = quizStageState
         ? quizStageState.stageConfig
             .slice(0, quizStageState.stageIndex + 1)
