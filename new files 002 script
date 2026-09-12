@@ -36,6 +36,7 @@ const teacherDashboardHomeBtn = document.getElementById("teacherDashboardHomeBtn
 const teacherDashboardRefreshBtn = document.getElementById("teacherDashboardRefreshBtn");
 const teacherDashboardPrintBtn = document.getElementById("teacherDashboardPrintBtn");
 const teacherCustomizeBtn = document.getElementById("teacherCustomizeBtn");
+const teacherAddLessonBtn = document.getElementById("teacherAddLessonBtn");
 const teacherCustomizeModal = document.getElementById("teacherCustomizeModal");
 const teacherCustomizeForm = document.getElementById("teacherCustomizeForm");
 const teacherCustomizeCloseBtn = document.getElementById("teacherCustomizeCloseBtn");
@@ -45,6 +46,16 @@ const customQuestionPrompt = document.getElementById("customQuestionPrompt");
 const customQuestionCorrect = document.getElementById("customQuestionCorrect");
 const customQuestionList = document.getElementById("customQuestionList");
 const customQuestionMessage = document.getElementById("customQuestionMessage");
+const teacherLessonModal = document.getElementById("teacherLessonModal");
+const teacherLessonForm = document.getElementById("teacherLessonForm");
+const customLessonName = document.getElementById("customLessonName");
+const customLessonCover = document.getElementById("customLessonCover");
+const customLessonItems = document.getElementById("customLessonItems");
+const addLessonItemBtn = document.getElementById("addLessonItemBtn");
+const teacherLessonCloseBtn = document.getElementById("teacherLessonCloseBtn");
+const teacherLessonMessage = document.getElementById("teacherLessonMessage");
+const customLessonList = document.getElementById("customLessonList");
+const customLessonGrid = document.getElementById("customLessonGrid");
 const teacherPrintModal = document.getElementById("teacherPrintModal");
 const teacherPrintStudent = document.getElementById("teacherPrintStudent");
 const teacherPrintCancelBtn = document.getElementById("teacherPrintCancelBtn");
@@ -65,7 +76,7 @@ const settingsBtn = document.getElementById("settingsBtn");
 const settingsModal = document.getElementById("settingsModal");
 const closeModal = document.getElementById("settingsCloseBtn") || document.querySelector("#settingsModal .close");
 const settingsDoneBtn = document.getElementById("settingsDoneBtn");
-const floatingSettingsBtn = document.getElementById("floatingSettingsBtn");
+const floatingSettingsBtn = settingsBtn;
 const quizStarScoreEl = document.getElementById("quizStarScore");
 const quizStarCountEl = document.getElementById("quizStarCount");
 const fullscreenToggle = document.getElementById("fullscreenToggle");
@@ -157,11 +168,12 @@ function saveStudentStars() {
 function updateStudentHud() {
     const active = document.querySelector(".screen.active");
     const showStars = active === menuScreen || active === lessonScreen || active === quizScreen;
-    const showSettings = hasStudentProfile()
-        && active !== teacherScreen
-        && active !== teacherDashboard
-        && active !== homeScreen
-        && active !== profileScreen;
+    const showSettings = active === homeScreen
+        || (hasStudentProfile()
+            && active !== teacherScreen
+            && active !== teacherDashboard
+            && active !== profileScreen);
+    const showTeacher = active === homeScreen;
 
     if (quizStarScoreEl) {
         quizStarScoreEl.classList.toggle("is-visible", showStars);
@@ -172,6 +184,11 @@ function updateStudentHud() {
     if (floatingSettingsBtn) {
         floatingSettingsBtn.classList.toggle("is-visible", showSettings);
         floatingSettingsBtn.hidden = !showSettings;
+    }
+
+    if (teacherBtn) {
+        teacherBtn.classList.toggle("is-visible", showTeacher);
+        teacherBtn.hidden = !showTeacher;
     }
 }
 
@@ -243,6 +260,18 @@ teacherLoginForm.addEventListener("submit", (event) => {
         handleTeacherLogin();
     }
 
+});
+
+document.querySelectorAll(".password-toggle-btn").forEach(button => {
+    button.addEventListener("click", () => {
+        const passwordInput = document.getElementById(button.dataset.toggleTarget);
+        if (!passwordInput) return;
+
+        const isPasswordVisible = passwordInput.type === "text";
+        passwordInput.type = isPasswordVisible ? "password" : "text";
+        button.textContent = isPasswordVisible ? "Show" : "Hide";
+        button.setAttribute("aria-label", isPasswordVisible ? "Show password" : "Hide password");
+    });
 });
 
 // Clear error state when user starts typing in input fields
@@ -420,8 +449,27 @@ function renderCustomQuestionList() {
     });
 }
 
+function syncCustomLessonQuizCategories() {
+    if (!customQuestionCategory) return;
+    const selectedCategory = customQuestionCategory.value;
+    const customLessons = getCustomLessons();
+    customQuestionCategory.querySelectorAll("[data-custom-lesson-category]").forEach(option => option.remove());
+    customLessons.forEach(customLesson => {
+        if (!customLesson.id || !customLesson.name) return;
+        const option = document.createElement("option");
+        option.value = customLesson.id;
+        option.textContent = `${customLesson.name} Lesson`;
+        option.dataset.customLessonCategory = "true";
+        customQuestionCategory.appendChild(option);
+    });
+    if ([...customQuestionCategory.options].some(option => option.value === selectedCategory)) {
+        customQuestionCategory.value = selectedCategory;
+    }
+}
+
 function openTeacherCustomizeModal() {
     if (!teacherCustomizeModal) return;
+    syncCustomLessonQuizCategories();
     renderCustomQuestionList();
     teacherCustomizeModal.hidden = false;
     customQuestionPrompt?.focus();
@@ -469,8 +517,152 @@ if (teacherCustomizeForm) {
         });
         saveCustomQuizQuestions(questions);
         teacherCustomizeForm.reset();
+        syncCustomLessonQuizCategories();
         customQuestionMessage.textContent = "Question added to the selected quiz level.";
         renderCustomQuestionList();
+    });
+}
+
+function getCustomLessonsKey() {
+    return getNamespacedKey("customLessons");
+}
+
+function getCustomLessons() {
+    try {
+        const lessons = JSON.parse(localStorage.getItem(getCustomLessonsKey()));
+        return Array.isArray(lessons) ? lessons : [];
+    } catch (error) {
+        return [];
+    }
+}
+
+function saveCustomLessons(customLessons) {
+    localStorage.setItem(getCustomLessonsKey(), JSON.stringify(customLessons));
+}
+
+function addLessonItemField(item = {}) {
+    if (!customLessonItems) return;
+    const itemField = document.createElement("div");
+    itemField.className = "custom-lesson-item";
+    itemField.innerHTML = `
+        <div class="custom-lesson-item-fields">
+            <input class="custom-lesson-item-name" type="text" maxlength="60" placeholder="Animal name (for example, Giraffe)" value="${escapePrintText(item.name || "")}" required>
+            <input class="custom-lesson-item-image" type="file" accept="image/*" aria-label="Picture for this lesson item" ${item.image ? "" : "required"}>
+        </div>
+        <button class="tdash-btn tdash-btn--danger custom-lesson-remove" type="button">Remove</button>`;
+    if (item.image) {
+        itemField.dataset.image = item.image;
+    }
+    itemField.querySelector(".custom-lesson-remove").addEventListener("click", () => {
+        itemField.remove();
+    });
+    customLessonItems.appendChild(itemField);
+}
+
+function renderCustomLessonList() {
+    if (!customLessonList) return;
+    const customLessons = getCustomLessons();
+    customLessonList.innerHTML = "";
+    if (!customLessons.length) {
+        customLessonList.innerHTML = '<p class="custom-question-empty">No lessons added yet.</p>';
+        return;
+    }
+    customLessons.forEach(customLesson => {
+        const item = document.createElement("div");
+        item.className = "custom-question-item";
+        item.innerHTML = `
+            <div>
+                <strong></strong>
+                <span></span>
+            </div>
+            <div class="custom-lesson-actions">
+                <button class="tdash-btn tdash-btn--soft custom-lesson-visibility" type="button"></button>
+                <button class="tdash-btn tdash-btn--danger" type="button">Remove</button>
+            </div>`;
+        item.querySelector("strong").textContent = customLesson.name;
+        item.querySelector("span").textContent = `${customLesson.items.length} pictures · ${customLesson.hidden ? "Hidden from students" : "Visible to students"}`;
+        item.querySelector(".custom-lesson-visibility").textContent = customLesson.hidden ? "Show lesson" : "Hide lesson";
+        item.querySelector(".custom-lesson-visibility").addEventListener("click", () => {
+            const updatedLessons = getCustomLessons().map(entry =>
+                entry.id === customLesson.id
+                    ? { ...entry, hidden: !entry.hidden }
+                    : entry
+            );
+            saveCustomLessons(updatedLessons);
+            syncCustomLessons();
+            renderCustomLessonList();
+            showNotification(`${customLesson.name} is now ${customLesson.hidden ? "visible to" : "hidden from"} students.`);
+        });
+        item.querySelector(".tdash-btn--danger").addEventListener("click", () => {
+            saveCustomLessons(getCustomLessons().filter(entry => entry.id !== customLesson.id));
+            syncCustomLessons();
+            renderCustomLessonList();
+            showNotification(`${customLesson.name} lesson removed.`);
+        });
+        customLessonList.appendChild(item);
+    });
+}
+
+function openTeacherLessonModal() {
+    if (!teacherLessonModal) return;
+    teacherLessonForm.reset();
+    customLessonItems.innerHTML = "";
+    addLessonItemField();
+    addLessonItemField();
+    teacherLessonMessage.textContent = "";
+    renderCustomLessonList();
+    teacherLessonModal.hidden = false;
+    customLessonName.focus();
+}
+
+function closeTeacherLessonModal() {
+    if (teacherLessonModal) teacherLessonModal.hidden = true;
+}
+
+if (teacherAddLessonBtn) teacherAddLessonBtn.addEventListener("click", openTeacherLessonModal);
+if (teacherLessonCloseBtn) teacherLessonCloseBtn.addEventListener("click", closeTeacherLessonModal);
+if (addLessonItemBtn) addLessonItemBtn.addEventListener("click", () => addLessonItemField());
+if (teacherLessonForm) {
+    teacherLessonForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        const itemFields = [...customLessonItems.querySelectorAll(".custom-lesson-item")];
+        const items = [];
+        for (const itemField of itemFields) {
+            const name = itemField.querySelector(".custom-lesson-item-name").value.trim();
+            const file = itemField.querySelector(".custom-lesson-item-image").files[0];
+            const image = file ? await readImageAsDataUrl(file) : itemField.dataset.image;
+            if (name && image) items.push({ name, image });
+        }
+        if (!items.length) {
+            teacherLessonMessage.textContent = "Add at least one picture and name.";
+            return;
+        }
+        const coverFile = customLessonCover.files[0];
+        if (!coverFile) {
+            teacherLessonMessage.textContent = "Choose a cover picture.";
+            return;
+        }
+        const customLesson = {
+            id: `custom-lesson-${Date.now()}`,
+            name: customLessonName.value.trim(),
+            cover: await readImageAsDataUrl(coverFile),
+            items,
+            hidden: false
+        };
+        if (!customLesson.name) {
+            teacherLessonMessage.textContent = "Enter a lesson name.";
+            return;
+        }
+        saveCustomLessons([...getCustomLessons(), customLesson]);
+        syncCustomLessonQuizCategories();
+        syncCustomLessons();
+        renderCustomLessonList();
+        teacherLessonForm.reset();
+        customLessonItems.innerHTML = "";
+        addLessonItemField();
+        addLessonItemField();
+        teacherLessonMessage.textContent = "Lesson saved. Students can now open it from the learning menu.";
+        showNotification(`${customLesson.name} lesson added.`);
     });
 }
 
@@ -1284,10 +1476,6 @@ function openSettingsModal() {
 
 settingsBtn.addEventListener("click", openSettingsModal);
 
-if (floatingSettingsBtn) {
-    floatingSettingsBtn.addEventListener("click", openSettingsModal);
-}
-
 if (closeModal) {
     closeModal.addEventListener("click", closeSettingsModal);
 }
@@ -2014,6 +2202,52 @@ const lessons = {
 
 };
 
+const customLessonMetadata = {};
+
+function syncCustomLessons() {
+    Object.keys(customLessonMetadata).forEach(category => {
+        delete lessons[category];
+        delete customLessonMetadata[category];
+    });
+
+    getCustomLessons().forEach(customLesson => {
+        if (!customLesson.id || !customLesson.name || !Array.isArray(customLesson.items) || !customLesson.items.length) return;
+        const category = customLesson.id;
+        lessons[category] = customLesson.items.map(item => ({
+            title: `${customLesson.name} Lesson`,
+            letter: "",
+            word: item.name,
+            image: item.image
+        }));
+        customLessonMetadata[category] = customLesson;
+    });
+    renderCustomLessonGrid();
+}
+
+function renderCustomLessonGrid() {
+    if (!customLessonGrid) return;
+    customLessonGrid.innerHTML = "";
+    Object.entries(customLessonMetadata)
+        .filter(([, customLesson]) => !customLesson.hidden)
+        .forEach(([category, customLesson]) => {
+        const card = document.createElement("div");
+        card.className = "lesson-card custom-lesson-card";
+        card.innerHTML = `
+            <img alt="">
+            <h3></h3>
+            <button class="lesson-btn" type="button">Start</button>
+            <button class="quiz-menu-btn" data-quiz-category="${category}" type="button" disabled>Quiz 🔒</button>`;
+        card.querySelector("img").src = customLesson.cover;
+        card.querySelector("img").alt = `${customLesson.name} lesson cover`;
+        card.querySelector("h3").textContent = customLesson.name;
+        card.querySelector(".lesson-btn").addEventListener("click", () => openLesson(category));
+        card.querySelector(".quiz-menu-btn").addEventListener("click", () => openCategoryQuiz(category));
+        customLessonGrid.appendChild(card);
+        });
+}
+
+syncCustomLessons();
+
 const translationMap = {
     One: "Isa",
     Two: "Dalawa",
@@ -2724,9 +2958,9 @@ function loadLesson() {
         lessonWord.textContent = "";
         lessonWord.hidden = true;
     } else {
-        lessonLetter.textContent = lesson.letter || localizedWord;
-        lessonWord.textContent = localizedWord;
-        lessonWord.hidden = !lesson.letter;
+        lessonLetter.textContent = localizedWord;
+        lessonWord.textContent = "";
+        lessonWord.hidden = true;
     }
 
     const progress =
@@ -2767,7 +3001,7 @@ function getCompletedLessonCategories() {
 
 function updateQuizMenuButtons() {
     const completedCategories = getCompletedLessonCategories();
-    quizMenuButtons.forEach(button => {
+    document.querySelectorAll(".quiz-menu-btn").forEach(button => {
         const category = button.dataset.quizCategory;
         const unlocked = !!completedCategories[category];
         button.disabled = !unlocked;
@@ -4186,8 +4420,3 @@ window.addEventListener("load",()=>{
 
 
 // 
-
-
-
-
-
