@@ -55,19 +55,17 @@
                     Start Learning
                 </button>
 
-                <button id="teacherBtn" class="main-btn">
-                    <i class="fa-solid fa-user-tie"></i>
-                    Teacher Login
-                </button>
-
-                <button id="settingsBtn" class="main-btn">
-                    <i class="fa-solid fa-gear"></i>
-                    Settings
-                </button>
-
             </div>
 
         </div>
+
+        <button type="button" id="teacherBtn" class="floating-teacher-btn" aria-label="Teacher login" title="Teacher login" hidden>
+            <i class="fa-solid fa-user-tie"></i>
+        </button>
+
+        <button type="button" id="settingsBtn" class="floating-settings-btn" aria-label="Open settings" title="Settings" hidden>
+            <i class="fa-solid fa-gear"></i>
+        </button>
 
     </section>
 
@@ -199,7 +197,8 @@
                 </div>
                 <div class="tdash-header-actions">
                     <button id="teacherDashboardRefreshBtn" class="tdash-btn tdash-btn--refresh" type="button">Refresh</button>
-                    <button id="teacherCustomizeBtn" class="tdash-btn tdash-btn--soft" type="button">Customize</button>
+                    <button id="teacherCustomizeBtn" class="tdash-btn tdash-btn--soft" type="button">Add Quiz</button>
+                    <button id="teacherAddLessonBtn" class="tdash-btn tdash-btn--solid" type="button">Add Lesson</button>
                     <button id="teacherDashboardPrintBtn" class="tdash-btn tdash-btn--soft" type="button">Print</button>
                     <button id="teacherDashboardHomeBtn" class="tdash-btn tdash-btn--ghost" type="button">Home</button>
                     <button id="teacherLogoutBtn" class="tdash-btn tdash-btn--solid" type="button">Logout</button>
@@ -314,7 +313,7 @@
 
         <div id="teacherCustomizeModal" class="teacher-customize-modal" hidden>
             <div class="teacher-customize-card" role="dialog" aria-modal="true" aria-labelledby="teacherCustomizeTitle">
-                <h3 id="teacherCustomizeTitle">Customize Quiz Questions</h3>
+                <h3 id="teacherCustomizeTitle">Add a Quiz Question</h3>
                 <form id="teacherCustomizeForm" class="teacher-customize-form">
                     <label for="customQuestionCategory">Category</label>
                     <select id="customQuestionCategory" required>
@@ -351,12 +350,39 @@
                     <p id="customQuestionMessage" class="teacher-customize-message" aria-live="polite"></p>
                     <div class="teacher-customize-actions">
                         <button id="teacherCustomizeCloseBtn" class="tdash-btn tdash-btn--ghost" type="button">Close</button>
-                        <button class="tdash-btn tdash-btn--solid" type="submit">Add Question</button>
+                        <button class="tdash-btn tdash-btn--solid" type="submit">Save Question</button>
                     </div>
                 </form>
                 <div>
-                    <h4>Added Questions</h4>
+                    <h4>Your Added Quiz Questions</h4>
                     <div id="customQuestionList" class="custom-question-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="teacherLessonModal" class="teacher-customize-modal" hidden>
+            <div class="teacher-customize-card teacher-lesson-card" role="dialog" aria-modal="true" aria-labelledby="teacherLessonTitle">
+                <h3 id="teacherLessonTitle">Add a Lesson</h3>
+                <p class="teacher-lesson-help">Create a lesson such as Animals. Add a cover picture, then add each animal picture and its name.</p>
+                <form id="teacherLessonForm" class="teacher-customize-form">
+                    <label for="customLessonName">Lesson name</label>
+                    <input id="customLessonName" type="text" maxlength="50" placeholder="Animals" required>
+                    <label for="customLessonCover">Cover picture</label>
+                    <input id="customLessonCover" type="file" accept="image/*" required>
+                    <div class="teacher-lesson-items-head">
+                        <label>Lesson pictures and names</label>
+                        <button id="addLessonItemBtn" class="tdash-btn tdash-btn--soft" type="button">Add picture</button>
+                    </div>
+                    <div id="customLessonItems" class="custom-lesson-items"></div>
+                    <p id="teacherLessonMessage" class="teacher-customize-message" aria-live="polite"></p>
+                    <div class="teacher-customize-actions">
+                        <button id="teacherLessonCloseBtn" class="tdash-btn tdash-btn--ghost" type="button">Close</button>
+                        <button class="tdash-btn tdash-btn--solid" type="submit">Save Lesson</button>
+                    </div>
+                </form>
+                <div>
+                    <h4>Your Added Lessons</h4>
+                    <div id="customLessonList" class="custom-question-list"></div>
                 </div>
             </div>
         </div>
@@ -392,6 +418,8 @@
                     </button>
 
                 </div>
+
+                <div id="customLessonGrid" class="lesson-grid custom-lesson-grid"></div>
 
                 <!-- Numbers -->
 
@@ -865,10 +893,6 @@
     <span id="quizStarCount" class="quiz-star-count">0</span>
     <span class="quiz-star-label">Stars</span>
 </div>
-
-<button type="button" id="floatingSettingsBtn" class="floating-settings-btn" aria-label="Open settings" hidden>
-    <i class="fa-solid fa-gear"></i>
-</button>
 
 </body>
 
