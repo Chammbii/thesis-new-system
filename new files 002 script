@@ -1,4422 +1,902 @@
+<!DOCTYPE html>
+<!-- <html lang="en"> -->
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <title>QuizLand</title>
 
-// ======================================================
-// QUIZLAND ADVENTURE
-// SCRIPT.JS
-// ======================================================
+      <!-- Favicon / Tab Logo -->
+  <link rel="icon" type="image/png" class = logo  href="logo.png">
 
-// ---------- HOME ----------
-const homeScreen = document.getElementById("homeScreen");
-const profileScreen = document.getElementById("profileScreen");
-const menuScreen = document.getElementById("menuScreen");
 
-// ---------- BUTTONS ----------
-const startBtn = document.getElementById("startBtn");
-const continueBtn = document.getElementById("continueBtn");
-const backHome = document.getElementById("backHome");
-const teacherBtn = document.getElementById("teacherBtn");
-const teacherScreen = document.getElementById("teacherScreen");
-const teacherLoginForm = document.getElementById("teacherLoginForm");
-const teacherEmail = document.getElementById("teacherEmail");
-const teacherPassword = document.getElementById("teacherPassword");
-const teacherConfirmPassword = document.getElementById("teacherConfirmPassword");
-const teacherFullName = document.getElementById("teacherFullName");
-const teacherError = document.getElementById("teacherError");
-const teacherBackHome = document.getElementById("teacherBackHome");
-const teacherToggleMode = document.getElementById("teacherToggleMode");
-const teacherFormTitle = document.getElementById("teacherFormTitle");
-const teacherFormSubtitle = document.getElementById("teacherFormSubtitle");
-const teacherSwitchText = document.getElementById("teacherSwitchText");
-const teacherSubmitBtn = document.getElementById("teacherSubmitBtn");
-const teacherDashboard = document.getElementById("teacherDashboard");
-const teacherNameDisplay = document.getElementById("teacherNameDisplay");
-const teacherLogoutBtn = document.getElementById("teacherLogoutBtn");
-const teacherDashboardHomeBtn = document.getElementById("teacherDashboardHomeBtn");
-const teacherDashboardRefreshBtn = document.getElementById("teacherDashboardRefreshBtn");
-const teacherDashboardPrintBtn = document.getElementById("teacherDashboardPrintBtn");
-const teacherCustomizeBtn = document.getElementById("teacherCustomizeBtn");
-const teacherAddLessonBtn = document.getElementById("teacherAddLessonBtn");
-const teacherCustomizeModal = document.getElementById("teacherCustomizeModal");
-const teacherCustomizeForm = document.getElementById("teacherCustomizeForm");
-const teacherCustomizeCloseBtn = document.getElementById("teacherCustomizeCloseBtn");
-const customQuestionCategory = document.getElementById("customQuestionCategory");
-const customQuestionDifficulty = document.getElementById("customQuestionDifficulty");
-const customQuestionPrompt = document.getElementById("customQuestionPrompt");
-const customQuestionCorrect = document.getElementById("customQuestionCorrect");
-const customQuestionList = document.getElementById("customQuestionList");
-const customQuestionMessage = document.getElementById("customQuestionMessage");
-const teacherLessonModal = document.getElementById("teacherLessonModal");
-const teacherLessonForm = document.getElementById("teacherLessonForm");
-const customLessonName = document.getElementById("customLessonName");
-const customLessonCover = document.getElementById("customLessonCover");
-const customLessonItems = document.getElementById("customLessonItems");
-const addLessonItemBtn = document.getElementById("addLessonItemBtn");
-const teacherLessonCloseBtn = document.getElementById("teacherLessonCloseBtn");
-const teacherLessonMessage = document.getElementById("teacherLessonMessage");
-const customLessonList = document.getElementById("customLessonList");
-const customLessonGrid = document.getElementById("customLessonGrid");
-const teacherPrintModal = document.getElementById("teacherPrintModal");
-const teacherPrintStudent = document.getElementById("teacherPrintStudent");
-const teacherPrintCancelBtn = document.getElementById("teacherPrintCancelBtn");
-const teacherPrintConfirmBtn = document.getElementById("teacherPrintConfirmBtn");
-const teacherPrintReport = document.getElementById("teacherPrintReport");
-const teacherStudentProgressTable = document.getElementById("teacherStudentProgressTable");
-const teacherProgressChart = document.getElementById("teacherProgressChart");
-const teacherStarsChart = document.getElementById("teacherStarsChart");
-const teacherDailyStarsChart = document.getElementById("teacherDailyStarsChart");
-const teacherQuizHistoryTable = document.getElementById("teacherQuizHistoryTable");
-const quizHistorySubtitle = document.getElementById("quizHistorySubtitle");
-const teacherStudentTrackerCount = document.getElementById("teacherStudentTrackerCount");
-const teacherStudentSort = document.getElementById("teacherStudentSort");
-let selectedHistoryStudent = null;
-let sessionStarsGained = 0;
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
 
-const settingsBtn = document.getElementById("settingsBtn");
-const settingsModal = document.getElementById("settingsModal");
-const closeModal = document.getElementById("settingsCloseBtn") || document.querySelector("#settingsModal .close");
-const settingsDoneBtn = document.getElementById("settingsDoneBtn");
-const floatingSettingsBtn = settingsBtn;
-const quizStarScoreEl = document.getElementById("quizStarScore");
-const quizStarCountEl = document.getElementById("quizStarCount");
-const fullscreenToggle = document.getElementById("fullscreenToggle");
-const bgMusicToggle = document.getElementById("bgMusicToggle");
-const bgMusicVolume = document.getElementById("bgMusicVolume");
-const bgMusicVolumeValue = document.getElementById("bgMusicVolumeValue");
-const sfxToggle = document.getElementById("sfxToggle");
-const sfxVolume = document.getElementById("sfxVolume");
-const sfxVolumeValue = document.getElementById("sfxVolumeValue");
-const voiceNarrationToggle = document.getElementById("voiceNarrationToggle");
-const microphoneToggle = document.getElementById("microphoneToggle");
-const microphoneAllowBtn = document.getElementById("microphoneAllowBtn");
-const microphoneStatus = document.getElementById("microphoneStatus");
-const microphoneExtraRow = document.getElementById("microphoneExtraRow");
-const notificationBox = document.getElementById("notificationBox");
-const bgMusicElement = document.getElementById("bgMusic");
-const popSound = document.getElementById("popSound");
-const bgAudio = bgMusicElement || null;
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-// ---------- STUDENT ----------
-const studentName = document.getElementById("studentName");
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 
-// ---------- AVATARS ----------
-const avatars = document.querySelectorAll(".avatar-card");
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
 
-// ---------- LESSON ----------
-const lessonScreen = document.getElementById("lessonScreen");
-const lessonButtons = document.querySelectorAll(".lesson-btn");
-const quizMenuButtons = document.querySelectorAll(".quiz-menu-btn");
-const progressFill = document.getElementById("progressFill");
-const lessonTitle = document.getElementById("lessonTitle");
-const lessonImage = document.getElementById("lessonImage");
-const lessonLetter = document.getElementById("lessonLetter");
-const lessonWord = document.getElementById("lessonWord");
-const lessonFeedback = document.getElementById("lessonFeedback");
-const voiceBtn = document.getElementById("voiceBtn");
-const lessonSpeakBtn = document.getElementById("lessonSpeakBtn");
-const lessonVoiceStatus = document.getElementById("lessonVoiceStatus");
-const previousLesson = document.getElementById("previousLesson");
-const nextLesson = document.getElementById("nextLesson");
-const lessonHomeBtn = document.getElementById("lessonHomeBtn");
+        <audio id="popSound" src="popclick.mp3" preload="auto"></audio>
+<!-- bg audio -->
+        <audio id="bgMusi" loop preload="auto" src="bgMusic.mp3"></audio>
 
 
-let selectedAvatar = null;
-let quizStars = 0;
+   
+</head>
 
-// ======================================================
-// SCREEN NAVIGATION
-// ======================================================
+<body>  
 
-function hideAllScreens() {
+    <!-- ===================================================== -->
+    <!-- HOME SCREEN -->
+    <!-- ===================================================== -->
 
-    document.querySelectorAll(".screen").forEach(screen => {
+    <section id="homeScreen" class="screen active">
 
-        screen.classList.remove("active");
+        <div class="home-container">
 
-    });
 
-}
 
-function showScreen(screen) {
+            <p class="subtitle">
+                Learn • Play • Earn Stars 
+            </p>
 
-    hideAllScreens();
+            <div class="button-group">
 
-    screen.classList.add("active");
-    updateStudentHud();
-    if (screen === menuScreen) updateQuizMenuButtons();
+                <button id="startBtn" class="main-btn">
+                    <i class="fa-solid fa-play"></i>
+                    Start Learning
+                </button>
 
-}
-
-function hasStudentProfile() {
-    return !!(localStorage.getItem("studentName") && localStorage.getItem("avatar"));
-}
-
-function getStudentStarsKey() {
-    const student = localStorage.getItem("studentName") || "Unknown";
-    return getNamespacedKey(`totalStars_${encodeURIComponent(student)}`);
-}
-
-function loadStudentStars() {
-    quizStars = Number(localStorage.getItem(getStudentStarsKey())) || 0;
-    updateQuizStarDisplay(false);
-}
-
-function saveStudentStars() {
-    localStorage.setItem(getStudentStarsKey(), String(quizStars));
-}
-
-function updateStudentHud() {
-    const active = document.querySelector(".screen.active");
-    const showStars = active === menuScreen || active === lessonScreen || active === quizScreen;
-    const showSettings = active === homeScreen
-        || (hasStudentProfile()
-            && active !== teacherScreen
-            && active !== teacherDashboard
-            && active !== profileScreen);
-    const showTeacher = active === homeScreen;
-
-    if (quizStarScoreEl) {
-        quizStarScoreEl.classList.toggle("is-visible", showStars);
-        quizStarScoreEl.hidden = !showStars;
-        if (showStars) loadStudentStars();
-    }
-
-    if (floatingSettingsBtn) {
-        floatingSettingsBtn.classList.toggle("is-visible", showSettings);
-        floatingSettingsBtn.hidden = !showSettings;
-    }
-
-    if (teacherBtn) {
-        teacherBtn.classList.toggle("is-visible", showTeacher);
-        teacherBtn.hidden = !showTeacher;
-    }
-}
-
-// ======================================================
-// START BUTTON
-// ======================================================
-
-startBtn.addEventListener("click", () => {
-
-    showScreen(profileScreen);
-
-});
-
-// ======================================================
-// TEACHER LOGIN BUTTON
-// ======================================================
-
-let teacherMode = "login";
-let currentTeacherUsername = "Teacher";
-const teacherSwitchRow = document.querySelector(".teacher-switch");
-
-function openTeacherLoginScreen() {
-    clearTeacherError();
-    teacherLoginForm.reset();
-
-    const sessionEmail = getTeacherSession();
-    if (sessionEmail && getTeacherUsers()[sessionEmail]) {
-        // Returning teacher: password-only unlock screen
-        setTeacherMode("unlock");
-        teacherEmail.value = sessionEmail;
-        teacherPassword.value = "";
-        teacherPassword.focus();
-        return;
-    }
-
-    setTeacherMode("login");
-    showScreen(teacherScreen);
-}
-
-teacherBtn.addEventListener("click", () => {
-    // Always require credentials — never open the dashboard automatically.
-    openTeacherLoginScreen();
-    showScreen(teacherScreen);
-});
-
-teacherBackHome.addEventListener("click", () => {
-
-    showScreen(homeScreen);
-    clearTeacherError();
-    setTeacherMode("login");
-
-});
-
-teacherToggleMode.addEventListener("click", () => {
-
-    setTeacherMode(teacherMode === "login" ? "register" : "login");
-    clearTeacherError();
-    teacherLoginForm.reset();
-
-});
-
-teacherLoginForm.addEventListener("submit", (event) => {
-
-    event.preventDefault();
-    if (teacherMode === "register") {
-        handleTeacherRegister();
-    } else {
-        // login + unlock both verify password
-        handleTeacherLogin();
-    }
-
-});
-
-document.querySelectorAll(".password-toggle-btn").forEach(button => {
-    button.addEventListener("click", () => {
-        const passwordInput = document.getElementById(button.dataset.toggleTarget);
-        if (!passwordInput) return;
-
-        const isPasswordVisible = passwordInput.type === "text";
-        passwordInput.type = isPasswordVisible ? "password" : "text";
-        button.textContent = isPasswordVisible ? "Show" : "Hide";
-        button.setAttribute("aria-label", isPasswordVisible ? "Show password" : "Hide password");
-    });
-});
-
-// Clear error state when user starts typing in input fields
-[teacherEmail, teacherPassword, teacherConfirmPassword, teacherFullName].forEach(input => {
-    if (input) {
-        input.addEventListener("input", () => {
-            const wrapper = input.closest(".input-wrapper");
-            if (wrapper) {
-                wrapper.classList.remove("error");
-                const errorMsg = wrapper.querySelector(".input-error-message");
-                if (errorMsg) {
-                    errorMsg.textContent = "";
-                }
-            }
-        });
-    }
-});
-
-
-teacherLogoutBtn.addEventListener("click", () => {
-
-    currentTeacherUsername = "Teacher";
-    clearTeacherSession();
-    showScreen(homeScreen);
-    showNotification("Teacher logged out successfully.");
-
-});
-
-teacherDashboardHomeBtn.addEventListener("click", () => {
-    // Leave dashboard but keep classroom session for student progress tracking.
-    // Re-opening Teacher Login shows password-only unlock.
-    showScreen(homeScreen);
-    showNotification("Dashboard locked. Enter the password to open it again.", 4000);
-});
-
-if (teacherDashboardRefreshBtn) {
-    teacherDashboardRefreshBtn.addEventListener("click", () => {
-        showTeacherDashboard();
-        showNotification("Dashboard refreshed.");
-    });
-}
-
-function escapePrintText(value) {
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-function openTeacherPrintModal() {
-    if (!teacherPrintModal || !teacherPrintStudent) return;
-    const records = getStudentRecords().sort((a, b) => a.name.localeCompare(b.name));
-    teacherPrintStudent.innerHTML = '<option value="all">All students</option>';
-    records.forEach(record => {
-        const option = document.createElement("option");
-        option.value = record.name;
-        option.textContent = record.name;
-        teacherPrintStudent.appendChild(option);
-    });
-    teacherPrintModal.hidden = false;
-    teacherPrintStudent.focus();
-}
-
-function closeTeacherPrintModal() {
-    if (teacherPrintModal) teacherPrintModal.hidden = true;
-}
-
-function buildTeacherPrintReport(records) {
-    const totalCategories = Object.keys(lessons).length;
-    const reports = records.map(record => {
-        const history = getStudentQuizHistory(record.name);
-        const historyRows = history.length
-            ? history.map(entry => `
-                <tr>
-                    <td>${escapePrintText(formatQuizHistoryDate(entry.date))}</td>
-                    <td>${escapePrintText(entry.category || "Quiz")}</td>
-                    <td>${escapePrintText(`${entry.score} / ${entry.total}`)}</td>
-                    <td>${escapePrintText(`${entry.accuracy}%`)}</td>
-                    <td>${escapePrintText(entry.levelStopped ? ({ easy: "Easy", medium: "Normal", hard: "Hard" }[entry.levelStopped] || "Not recorded") : "Not recorded")}</td>
-                </tr>`).join("")
-            : '<tr><td colspan="5">No quiz history recorded.</td></tr>';
-
-        return `
-            <article class="teacher-print-student">
-                <h2>${escapePrintText(record.name)}</h2>
-                <p>Progress: ${escapePrintText(`${record.categoriesDone || 0}/${totalCategories} categories (${record.progressPercent || 0}%)`)} | Accuracy: ${escapePrintText(`${record.accuracy || 0}%`)} | Stars: ${escapePrintText(record.stars || 0)}</p>
-                <table>
-                    <thead><tr><th>Date</th><th>Category</th><th>Score</th><th>Accuracy</th><th>Level Stopped</th></tr></thead>
-                    <tbody>${historyRows}</tbody>
-                </table>
-            </article>`;
-    }).join("");
-
-    teacherPrintReport.innerHTML = `
-        <h1>QuizLand Student Progress</h1>
-        <p>Teacher: ${escapePrintText(currentTeacherUsername)} | Printed: ${escapePrintText(formatQuizHistoryDate(Date.now()))}</p>
-        ${reports || "<p>No student records available.</p>"}`;
-}
-
-function getSelectedTeacherPrintRecords() {
-    const records = getStudentRecords();
-    const selectedName = teacherPrintStudent ? teacherPrintStudent.value : "all";
-    return selectedName === "all"
-        ? records
-        : records.filter(record => record.name === selectedName);
-}
-
-function downloadTeacherPrintReport() {
-    buildTeacherPrintReport(getSelectedTeacherPrintRecords());
-    const reportStyles = `
-        body{font-family:Arial,sans-serif;color:#111;margin:32px}
-        h1{font-size:24px;margin:0 0 6px}
-        body>p{color:#444;margin:0 0 24px}
-        article{margin-bottom:28px;page-break-inside:avoid}
-        h2{font-size:19px;margin:0 0 6px}
-        article p{margin:0 0 12px}
-        table{width:100%;border-collapse:collapse;font-size:12px}
-        th,td{padding:7px;border:1px solid #bbb;text-align:left}
-        th{background:#eee}`;
-    const documentHtml = `<!doctype html><html><head><meta charset="UTF-8"><title>QuizLand Student Progress</title><style>${reportStyles}</style></head><body>${teacherPrintReport.innerHTML}</body></html>`;
-    const blob = new Blob([documentHtml], { type: "text/html;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "quizland-student-progress.html";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-}
-
-if (teacherDashboardPrintBtn) {
-    teacherDashboardPrintBtn.addEventListener("click", openTeacherPrintModal);
-}
-if (teacherPrintCancelBtn) {
-    teacherPrintCancelBtn.addEventListener("click", closeTeacherPrintModal);
-}
-if (teacherPrintConfirmBtn) {
-    teacherPrintConfirmBtn.addEventListener("click", () => {
-        downloadTeacherPrintReport();
-        closeTeacherPrintModal();
-    });
-}
-
-function getCustomQuestionsKey() {
-    return getNamespacedKey("customQuizQuestions");
-}
-
-function getCustomQuizQuestions() {
-    return JSON.parse(localStorage.getItem(getCustomQuestionsKey())) || [];
-}
-
-function saveCustomQuizQuestions(questions) {
-    localStorage.setItem(getCustomQuestionsKey(), JSON.stringify(questions));
-}
-
-function renderCustomQuestionList() {
-    if (!customQuestionList) return;
-    const questions = getCustomQuizQuestions();
-    customQuestionList.innerHTML = questions.length
-        ? questions.map(question => `
-            <div class="custom-question-item">
-                <div><strong>${escapePrintText(question.promptEN)}</strong><span>${escapePrintText(question.category)} · ${escapePrintText(question.difficulty)}</span></div>
-                <button class="tdash-btn tdash-btn--danger" type="button" data-custom-question-id="${escapePrintText(question.id)}">Remove</button>
-            </div>`).join("")
-        : '<p class="custom-question-empty">No custom questions added yet.</p>';
-
-    customQuestionList.querySelectorAll("[data-custom-question-id]").forEach(button => {
-        button.addEventListener("click", () => {
-            saveCustomQuizQuestions(getCustomQuizQuestions().filter(question => question.id !== button.dataset.customQuestionId));
-            renderCustomQuestionList();
-        });
-    });
-}
-
-function syncCustomLessonQuizCategories() {
-    if (!customQuestionCategory) return;
-    const selectedCategory = customQuestionCategory.value;
-    const customLessons = getCustomLessons();
-    customQuestionCategory.querySelectorAll("[data-custom-lesson-category]").forEach(option => option.remove());
-    customLessons.forEach(customLesson => {
-        if (!customLesson.id || !customLesson.name) return;
-        const option = document.createElement("option");
-        option.value = customLesson.id;
-        option.textContent = `${customLesson.name} Lesson`;
-        option.dataset.customLessonCategory = "true";
-        customQuestionCategory.appendChild(option);
-    });
-    if ([...customQuestionCategory.options].some(option => option.value === selectedCategory)) {
-        customQuestionCategory.value = selectedCategory;
-    }
-}
-
-function openTeacherCustomizeModal() {
-    if (!teacherCustomizeModal) return;
-    syncCustomLessonQuizCategories();
-    renderCustomQuestionList();
-    teacherCustomizeModal.hidden = false;
-    customQuestionPrompt?.focus();
-}
-
-function closeTeacherCustomizeModal() {
-    if (teacherCustomizeModal) teacherCustomizeModal.hidden = true;
-}
-
-if (teacherCustomizeBtn) teacherCustomizeBtn.addEventListener("click", openTeacherCustomizeModal);
-if (teacherCustomizeCloseBtn) teacherCustomizeCloseBtn.addEventListener("click", closeTeacherCustomizeModal);
-if (teacherCustomizeForm) {
-    teacherCustomizeForm.addEventListener("submit", async event => {
-        event.preventDefault();
-        const choiceInputs = [...teacherCustomizeForm.querySelectorAll(".custom-choice")];
-        const imageInputs = [...teacherCustomizeForm.querySelectorAll(".custom-choice-image")];
-        const choices = choiceInputs.map(input => input.value.trim()).filter(Boolean);
-        const correct = customQuestionCorrect.value.trim();
-        const uniqueChoices = [...new Set(choices)];
-        if (!uniqueChoices.includes(correct)) {
-            customQuestionMessage.textContent = "The correct answer must be one of the choices.";
-            return;
-        }
-
-        const choiceImages = {};
-        for (let index = 0; index < choiceInputs.length; index++) {
-            const choice = choiceInputs[index].value.trim();
-            const file = imageInputs[index]?.files[0];
-            if (choice && file) {
-                choiceImages[choice] = await readImageAsDataUrl(file);
-            }
-        }
-
-        const questions = getCustomQuizQuestions();
-        questions.push({
-            id: `custom-${Date.now()}`,
-            category: customQuestionCategory.value,
-            difficulty: customQuestionDifficulty.value,
-            promptEN: customQuestionPrompt.value.trim(),
-            promptTL: customQuestionPrompt.value.trim(),
-            word: correct,
-            choices: uniqueChoices,
-            choiceImages,
-            custom: true
-        });
-        saveCustomQuizQuestions(questions);
-        teacherCustomizeForm.reset();
-        syncCustomLessonQuizCategories();
-        customQuestionMessage.textContent = "Question added to the selected quiz level.";
-        renderCustomQuestionList();
-    });
-}
-
-function getCustomLessonsKey() {
-    return getNamespacedKey("customLessons");
-}
-
-function getCustomLessons() {
-    try {
-        const lessons = JSON.parse(localStorage.getItem(getCustomLessonsKey()));
-        return Array.isArray(lessons) ? lessons : [];
-    } catch (error) {
-        return [];
-    }
-}
-
-function saveCustomLessons(customLessons) {
-    localStorage.setItem(getCustomLessonsKey(), JSON.stringify(customLessons));
-}
-
-function addLessonItemField(item = {}) {
-    if (!customLessonItems) return;
-    const itemField = document.createElement("div");
-    itemField.className = "custom-lesson-item";
-    itemField.innerHTML = `
-        <div class="custom-lesson-item-fields">
-            <input class="custom-lesson-item-name" type="text" maxlength="60" placeholder="Animal name (for example, Giraffe)" value="${escapePrintText(item.name || "")}" required>
-            <input class="custom-lesson-item-image" type="file" accept="image/*" aria-label="Picture for this lesson item" ${item.image ? "" : "required"}>
-        </div>
-        <button class="tdash-btn tdash-btn--danger custom-lesson-remove" type="button">Remove</button>`;
-    if (item.image) {
-        itemField.dataset.image = item.image;
-    }
-    itemField.querySelector(".custom-lesson-remove").addEventListener("click", () => {
-        itemField.remove();
-    });
-    customLessonItems.appendChild(itemField);
-}
-
-function renderCustomLessonList() {
-    if (!customLessonList) return;
-    const customLessons = getCustomLessons();
-    customLessonList.innerHTML = "";
-    if (!customLessons.length) {
-        customLessonList.innerHTML = '<p class="custom-question-empty">No lessons added yet.</p>';
-        return;
-    }
-    customLessons.forEach(customLesson => {
-        const item = document.createElement("div");
-        item.className = "custom-question-item";
-        item.innerHTML = `
-            <div>
-                <strong></strong>
-                <span></span>
             </div>
-            <div class="custom-lesson-actions">
-                <button class="tdash-btn tdash-btn--soft custom-lesson-visibility" type="button"></button>
-                <button class="tdash-btn tdash-btn--danger" type="button">Remove</button>
-            </div>`;
-        item.querySelector("strong").textContent = customLesson.name;
-        item.querySelector("span").textContent = `${customLesson.items.length} pictures · ${customLesson.hidden ? "Hidden from students" : "Visible to students"}`;
-        item.querySelector(".custom-lesson-visibility").textContent = customLesson.hidden ? "Show lesson" : "Hide lesson";
-        item.querySelector(".custom-lesson-visibility").addEventListener("click", () => {
-            const updatedLessons = getCustomLessons().map(entry =>
-                entry.id === customLesson.id
-                    ? { ...entry, hidden: !entry.hidden }
-                    : entry
-            );
-            saveCustomLessons(updatedLessons);
-            syncCustomLessons();
-            renderCustomLessonList();
-            showNotification(`${customLesson.name} is now ${customLesson.hidden ? "visible to" : "hidden from"} students.`);
-        });
-        item.querySelector(".tdash-btn--danger").addEventListener("click", () => {
-            saveCustomLessons(getCustomLessons().filter(entry => entry.id !== customLesson.id));
-            syncCustomLessons();
-            renderCustomLessonList();
-            showNotification(`${customLesson.name} lesson removed.`);
-        });
-        customLessonList.appendChild(item);
-    });
-}
 
-function openTeacherLessonModal() {
-    if (!teacherLessonModal) return;
-    teacherLessonForm.reset();
-    customLessonItems.innerHTML = "";
-    addLessonItemField();
-    addLessonItemField();
-    teacherLessonMessage.textContent = "";
-    renderCustomLessonList();
-    teacherLessonModal.hidden = false;
-    customLessonName.focus();
-}
-
-function closeTeacherLessonModal() {
-    if (teacherLessonModal) teacherLessonModal.hidden = true;
-}
-
-if (teacherAddLessonBtn) teacherAddLessonBtn.addEventListener("click", openTeacherLessonModal);
-if (teacherLessonCloseBtn) teacherLessonCloseBtn.addEventListener("click", closeTeacherLessonModal);
-if (addLessonItemBtn) addLessonItemBtn.addEventListener("click", () => addLessonItemField());
-if (teacherLessonForm) {
-    teacherLessonForm.addEventListener("submit", async event => {
-        event.preventDefault();
-        const itemFields = [...customLessonItems.querySelectorAll(".custom-lesson-item")];
-        const items = [];
-        for (const itemField of itemFields) {
-            const name = itemField.querySelector(".custom-lesson-item-name").value.trim();
-            const file = itemField.querySelector(".custom-lesson-item-image").files[0];
-            const image = file ? await readImageAsDataUrl(file) : itemField.dataset.image;
-            if (name && image) items.push({ name, image });
-        }
-        if (!items.length) {
-            teacherLessonMessage.textContent = "Add at least one picture and name.";
-            return;
-        }
-        const coverFile = customLessonCover.files[0];
-        if (!coverFile) {
-            teacherLessonMessage.textContent = "Choose a cover picture.";
-            return;
-        }
-        const customLesson = {
-            id: `custom-lesson-${Date.now()}`,
-            name: customLessonName.value.trim(),
-            cover: await readImageAsDataUrl(coverFile),
-            items,
-            hidden: false
-        };
-        if (!customLesson.name) {
-            teacherLessonMessage.textContent = "Enter a lesson name.";
-            return;
-        }
-        saveCustomLessons([...getCustomLessons(), customLesson]);
-        syncCustomLessonQuizCategories();
-        syncCustomLessons();
-        renderCustomLessonList();
-        teacherLessonForm.reset();
-        customLessonItems.innerHTML = "";
-        addLessonItemField();
-        addLessonItemField();
-        teacherLessonMessage.textContent = "Lesson saved. Students can now open it from the learning menu.";
-        showNotification(`${customLesson.name} lesson added.`);
-    });
-}
-
-function readImageAsDataUrl(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-    });
-}
-
-function clearTeacherError(){
-    // Clear error state from all input wrappers
-    const inputWrappers = document.querySelectorAll(".input-wrapper");
-    inputWrappers.forEach(wrapper => {
-        wrapper.classList.remove("error");
-        const errorMsg = wrapper.querySelector(".input-error-message");
-        if (errorMsg) {
-            errorMsg.textContent = "";
-        }
-    });
-}
-
-function setTeacherMode(mode){
-    teacherMode = mode;
-
-    const isRegister = mode === "register";
-    const isUnlock = mode === "unlock";
-
-    if (isUnlock) {
-        teacherFormTitle.textContent = "Enter the Password";
-        teacherFormSubtitle.textContent = "";
-        teacherFormSubtitle.classList.add("teacher-hidden");
-        teacherSubmitBtn.textContent = "Unlock";
-        teacherPassword.placeholder = "Enter the password";
-        teacherLoginForm.classList.add("teacher-form--unlock");
-    } else {
-        teacherFormSubtitle.classList.remove("teacher-hidden");
-        teacherLoginForm.classList.remove("teacher-form--unlock");
-        teacherFormTitle.textContent = isRegister ? "Teacher Register" : "Teacher Login";
-        teacherFormSubtitle.textContent = isRegister
-            ? "Create a new account to manage lessons."
-            : "Enter your teacher credentials to access the dashboard.";
-        teacherSubmitBtn.textContent = isRegister ? "Register" : "Login";
-        teacherPassword.placeholder = "Password";
-        teacherSwitchText.textContent = isRegister
-            ? "Already have an account?"
-            : "Don't have an account?";
-        teacherToggleMode.textContent = isRegister ? "Login" : "Register";
-    }
-
-    teacherEmail.closest(".input-wrapper").classList.toggle("teacher-hidden", isUnlock);
-    teacherConfirmPassword.closest(".input-wrapper").classList.toggle("teacher-hidden", !isRegister);
-    teacherFullName.closest(".input-wrapper").classList.toggle("teacher-hidden", !isRegister);
-    if (teacherSwitchRow) {
-        teacherSwitchRow.classList.toggle("teacher-hidden", isUnlock);
-    }
-}
-
-function getTeacherUsers(){
-    const raw = localStorage.getItem("teacherUsers");
-    try {
-        return raw ? JSON.parse(raw) : {};
-    } catch (error) {
-        return {};
-    }
-}
-
-function saveTeacherUsers(users){
-    localStorage.setItem("teacherUsers", JSON.stringify(users));
-}
-
-function saveTeacherSession(email){
-    localStorage.setItem("teacherSession", email);
-}
-
-function clearTeacherSession(){
-    localStorage.removeItem("teacherSession");
-}
-
-function getTeacherSession(){
-    return localStorage.getItem("teacherSession");
-}
-
-function restoreTeacherSession(){
-    // Kept for compatibility: only restores teacher name/context.
-    // Never opens the dashboard without a fresh password login.
-    const email = getTeacherSession();
-    if (!email) {
-        return false;
-    }
-
-    const users = getTeacherUsers();
-    const user = users[email];
-    if (!user) {
-        clearTeacherSession();
-        return false;
-    }
-
-    currentTeacherUsername = user.fullName || user.email;
-    return true;
-}
-
-function handleTeacherRegister(){
-    const email = teacherEmail.value.trim().toLowerCase();
-    const password = teacherPassword.value;
-    const confirmPassword = teacherConfirmPassword.value;
-    const fullName = teacherFullName.value.trim();
-
-    if (!email || !password || !confirmPassword || !fullName) {
-        setTeacherError("Please fill in all fields.");
-        return;
-    }
-
-    if (password !== confirmPassword) {
-        setTeacherError("Passwords do not match.");
-        return;
-    }
-
-    const users = getTeacherUsers();
-    const userKey = email;
-
-    if (users[userKey]) {
-        setTeacherError("This email is already registered.");
-        return;
-    }
-
-    users[userKey] = {
-        email: email,
-        fullName: fullName,
-        password: password
-    };
-
-    saveTeacherUsers(users);
-    setTeacherMode("login");
-    showScreen(teacherScreen);
-    teacherEmail.value = email;
-    teacherPassword.value = "";
-    teacherConfirmPassword.value = "";
-    teacherFullName.value = "";
-    teacherEmail.focus();
-    showNotification("Registration successful. Please login with your new email.");
-}
-
-function handleTeacherLogin(){
-    const isUnlock = teacherMode === "unlock";
-    const email = (isUnlock ? getTeacherSession() : teacherEmail.value.trim().toLowerCase()) || "";
-    const password = teacherPassword.value;
-
-    if (isUnlock) {
-        if (!password) {
-            setTeacherError("Please enter the password.");
-            teacherPassword.focus();
-            return;
-        }
-    } else if (!email || !password) {
-        setTeacherError("Please enter both email and password.");
-        return;
-    }
-
-    const users = getTeacherUsers();
-    const user = users[email];
-
-    if (!user || user.password !== password) {
-        setTeacherError(isUnlock ? "Incorrect password." : "Invalid email or password.");
-        teacherPassword.value = "";
-        teacherPassword.focus();
-        return;
-    }
-
-    currentTeacherUsername = user.fullName || user.email;
-    saveTeacherSession(email);
-    teacherPassword.value = "";
-    showTeacherDashboard();
-    showNotification("Welcome back, " + currentTeacherUsername + "!");
-}
-
-function setTeacherError(message){
-    // Find the first visible input wrapper and display the error there
-    const inputWrappers = document.querySelectorAll(".input-wrapper");
-    let targetWrapper = null;
-    
-    for (let wrapper of inputWrappers) {
-        if (!wrapper.classList.contains("teacher-hidden")) {
-            targetWrapper = wrapper;
-            break;
-        }
-    }
-    
-    if (targetWrapper) {
-        targetWrapper.classList.add("error");
-        const errorMsg = targetWrapper.querySelector(".input-error-message");
-        if (errorMsg) {
-            errorMsg.textContent = message;
-        }
-    }
-}
-
-function getTeacherSessionEmail() {
-    return getTeacherSession();
-}
-
-function getProgressNamespace() {
-    const email = getTeacherSessionEmail();
-    return email ? `teacher:${email}` : "anonymous";
-}
-
-function getNamespacedKey(suffix) {
-    return `studentProgress_${getProgressNamespace()}_${suffix}`;
-}
-
-function getCurrentStudentProgressKey(suffix) {
-    const student = localStorage.getItem("studentName") || "NewStudent";
-    return getNamespacedKey(`student_${encodeURIComponent(student)}_${suffix}`);
-}
-
-function getStudentRecords() {
-    const key = getNamespacedKey("studentRecords");
-    return JSON.parse(localStorage.getItem(key)) || [];
-}
-
-function saveStudentRecords(records) {
-    const key = getNamespacedKey("studentRecords");
-    localStorage.setItem(key, JSON.stringify(records));
-}
-
-function updateCurrentStudentRecord() {
-    const student = localStorage.getItem("studentName") || "Unknown";
-
-    if (!student) return;
-
-    const avatarIndex = Number(localStorage.getItem("avatar")) || 1;
-    const completedLessons = Number(localStorage.getItem(getCurrentStudentProgressKey("completedLessons"))) || 0;
-    const lessonProgress = JSON.parse(localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))) || {};
-    const categoriesDone = Object.keys(lessonProgress).length;
-    const totalCategories = Object.keys(lessons).length;
-    const progressPercent = totalCategories > 0
-        ? Math.round((categoriesDone / totalCategories) * 100)
-        : 0;
-
-// Per-student quiz summary (prevents everyone showing same accuracy)
-    const lastQuizScoreKey = getNamespacedKey(`lastQuizScore_${encodeURIComponent(student)}`);
-    const lastQuizTotalKey = getNamespacedKey(`lastQuizTotal_${encodeURIComponent(student)}`);
-
-
-    const lastQuizScore = Number(localStorage.getItem(lastQuizScoreKey)) || 0;
-    const lastQuizTotal = Number(localStorage.getItem(lastQuizTotalKey)) || 0;
-
-    const accuracy = lastQuizTotal > 0
-        ? Math.round((lastQuizScore / lastQuizTotal) * 100)
-        : 0;
-
-    const starsKey = getNamespacedKey(`totalStars_${encodeURIComponent(student)}`);
-    const stars = Number(localStorage.getItem(starsKey)) || 0;
-
-    const records = getStudentRecords();
-    let record = records.find(r => r.name === student);
-    const now = Date.now();
-
-    if (!record) {
-        record = {
-            name: student,
-            avatar: avatarIndex,
-            completedLessons,
-            categoriesDone,
-            progressPercent,
-            accuracy,
-            stars,
-            updatedAt: now,
-            progressHistory: [{ progressPercent, updatedAt: now }]
-        };
-        records.push(record);
-    } else {
-        const progressHistory = Array.isArray(record.progressHistory) && record.progressHistory.length
-            ? record.progressHistory
-            : [{ progressPercent: Number(record.progressPercent) || 0, updatedAt: Number(record.updatedAt) || now }];
-        const lastProgress = progressHistory[progressHistory.length - 1];
-        if (Number(lastProgress.progressPercent) !== progressPercent) {
-            progressHistory.push({ progressPercent, updatedAt: now });
-        }
-        record.avatar = avatarIndex;
-        record.completedLessons = completedLessons;
-        record.categoriesDone = categoriesDone;
-        record.progressPercent = progressPercent;
-        record.accuracy = accuracy;
-        record.stars = stars;
-        record.updatedAt = now;
-        record.progressHistory = progressHistory.slice(-20);
-    }
-
-    saveStudentRecords(records);
-}
-
-function getQuizHistoryKey(student) {
-    return getNamespacedKey(`quizHistory_${encodeURIComponent(student)}`);
-}
-
-function getStudentQuizHistory(student) {
-    return JSON.parse(localStorage.getItem(getQuizHistoryKey(student))) || [];
-}
-
-function saveStudentQuizHistory(student, history) {
-    localStorage.setItem(getQuizHistoryKey(student), JSON.stringify(history.slice(0, 40)));
-}
-
-function appendQuizHistoryEntry(student, entry) {
-    const history = getStudentQuizHistory(student);
-    history.unshift(entry);
-    saveStudentQuizHistory(student, history);
-}
-
-function formatQuizHistoryDate(timestamp) {
-    try {
-        return new Date(timestamp).toLocaleString(undefined, {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-            hour: "numeric",
-            minute: "2-digit"
-        });
-    } catch (err) {
-        return "—";
-    }
-}
-
-function toDateKey(timestamp = Date.now()) {
-    const date = new Date(timestamp);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-}
-
-function formatChartDayLabel(dateKey) {
-    const [year, month, day] = dateKey.split("-").map(Number);
-    const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric"
-    });
-}
-
-function getDailyStarsStore() {
-    return JSON.parse(localStorage.getItem(getNamespacedKey("dailyStarsByDate"))) || {};
-}
-
-function saveDailyStarsStore(store) {
-    localStorage.setItem(getNamespacedKey("dailyStarsByDate"), JSON.stringify(store));
-}
-
-function recordDailyStarsEarned(gained) {
-    if (!gained) return;
-    const store = getDailyStarsStore();
-    const day = toDateKey();
-    store[day] = (Number(store[day]) || 0) + Number(gained);
-    saveDailyStarsStore(store);
-}
-
-function ensureDailyStarsBackfill() {
-    const flagKey = getNamespacedKey("dailyStarsBackfilled");
-    if (localStorage.getItem(flagKey)) {
-        return getDailyStarsStore();
-    }
-
-    const store = getDailyStarsStore();
-    getStudentRecords().forEach(record => {
-        getStudentQuizHistory(record.name).forEach(entry => {
-            if (!entry || !entry.date) return;
-            const day = toDateKey(entry.date);
-            store[day] = (Number(store[day]) || 0) + (Number(entry.starsGained) || 0);
-        });
-    });
-
-    saveDailyStarsStore(store);
-    localStorage.setItem(flagKey, "1");
-    return store;
-}
-
-function getDailyStarsChartItems(dayCount = 14) {
-    const store = ensureDailyStarsBackfill();
-    const items = [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    for (let offset = dayCount - 1; offset >= 0; offset--) {
-        const date = new Date(today);
-        date.setDate(today.getDate() - offset);
-        const key = toDateKey(date.getTime());
-        const value = Number(store[key]) || 0;
-        items.push({
-            label: formatChartDayLabel(key),
-            value,
-            display: String(value)
-        });
-    }
-
-    return items;
-}
-
-function renderBarChart(container, items, options = {}) {
-    if (!container) return;
-    container.innerHTML = "";
-
-    if (!items.length) {
-        const empty = document.createElement("div");
-        empty.className = "bar-chart-empty";
-        empty.textContent = options.emptyText || "No student data yet.";
-        container.appendChild(empty);
-        return;
-    }
-
-    const maxValue = Math.max(...items.map(item => item.value), 1);
-
-    items.forEach(item => {
-        const wrap = document.createElement("div");
-        wrap.className = "bar-item";
-        wrap.title = `${item.label}: ${item.display}`;
-
-        const valueLabel = document.createElement("div");
-        valueLabel.className = "bar-value-label";
-        valueLabel.textContent = item.display;
-
-        const track = document.createElement("div");
-        track.className = "bar-track-vertical";
-
-        const fill = document.createElement("div");
-        fill.className = `bar-fill-vertical${options.starStyle ? " is-stars" : ""}${options.dailyStyle ? " is-daily" : ""}`;
-        const heightPct = Math.max(4, Math.round((item.value / maxValue) * 100));
-        fill.style.height = "0%";
-        track.appendChild(fill);
-
-        const name = document.createElement("div");
-        name.className = options.dailyStyle ? "bar-name bar-name--date" : "bar-name";
-        name.textContent = item.label;
-
-        wrap.appendChild(valueLabel);
-        wrap.appendChild(track);
-        wrap.appendChild(name);
-        container.appendChild(wrap);
-
-        requestAnimationFrame(() => {
-            fill.style.height = `${heightPct}%`;
-        });
-    });
-}
-
-function renderTeacherCharts(records) {
-    const progressItems = records.map(record => ({
-        label: record.name,
-        value: Number(record.progressPercent) || 0,
-        display: `${Number(record.progressPercent) || 0}%`
-    }));
-
-    const starItems = records.map(record => ({
-        label: record.name,
-        value: Number(record.stars) || 0,
-        display: String(Number(record.stars) || 0)
-    }));
-
-    renderBarChart(teacherProgressChart, progressItems, {
-        emptyText: "No progress to chart yet. Students will appear after lessons."
-    });
-    renderBarChart(teacherStarsChart, starItems, {
-        starStyle: true,
-        emptyText: "No stars earned yet. Quiz wins will show up here."
-    });
-    renderBarChart(teacherDailyStarsChart, getDailyStarsChartItems(14), {
-        dailyStyle: true,
-        emptyText: "No daily star activity yet."
-    });
-}
-
-function renderTeacherNeedsInterpretation(records) {
-    const container = document.getElementById("teacherNeedsInterpretation");
-    if (!container) return;
-
-    const lessonLabels = {
-        alphabet: "Alphabet",
-        numbers: "Numbers",
-        colors: "Colors",
-        shapes: "Shapes"
-    };
-
-    function getUnfinishedLessons(studentName) {
-        const progressKey = getNamespacedKey(`student_${encodeURIComponent(studentName)}_lessonProgress`);
-        const progress = JSON.parse(localStorage.getItem(progressKey)) || {};
-        return Object.keys(lessons)
-            .filter(category => !progress[category])
-            .map(category => lessonLabels[category] || category);
-    }
-
-    if (!records.length) {
-        container.innerHTML = '<div class="teacher-needs-empty">No students tracked yet. Students will appear here when they begin learning.</div>';
-        return;
-    }
-
-    const needsStudents = records
-        .map(record => {
-            const progress = Number(record.progressPercent) || 0;
-            const accuracy = Number(record.accuracy) || 0;
-            const stars = Number(record.stars) || 0;
-            const needsMorePractice = progress < 60 || accuracy < 70 || stars === 0;
-
-            return needsMorePractice ? {
-                ...record,
-                progress,
-                accuracy,
-                stars
-            } : null;
-        })
-        .filter(Boolean)
-        .sort((a, b) => {
-            const aScore = (Number(a.progress) || 0) + (Number(a.accuracy) || 0);
-            const bScore = (Number(b.progress) || 0) + (Number(b.accuracy) || 0);
-            return aScore - bScore;
-        });
-
-    if (!needsStudents.length) {
-        container.innerHTML = '<div class="teacher-needs-empty">All students are progressing well. No one needs extra lesson practice right now.</div>';
-        return;
-    }
-
-    const items = needsStudents.map(student => `
-        <div class="teacher-needs-item">
-            <div class="teacher-needs-name">${student.name}</div>
-            <div class="teacher-needs-meta">Progress: ${student.progress}% • Accuracy: ${student.accuracy}% • Stars: ${student.stars}</div>
-            <div class="teacher-needs-note">Needs more practice to master: ${getUnfinishedLessons(student.name).join(", ") || "the current lesson"}.</div>
         </div>
-    `).join("");
-
-    container.innerHTML = `
-        <p class="teacher-needs-summary">This is students that need to master the lesson:</p>
-        <div class="teacher-needs-list">${items}</div>
-    `;
-}
-
-function renderQuizHistory(studentName) {
-    if (!teacherQuizHistoryTable) return;
-    const tbody = teacherQuizHistoryTable.querySelector("tbody");
-    tbody.innerHTML = "";
-
-    if (!studentName) {
-        if (quizHistorySubtitle) {
-            quizHistorySubtitle.textContent = "Select a student to view every quiz attempt.";
-        }
-        tbody.innerHTML = `<tr class="quiz-history-empty"><td colspan="6">No student selected yet.</td></tr>`;
-        return;
-    }
-
-    if (quizHistorySubtitle) {
-        quizHistorySubtitle.textContent = `Quiz attempts for ${studentName}`;
-    }
-
-    const history = getStudentQuizHistory(studentName);
-    if (!history.length) {
-        tbody.innerHTML = `<tr class="quiz-history-empty"><td colspan="6">No quiz history yet for ${studentName}.</td></tr>`;
-        return;
-    }
-
-    history.forEach((entry, index) => {
-        const row = document.createElement("tr");
-        if (index === 0) {
-            row.classList.add("is-latest");
-        }
-        const category = (entry.category || "quiz").charAt(0).toUpperCase() + (entry.category || "quiz").slice(1);
-        const difficultyLabels = {
-            easy: "Easy",
-            medium: "Normal",
-            hard: "Hard"
-        };
-        const levelStopped = difficultyLabels[entry.levelStopped] || "Not recorded";
-        row.innerHTML = `
-            <td>${formatQuizHistoryDate(entry.date)}${index === 0 ? '<span class="latest-history-badge">Latest</span>' : ""}</td>
-            <td>${category}</td>
-            <td>${entry.score} / ${entry.total}</td>
-            <td>${entry.accuracy}%</td>
-            <td>+${entry.starsGained || 0} ★</td>
-            <td>${levelStopped}</td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-function renderTeacherStudentProgress() {
-    if (!teacherStudentProgressTable) return;
-    const tbody = teacherStudentProgressTable.querySelector("tbody");
-    tbody.innerHTML = "";
-    const records = getStudentRecords();
-    const totalCategories = Object.keys(lessons).length;
-
-    if (teacherStudentTrackerCount) {
-        const studentCount = records.length;
-        teacherStudentTrackerCount.textContent = `${studentCount} ${studentCount === 1 ? "student" : "students"} tracked`;
-    }
-
-    const sortMode = teacherStudentSort?.value || "recent";
-    records.sort((a, b) => {
-        if (sortMode === "surname") {
-            return getSurname(a.name).localeCompare(getSurname(b.name)) || a.name.localeCompare(b.name);
-        }
-        if (sortMode === "stars") {
-            return (Number(b.stars) || 0) - (Number(a.stars) || 0) || a.name.localeCompare(b.name);
-        }
-        return (Number(b.updatedAt) || 0) - (Number(a.updatedAt) || 0);
-    });
-
-    renderTeacherCharts(records);
-    renderTeacherNeedsInterpretation(records);
-
-    if (!records.length) {
-        tbody.innerHTML = `<tr class="quiz-history-empty"><td colspan="6">No students tracked yet.</td></tr>`;
-        renderQuizHistory(null);
-        return;
-    }
-
-    records.forEach(record => {
-        const row = document.createElement("tr");
-        if (selectedHistoryStudent === record.name) {
-            row.classList.add("is-selected");
-        }
-
-        const nameTd = document.createElement("td");
-        nameTd.textContent = record.name;
-
-        const avatarTd = document.createElement("td");
-        const img = document.createElement("img");
-        img.src = `avatar00${record.avatar}.png`;
-        img.alt = `Avatar ${record.avatar}`;
-        img.className = "student-avatar-cell";
-        avatarTd.appendChild(img);
-
-        const progressTd = document.createElement("td");
-        const progressHistory = Array.isArray(record.progressHistory) && record.progressHistory.length
-            ? record.progressHistory
-            : [{ progressPercent: Number(record.progressPercent) || 0, updatedAt: record.updatedAt }];
-        const firstProgress = progressHistory[0];
-        const latestProgress = progressHistory[progressHistory.length - 1];
-        progressTd.innerHTML = `
-            <strong>${record.categoriesDone}/${totalCategories} (${record.progressPercent}%)</strong>
-            <span class="progress-history-line">Before: ${Number(firstProgress.progressPercent) || 0}% · ${formatProgressDate(firstProgress.updatedAt)}</span>
-            <span class="progress-history-line">After: ${Number(latestProgress.progressPercent) || 0}% · ${formatProgressDate(latestProgress.updatedAt)}</span>`;
-
-        const latestActivity = getStudentQuizHistory(record.name)[0];
-        const latestScoreTd = document.createElement("td");
-        latestScoreTd.className = "latest-activity-cell";
-        latestScoreTd.innerHTML = latestActivity
-            ? `<strong>${latestActivity.score} / ${latestActivity.total}</strong><span>${latestActivity.accuracy}% accuracy</span>`
-            : `<strong>No quiz yet</strong><span>${record.accuracy || 0}% accuracy</span>`;
-
-        const starsTd = document.createElement("td");
-        starsTd.textContent = `★ ${record.stars || 0}`;
-
-        const actionsTd = document.createElement("td");
-        const actionsWrap = document.createElement("div");
-        actionsWrap.className = "tdash-row-actions";
-
-        const historyBtn = document.createElement("button");
-        historyBtn.textContent = "History";
-        historyBtn.className = "tdash-btn tdash-btn--soft";
-        historyBtn.type = "button";
-        historyBtn.addEventListener("click", () => {
-            selectedHistoryStudent = record.name;
-            renderTeacherStudentProgress();
-            renderQuizHistory(record.name);
-            const panel = document.getElementById("quizHistoryPanel");
-            if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-
-        const removeBtn = document.createElement("button");
-        removeBtn.textContent = "Remove";
-        removeBtn.className = "tdash-btn tdash-btn--danger";
-        removeBtn.type = "button";
-        removeBtn.addEventListener("click", () => {
-            removeStudentRecord(record.name);
-            if (selectedHistoryStudent === record.name) {
-                selectedHistoryStudent = null;
-            }
-            renderTeacherStudentProgress();
-            renderQuizHistory(selectedHistoryStudent);
-            showNotification(`${record.name} has been removed.`);
-        });
-
-        actionsWrap.appendChild(historyBtn);
-        actionsWrap.appendChild(removeBtn);
-        actionsTd.appendChild(actionsWrap);
-
-        row.appendChild(nameTd);
-        row.appendChild(avatarTd);
-        row.appendChild(progressTd);
-        row.appendChild(latestScoreTd);
-        row.appendChild(starsTd);
-        row.appendChild(actionsTd);
-        tbody.appendChild(row);
-    });
-
-    if (selectedHistoryStudent) {
-        renderQuizHistory(selectedHistoryStudent);
-    }
-}
-
-function getSurname(name) {
-    const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
-    return parts.length ? parts[parts.length - 1].toLowerCase() : "";
-}
-
-function formatProgressDate(timestamp) {
-    const date = new Date(Number(timestamp) || Date.now());
-    return date.toLocaleString(undefined, {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "numeric",
-        minute: "2-digit"
-    });
-}
-
-if (teacherStudentSort) {
-    teacherStudentSort.addEventListener("change", renderTeacherStudentProgress);
-}
-
-function removeStudentRecord(studentName) {
-    const records = getStudentRecords().filter(record => record.name !== studentName);
-    saveStudentRecords(records);
-    localStorage.removeItem(getQuizHistoryKey(studentName));
-}
-
-function showTeacherDashboard(){
-    showScreen(teacherDashboard);
-    teacherNameDisplay.textContent = currentTeacherUsername;
 
-    renderTeacherStudentProgress();
-}
+        <button type="button" id="teacherBtn" class="floating-teacher-btn" aria-label="Teacher login" title="Teacher login" hidden>
+            <i class="fa-solid fa-user-tie"></i>
+        </button>
 
-// ======================================================
-// CONTINUE BUTTON
-// ======================================================
+        <button type="button" id="settingsBtn" class="floating-settings-btn" aria-label="Open settings" title="Settings" hidden>
+            <i class="fa-solid fa-gear"></i>
+        </button>
 
-continueBtn.addEventListener("click", () => {
+    </section>
 
-    const name = studentName.value.trim();
 
-    if (name === "") {
 
-        const msg = "Please enter your name.";
-        showNotification(msg);
-        speakText(msg);
+    <!-- LESSON SCREEN -->
+    <!-- STUDENT PROFILE -->
+    <!-- ===================================================== -->
 
-        studentName.focus();
+    <section id="profileScreen" class="screen">
 
-        return;
+        <div class="profile-container">
 
-    }
+            <h2>Student Profile</h2>
 
-    localStorage.setItem("studentName", name);
+            <p>
+                Enter your name and choose your favorite avatar.
+            </p>
 
-    if (selectedAvatar === null) {
+            <input
+                type="text"
+                id="studentName"
+                placeholder="Enter your name">
 
-        const msg = "Please select an avatar.";
-        showNotification(msg);
-        speakText(msg);
-        return;
+            <h3>Select Avatar</h3>
 
-    }
+            <div class="avatar-grid">
 
-    localStorage.setItem("avatar", selectedAvatar);
+                <div class="avatar-card">
+                    <img src="avatar001.png">
+                </div>
 
-    updateCurrentStudentRecord();
+                <div class="avatar-card">
+                    <img src="avatar002.png">
+                </div>
 
-    showScreen(menuScreen);
+                <div class="avatar-card">
+                    <img src="avatar003.png">
+                </div>
 
-    setTimeout(() => {
+                <div class="avatar-card">
+                    <img src="avatar004.png">
+                </div>
 
-        const msg = `Welcome, ${name}! Let's start learning!`;
-        showNotification(msg);
-        speakText(msg);
+            </div>
 
-    }, 300);
+            <button id="continueBtn" class="main-btn">
+                Continue
+            </button>
 
+        </div>
 
-});
+    </section>
 
-// ======================================================
-// BACK HOME
-// ======================================================
 
-backHome.addEventListener("click", () => {
+    <!-- ===================================================== -->
+    <!-- TEACHER LOGIN SCREEN -->
+    <!-- ===================================================== -->
 
-    showScreen(homeScreen);
+    <section id="teacherScreen" class="screen">
 
-});
+        <div class="teacher-container">
 
-// ======================================================
-// SETTINGS
-// ======================================================
+            <div class="teacher-card">
 
-function closeSettingsModal() {
-    if (settingsModal) settingsModal.style.display = "none";
-}
+                <h2 id="teacherFormTitle">Teacher Login</h2>
 
-function updateVolumeLabel(input, label) {
-    if (!input || !label) return;
-    label.textContent = `${input.value}%`;
-}
+                <p id="teacherFormSubtitle">Enter your teacher credentials to access the dashboard.</p>
 
-function openSettingsModal() {
-    updateVolumeLabel(bgMusicVolume, bgMusicVolumeValue);
-    updateVolumeLabel(sfxVolume, sfxVolumeValue);
-    if (settingsModal) settingsModal.style.display = "flex";
-}
+                <form id="teacherLoginForm" class="teacher-form">
 
-settingsBtn.addEventListener("click", openSettingsModal);
+                    <div class="input-wrapper">
+                        <input type="email" id="teacherEmail" placeholder="Email">
+                        <span class="input-error-icon" aria-hidden="true">⚠</span>
+                        <div class="input-error-message"></div>
+                    </div>
 
-if (closeModal) {
-    closeModal.addEventListener("click", closeSettingsModal);
-}
+                    <div class="input-wrapper">
+                        <input type="password" id="teacherPassword" placeholder="Password">
+                        <button type="button" class="password-toggle-btn" data-toggle-target="teacherPassword" aria-label="Show password">Show</button>
+                        <span class="input-error-icon" aria-hidden="true">⚠</span>
+                        <div class="input-error-message"></div>
+                    </div>
 
-if (settingsDoneBtn) {
-    settingsDoneBtn.addEventListener("click", closeSettingsModal);
-}
+                    <div class="input-wrapper teacher-hidden">
+                        <input type="password" id="teacherConfirmPassword" placeholder="Confirm Password">
+                        <button type="button" class="password-toggle-btn" data-toggle-target="teacherConfirmPassword" aria-label="Show password">Show</button>
+                        <span class="input-error-icon" aria-hidden="true">⚠</span>
+                        <div class="input-error-message"></div>
+                    </div>
+
+                    <div class="input-wrapper teacher-hidden">
+                        <input type="text" id="teacherFullName" placeholder="Full Name">
+                        <span class="input-error-icon" aria-hidden="true">⚠</span>
+                        <div class="input-error-message"></div>
+                    </div>
+
+                    <div class="teacher-form-actions">
+                        <button type="submit" class="main-btn" id="teacherSubmitBtn">Login</button>
+                        <button type="button" id="teacherForgotPasswordBtn" class="secondary-btn teacher-hidden">Forgot Password</button>
+                        <button type="button" id="teacherLogoutUnlockBtn" class="secondary-btn teacher-hidden">Logout</button>
+                    </div>
+
+                    <p class="teacher-switch">
+                        <span id="teacherSwitchText">Don't have an account?</span>
+                        <button type="button" id="teacherToggleMode" class="main-btn">Register</button>
+                    </p>
+
+                    <button type="button" id="teacherBackHome" class="back-btn">← Back to Home</button>
+
+                </form>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <section id="teacherDashboard" class="screen">
+
+        <div class="tdash">
+
+            <header class="tdash-header">
+                <div class="tdash-header-copy">
+                    <p class="tdash-eyebrow">QuizLand Teacher</p>
+                    <h2>Classroom Dashboard</h2>
+                    <p class="tdash-welcome">Welcome back, <span id="teacherNameDisplay">Teacher</span>.</p>
+                </div>
+                <div class="tdash-header-actions">
+                    <button id="teacherDashboardRefreshBtn" class="tdash-btn tdash-btn--refresh" type="button">Refresh</button>
+                    <button id="teacherCustomizeBtn" class="tdash-btn tdash-btn--soft" type="button">Add Quiz</button>
+                    <button id="teacherAddLessonBtn" class="tdash-btn tdash-btn--solid" type="button">Add Lesson</button>
+                    <button id="teacherDashboardPrintBtn" class="tdash-btn tdash-btn--soft" type="button">Print</button>
+                    <button id="teacherDashboardHomeBtn" class="tdash-btn tdash-btn--ghost" type="button">Home</button>
+                    <button id="teacherLogoutBtn" class="tdash-btn tdash-btn--solid" type="button">Logout</button>
+                </div>
+            </header>
+
+            <div class="tdash-charts">
+                <section class="tdash-panel">
+                    <div class="tdash-panel-head">
+                        <h3>Progress of Student</h3>
+                        <p>Lesson category completion (%)</p>
+                    </div>
+                    <div id="teacherProgressChart" class="bar-chart" aria-label="Student progress bar chart"></div>
+                </section>
+                <section class="tdash-panel">
+                    <div class="tdash-panel-head">
+                        <h3>Stars of Student</h3>
+                        <p>Total stars each child earned</p>
+                    </div>
+                    <div id="teacherStarsChart" class="bar-chart" aria-label="Student stars bar chart"></div>
+                </section>
+            </div>
+
+            <section class="tdash-panel tdash-panel--wide">
+                <div class="tdash-panel-head">
+                    <h3>Stars earned of the day</h3>
+                    <p>Total stars all students earned each day (last 14 days)</p>
+                </div>
+                <div id="teacherDailyStarsChart" class="bar-chart bar-chart--daily" aria-label="Daily stars earned bar chart"></div>
+            </section>
+
+            <section class="tdash-panel tdash-panel--wide">
+                <div class="tdash-panel-head">
+                    <h3>Student that needs more practice</h3>
+
+                </div>
+                <div id="teacherNeedsInterpretation" class="teacher-needs-interpretation" aria-live="polite"></div>
+            </section>
+
+            <section class="tdash-panel tdash-panel--wide">
+                <div class="tdash-panel-head">
+                    <h3>Student Progress Tracker</h3>
+                    <p>Name, avatar, progress, accuracy, stars, and quiz history</p>
+                    <p id="teacherStudentTrackerCount" class="teacher-student-count" aria-live="polite">0 students tracked</p>
+                    <label class="teacher-student-sort-label" for="teacherStudentSort">Sort students</label>
+                    <select id="teacherStudentSort" class="teacher-student-sort">
+                        <option value="recent">Recently updated</option>
+                        <option value="surname">Surname A-Z</option>
+                        <option value="stars">Highest stars</option>
+                    </select>
+                </div>
+                <div class="teacher-progress-table">
+                    <table id="teacherStudentProgressTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Avatar</th>
+                                <th>Progress</th>
+                                <th>Latest Activity Score</th>
+                                <th>Stars</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="tdash-panel tdash-panel--wide" id="quizHistoryPanel">
+                <div class="tdash-panel-head">
+                    <h3>Quiz History</h3>
+                    <p id="quizHistorySubtitle">Select a student to view every quiz attempt.</p>
+                </div>
+                <div class="quiz-history-table-wrap">
+                    <table id="teacherQuizHistoryTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Score</th>
+                                <th>Accuracy</th>
+                                <th>Stars Gained</th>
+                                <th>Level Stopped</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="quiz-history-empty">
+                                <td colspan="6">No student selected yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </div>
+
+        <div id="teacherPrintModal" class="teacher-print-modal" hidden>
+            <div class="teacher-print-card" role="dialog" aria-modal="true" aria-labelledby="teacherPrintTitle">
+                <h3 id="teacherPrintTitle">Print Student Progress</h3>
+                <label for="teacherPrintStudent">Choose a student</label>
+                <select id="teacherPrintStudent">
+                    <option value="all">All students</option>
+                </select>
+                <div class="teacher-print-actions">
+                    <button id="teacherPrintCancelBtn" class="tdash-btn tdash-btn--ghost" type="button">Cancel</button>
+                    <button id="teacherPrintConfirmBtn" class="tdash-btn tdash-btn--solid" type="button">Print Progress</button>
+                </div>
+            </div>
+        </div>
+
+        <section id="teacherPrintReport" class="teacher-print-report" aria-hidden="true"></section>
+
+        <div id="teacherCustomizeModal" class="teacher-customize-modal" hidden>
+            <div class="teacher-customize-card" role="dialog" aria-modal="true" aria-labelledby="teacherCustomizeTitle">
+                <h3 id="teacherCustomizeTitle">Add a Quiz Question</h3>
+                <form id="teacherCustomizeForm" class="teacher-customize-form">
+                    <label for="customQuestionCategory">Category</label>
+                    <select id="customQuestionCategory" required>
+                        <option value="alphabet">Alphabet</option>
+                        <option value="numbers">Numbers</option>
+                        <option value="colors">Colors</option>
+                        <option value="shapes">Shapes</option>
+                    </select>
+                    <label for="customQuestionDifficulty">Level</label>
+                    <select id="customQuestionDifficulty" required>
+                        <option value="easy">Easy</option>
+                        <option value="medium">Normal</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                    <label for="customQuestionPrompt">Question</label>
+                    <input id="customQuestionPrompt" type="text" maxlength="160" placeholder="Which answer is correct?" required>
+                    <label for="customQuestionCorrect">Correct answer</label>
+                    <input id="customQuestionCorrect" type="text" maxlength="80" placeholder="Correct answer" required>
+                    <label>Multiple-choice answers</label>
+                    <div class="custom-choice-fields">
+                        <div class="custom-choice-field">
+                            <input class="custom-choice" type="text" maxlength="80" placeholder="Answer 1" required>
+                            <input class="custom-choice-image" type="file" accept="image/*" aria-label="Photo for answer 1">
+                        </div>
+                        <div class="custom-choice-field">
+                            <input class="custom-choice" type="text" maxlength="80" placeholder="Answer 2" required>
+                            <input class="custom-choice-image" type="file" accept="image/*" aria-label="Photo for answer 2">
+                        </div>
+                        <div class="custom-choice-field">
+                            <input class="custom-choice" type="text" maxlength="80" placeholder="Answer 3" required>
+                            <input class="custom-choice-image" type="file" accept="image/*" aria-label="Photo for answer 3">
+                        </div>
+                    </div>
+                    <p id="customQuestionMessage" class="teacher-customize-message" aria-live="polite"></p>
+                    <div class="teacher-customize-actions">
+                        <button id="teacherCustomizeCloseBtn" class="tdash-btn tdash-btn--ghost" type="button">Close</button>
+                        <button class="tdash-btn tdash-btn--solid" type="submit">Save Question</button>
+                    </div>
+                </form>
+                <div>
+                    <h4>Your Added Quiz Questions</h4>
+                    <div id="customQuestionList" class="custom-question-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="teacherLessonModal" class="teacher-customize-modal" hidden>
+            <div class="teacher-customize-card teacher-lesson-card" role="dialog" aria-modal="true" aria-labelledby="teacherLessonTitle">
+                <h3 id="teacherLessonTitle">Add a Lesson</h3>
+                <p class="teacher-lesson-help">Create a lesson such as Animals. Add a cover picture, then add each animal picture and its name.</p>
+                <form id="teacherLessonForm" class="teacher-customize-form">
+                    <label for="customLessonName">Lesson name</label>
+                    <input id="customLessonName" type="text" maxlength="50" placeholder="Animals" required>
+                    <label for="customLessonCover">Cover picture</label>
+                    <input id="customLessonCover" type="file" accept="image/*" required>
+                    <div class="teacher-lesson-items-head">
+                        <label>Lesson pictures and names</label>
+                        <button id="addLessonItemBtn" class="tdash-btn tdash-btn--soft" type="button">Add picture</button>
+                    </div>
+                    <div id="customLessonItems" class="custom-lesson-items"></div>
+                    <p id="teacherLessonMessage" class="teacher-customize-message" aria-live="polite"></p>
+                    <div class="teacher-customize-actions">
+                        <button id="teacherLessonCloseBtn" class="tdash-btn tdash-btn--ghost" type="button">Close</button>
+                        <button class="tdash-btn tdash-btn--solid" type="submit">Save Lesson</button>
+                    </div>
+                </form>
+                <div>
+                    <h4>Your Added Lessons</h4>
+                    <div id="customLessonList" class="custom-question-list"></div>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+
+    <!-- ===================================================== -->
+    <!-- LEARNING MENU -->
+    <!-- ===================================================== -->
+
+    <section id="menuScreen" class="screen">
+
+        <div class="menu-container">
+
+            <h2>Choose What You Want To Learn</h2>
+
+            <div class="lesson-grid">
+
+                <!-- Alphabet -->
+
+                <div class="lesson-card">
+
+                    <img src="alphabetlesson.png">
+
+                    <h3>Alphabet</h3>
+
+                    <button class="lesson-btn">
+                        Start
+                    </button>
+                    <button class="quiz-menu-btn" data-quiz-category="alphabet" type="button" disabled>
+                        Quiz 🔒
+                    </button>
+
+                </div>
+
+                <!-- Numbers -->
+
+                <div class="lesson-card">
+
+                    <img src="numberlesson.png">
+
+                    <h3>Numbers</h3>
+
+                    <button class="lesson-btn">
+                        Start
+                    </button>
+                    <button class="quiz-menu-btn" data-quiz-category="numbers" type="button" disabled>
+                        Quiz 🔒
+                    </button>
+
+                </div>
+
+                <!-- Colors -->
+
+                <div class="lesson-card">
+
+                    <img src="colorlesson.png">
+
+                    <h3>Colors</h3>
+
+                    <button class="lesson-btn">
+                        Start
+                    </button>
+                    <button class="quiz-menu-btn" data-quiz-category="colors" type="button" disabled>
+                        Quiz 🔒
+                    </button>
+
+                </div>
+
+                <!-- Shapes -->
+
+                <div class="lesson-card">
+
+                    <img src="shapelesson.png">
+
+                    <h3>Shapes</h3>
+
+                    <button class="lesson-btn">
+                        Start
+                    </button>
+                    <button class="quiz-menu-btn" data-quiz-category="shapes" type="button" disabled>
+                        Quiz 🔒
+                    </button>
+
+                </div>
+
+                <div id="customLessonGrid" class="custom-lesson-grid"></div>
+
+            </div>
+
+            <button id="backHome" class="back-btn">
+                ← Back to Home
+            </button>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ===================================================== -->
+    <!-- SETTINGS POPUP -->
+    <!-- ===================================================== -->
+
+    <div id="settingsModal" class="modal">
+
+        <div class="modal-content settings-panel">
+
+            <button type="button" class="settings-close" id="settingsCloseBtn" aria-label="Close settings">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <header class="settings-header">
+                <div class="settings-header-icon" aria-hidden="true">
+                    <i class="fa-solid fa-sliders"></i>
+                </div>
+                <div class="settings-header-text">
+                    <h2>Settings</h2>
+                    <p>Tune sound, voice, and display for your adventure.</p>
+                </div>
+            </header>
+
+            <div class="settings-body">
+
+                <section class="settings-section" aria-labelledby="settingsSoundTitle">
+                    <h3 id="settingsSoundTitle" class="settings-section-title">
+                        <i class="fa-solid fa-music"></i>
+                        Sound
+                    </h3>
+
+                    <div class="setting-row">
+                        <div class="setting-copy">
+                            <span class="setting-label">Background Music</span>
+                            <span class="setting-hint">Play soft music while learning</span>
+                        </div>
+                        <label class="switch" for="bgMusicToggle">
+                            <input id="bgMusicToggle" type="checkbox" checked>
+                            <span class="switch-track" aria-hidden="true"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-row setting-row--stack">
+                        <div class="setting-copy setting-copy--inline">
+                            <span class="setting-label">Music Volume</span>
+                            <span class="setting-value" id="bgMusicVolumeValue">60%</span>
+                        </div>
+                        <input id="bgMusicVolume" class="setting-range" type="range" min="0" max="100" value="60">
+                    </div>
+
+                    <div class="setting-row">
+                        <div class="setting-copy">
+                            <span class="setting-label">Sound Effects</span>
+                            <span class="setting-hint">Clicks and playful feedback sounds</span>
+                        </div>
+                        <label class="switch" for="sfxToggle">
+                            <input id="sfxToggle" type="checkbox" checked>
+                            <span class="switch-track" aria-hidden="true"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-row setting-row--stack">
+                        <div class="setting-copy setting-copy--inline">
+                            <span class="setting-label">Effects Volume</span>
+                            <span class="setting-value" id="sfxVolumeValue">80%</span>
+                        </div>
+                        <input id="sfxVolume" class="setting-range" type="range" min="0" max="100" value="80">
+                    </div>
+                </section>
+
+                <section class="settings-section" aria-labelledby="settingsLearningTitle">
+                    <h3 id="settingsLearningTitle" class="settings-section-title">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                        Learning
+                    </h3>
+
+                    <div class="setting-row">
+                        <div class="setting-copy">
+                            <span class="setting-label">Voice Narration</span>
+                            <span class="setting-hint">Hear lesson and quiz prompts aloud</span>
+                        </div>
+                        <label class="switch" for="voiceNarrationToggle">
+                            <input id="voiceNarrationToggle" type="checkbox" checked>
+                            <span class="switch-track" aria-hidden="true"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-row">
+                        <div class="setting-copy">
+                            <span class="setting-label">Microphone</span>
+                            <span class="setting-hint">Use your voice for Speak Answer in lessons</span>
+                        </div>
+                        <label class="switch" for="microphoneToggle">
+                            <input id="microphoneToggle" type="checkbox" checked>
+                            <span class="switch-track" aria-hidden="true"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-row setting-row--mic-extra" id="microphoneExtraRow">
+                        <div class="mic-setting-controls">
+                            <span id="microphoneStatus" class="mic-status mic-status--unknown">Checking...</span>
+                            <button type="button" id="microphoneAllowBtn" class="mic-allow-btn">
+                                <i class="fa-solid fa-microphone"></i>
+                                Allow Microphone
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="settings-section" aria-labelledby="settingsDisplayTitle">
+                    <h3 id="settingsDisplayTitle" class="settings-section-title">
+                        <i class="fa-solid fa-display"></i>
+                        Display
+                    </h3>
+
+                    <div class="setting-row">
+                        <div class="setting-copy">
+                            <span class="setting-label">Fullscreen</span>
+                            <span class="setting-hint">Fill the whole screen for focus mode</span>
+                        </div>
+                        <label class="switch" for="fullscreenToggle">
+                            <input id="fullscreenToggle" type="checkbox">
+                            <span class="switch-track" aria-hidden="true"></span>
+                        </label>
+                    </div>
+                </section>
+
+            </div>
+
+            <footer class="settings-footer">
+                <button type="button" class="settings-done-btn" id="settingsDoneBtn">
+                    Done
+                </button>
+            </footer>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- ===================================================== -->
+    <!-- FOOTER -->
+    <!-- ===================================================== -->
+
+ 
+
+    <!-- ===================================================== -->
+<!-- LESSON SCREEN -->
+<!-- ===================================================== -->
+
+<section id="lessonScreen" class="screen">
+
+    <div class="lesson-container">
+
+        <!-- Progress -->
+
+        <div class="lesson-progress">
+
+            <div id="progressFill" class="progress-fill"></div>
+
+        </div>
+
+        <!-- Lesson Title -->
+
+        <h2 id="lessonTitle">
+
+            Alphabet Lesson
+
+        </h2>
+
+        <!-- Lesson Image -->
+
+        <div class="lesson-image">
+
+            <img
+                id="lessonImage"
+                src="images/alphabet/apple.png"
+                alt="Lesson Image">
+
+        </div>
+
+        <!-- Letter / Number -->
+
+        <h1 id="lessonLetter">
+
+            A
+
+        </h1>
+
+        <!-- Word -->
+
+        <h2 id="lessonWord"></h2>
+
+        <p id="lessonFeedback" class="lesson-feedback">
+            Lesson 1 of 26
+        </p>
+
+        <!-- Voice Buttons -->
+
+        <div class="lesson-voice-actions">
+            <button id="voiceBtn" class="voice-btn" type="button">
+                🔊 Listen
+            </button>
+            <button id="lessonSpeakBtn" class="voice-btn voice-btn--speak" type="button">
+                🎤 Speak Answer
+            </button>
+        </div>
+
+        <p id="lessonVoiceStatus" class="lesson-voice-status" aria-live="polite"></p>
+
+        <!-- Navigation -->
+
+        <div class="lesson-navigation">
+
+            <button id="previousLesson" class="lesson-nav-btn">
+
+                ⬅ Previous
+
+            </button>
+
+            <button id="nextLesson" class="lesson-nav-btn">
+
+                Next ➜
+
+            </button>
+
+        </div>
+
+        <!-- Home -->
+
+        <button id="lessonHomeBtn" class="back-btn">
+
+            🏠 Back to Menu
+
+        </button>
+
+    </div>
 
-window.addEventListener("click", (e) => {
+</section>
 
-    if (e.target === settingsModal) {
-        closeSettingsModal();
-    }
+<!-- ===================================================== -->
+<!-- QUIZ SCREEN -->
+<!-- ===================================================== -->
 
-});
+<section id="quizScreen" class="screen">
 
+    <div class="quiz-container">
 
-// FULLSCREENNNNNNNNNNN
+        <!-- Progress -->
 
+        <div class="quiz-progress">
 
-function updateFullscreenCheckbox() {
+            <div id="quizProgressFill" class="progress-fill"></div>
 
-    if (fullscreenToggle) {
+        </div>
 
-        fullscreenToggle.checked = !!document.fullscreenElement;
+        <!-- Quiz Title -->
 
-    }
+        <h2 id="quizTitle">
 
-}
+            Alphabet Quiz
 
-function setFullscreen(enabled) {
+        </h2>
 
-    if (!fullscreenToggle) return;
+        <!-- Difficulty -->
 
-    if (enabled) {
+        <div class="quiz-difficulty">
+            <div class="quiz-difficulty-label">Difficulty</div>
+            <div class="quiz-difficulty-buttons" role="group" aria-label="Quiz difficulty">
+                <button type="button" class="difficulty-btn" data-difficulty="easy" disabled>Easy</button>
+                <button type="button" class="difficulty-btn" data-difficulty="medium" disabled>Normal</button>
+                <button type="button" class="difficulty-btn" data-difficulty="hard" disabled>Hard</button>
 
-        if (!document.fullscreenElement) {
 
-            document.documentElement.requestFullscreen().catch((err) => {
+            </div>
+        </div>
 
-                console.warn("Fullscreen request failed:", err);
+        <div id="quizUnlockBox" class="quiz-unlock-box" role="status" aria-live="polite">
+            <div class="quiz-unlock-title">Unlock Next Level</div>
+            <p id="quizUnlockRule" class="quiz-unlock-rule">
+                Get all 5 Easy answers correct to unlock Medium.
+            </p>
+            <p id="quizUnlockProgress" class="quiz-unlock-progress">
+                Progress: 0 / 5 correct
+            </p>
+        </div>
 
-                fullscreenToggle.checked = false;
+        <!-- Score -->
 
-                localStorage.setItem("fullscreenEnabled", "false");
+        <div class="quiz-score">
 
-            });
 
-        }
+            Score:
+            <span id="currentScore">0</span>
 
-    } else {
+        </div>
 
-        if (document.fullscreenElement) {
+        <!-- Question Number -->
 
-            document.exitFullscreen().catch((err) => {
+        <p id="questionNumber">
 
-                console.warn("Fullscreen exit failed:", err);
+            Question 1 of 5
 
-            });
+        </p>
 
-        }
+        <!-- Question -->
 
-    }
+        <h1 id="quizQuestion">
 
-}
+            Which one is Apple?
 
-if (fullscreenToggle) {
+        </h1>
 
-    fullscreenToggle.addEventListener("change", () => {
+        <!-- Voice -->
 
-        const enabled = fullscreenToggle.checked;
+        <button id="quizVoiceBtn" class="voice-btn">
 
-        localStorage.setItem("fullscreenEnabled", enabled ? "true" : "false");
+            🔊 Read Question
 
-        setFullscreen(enabled);
+        </button>
 
-    });
+        <!-- Answer Cards -->
 
-}
+        <div class="answer-grid" id="quizAnswerGrid">
 
-window.addEventListener("fullscreenchange", updateFullscreenCheckbox);
+            <button class="answer-card" id="answer1">
 
-function isSfxEnabled() {
-    return sfxToggle ? sfxToggle.checked : false;
-}
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
 
-function updateSfxVolume() {
-    if (!popSound || !sfxVolume) return;
-    popSound.volume = Number(sfxVolume.value) / 100;
-}
+            </button>
 
-function isVoiceNarrationEnabled() {
-    if (voiceNarrationToggle) return !!voiceNarrationToggle.checked;
-    const saved = localStorage.getItem("voiceNarrationEnabled");
-    return saved === null ? true : saved === "true";
-}
+            <button class="answer-card" id="answer2">
 
-function applyVoiceNarrationSetting(enabled) {
-    if (voiceNarrationToggle) {
-        voiceNarrationToggle.checked = enabled;
-    }
-    localStorage.setItem("voiceNarrationEnabled", enabled ? "true" : "false");
-    if (!enabled) {
-        speechSynthesis.cancel();
-    }
-}
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
 
-// Female kid voice for all app narration (Web Speech API)
-const KID_VOICE_DEFAULTS = {
-    rate: 0.95,
-    pitch: 1.55,
-    volume: 1
-};
+            </button>
 
-let cachedSpeechVoices = [];
+            <button class="answer-card" id="answer3">
 
-function refreshSpeechVoices() {
-    if (!window.speechSynthesis) return;
-    cachedSpeechVoices = speechSynthesis.getVoices() || [];
-}
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
 
-function scoreKidFemaleVoice(voice, langPref) {
-    const name = (voice.name || "").toLowerCase();
-    const lang = (voice.lang || "").toLowerCase();
-    let score = 0;
+            </button>
 
-    // Prefer matching language (en / fil / tl)
-    if (langPref === "fil" || langPref === "tl") {
-        if (lang.startsWith("fil") || lang.startsWith("tl") || lang.includes("ph")) score += 40;
-        else if (lang.startsWith("en")) score += 15;
-    } else if (lang.startsWith("en")) {
-        score += 40;
-    }
+            <button class="answer-card" id="answer4">
 
-    // Strong female / child voice name hints
-    const kidHints = ["girl", "child", "kid", "junior", "little", "young"];
-    const femaleHints = [
-        "female", "zira", "samantha", "victoria", "karen", "moira", "fiona",
-        "tessa", "veena", "aria", "jenny", "sara", "susan", "hazel", "catherine",
-        "helen", "linda", "michelle", "natasha", "allison", "ava", "emma",
-        "google uk english female", "google us english"
-    ];
-    const maleHints = ["male", "david", "mark", "james", "thomas", "daniel", "george", "ravi", "fred"];
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
 
-    if (kidHints.some(h => name.includes(h))) score += 50;
-    if (femaleHints.some(h => name.includes(h))) score += 35;
-    if (maleHints.some(h => name.includes(h))) score -= 60;
-    if (name.includes("natural") || name.includes("neural")) score += 8;
-    if (voice.localService) score += 5;
+            </button>
 
-    return score;
-}
+            <button class="answer-card" id="answer5">
 
-function getKidFemaleVoice(lang) {
-    refreshSpeechVoices();
-    if (!cachedSpeechVoices.length) return null;
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
+                
+            </button>
 
-    const langPref = (lang || "en-US").toLowerCase().startsWith("fil") ||
-        (lang || "").toLowerCase().startsWith("tl")
-        ? "fil"
-        : "en";
-
-    let best = null;
-    let bestScore = -Infinity;
-
-    for (const voice of cachedSpeechVoices) {
-        const score = scoreKidFemaleVoice(voice, langPref);
-        if (score > bestScore) {
-            bestScore = score;
-            best = voice;
-        }
-    }
-
-    // Require at least a mild female/english match; otherwise still return best
-    return best;
-}
-
-function applyKidFemaleVoice(utterance, options = {}) {
-    const lang = options.lang || (selectedLanguage === "tl" ? "fil-PH" : "en-US");
-    utterance.lang = lang;
-    utterance.rate = options.rate ?? KID_VOICE_DEFAULTS.rate;
-    utterance.pitch = options.pitch ?? KID_VOICE_DEFAULTS.pitch;
-    utterance.volume = options.volume ?? KID_VOICE_DEFAULTS.volume;
-
-    const voice = getKidFemaleVoice(lang);
-    if (voice) {
-        utterance.voice = voice;
-        // Keep utterance.lang aligned with the chosen voice when possible
-        if (voice.lang) utterance.lang = voice.lang;
-    }
-    return utterance;
-}
-
-if (window.speechSynthesis) {
-    refreshSpeechVoices();
-    speechSynthesis.onvoiceschanged = refreshSpeechVoices;
-}
-
-function speakText(text, options = {}) {
-    return new Promise(resolve => {
-        if (!text || !isVoiceNarrationEnabled()) {
-            resolve();
-            return;
-        }
-        speechSynthesis.cancel();
-        const speech = new SpeechSynthesisUtterance(text);
-        applyKidFemaleVoice(speech, {
-            rate: options.rate ?? KID_VOICE_DEFAULTS.rate,
-            pitch: options.pitch ?? KID_VOICE_DEFAULTS.pitch,
-            volume: options.volume ?? KID_VOICE_DEFAULTS.volume,
-            lang: options.lang
-        });
-        speech.onend = resolve;
-        speech.onerror = resolve;
-        speechSynthesis.speak(speech);
-    });
-}
-
-function isMicrophoneEnabled() {
-    return microphoneToggle ? microphoneToggle.checked : true;
-}
-
-// ======================================================
-// MICROPHONE PERMISSION (requested when Speak Answer is used)
-// ======================================================
-
-const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-let micPermissionState = "unknown";
-let micPermissionRequestInFlight = null;
-let micAllowNotificationShown = false;
-
-function canUseVoiceFeatures() {
-    return window.isSecureContext && !!SpeechRecognitionAPI;
-}
-
-function getMicrophoneBlockedMessage() {
-    if (!window.isSecureContext) {
-        return selectedLanguage === "tl"
-            ? "Buksan ang app sa http://localhost o HTTPS, hindi file://, para gumana ang mikropono."
-            : "Open the app at http://localhost or HTTPS, not file://, for the microphone to work.";
-    }
-    if (!SpeechRecognitionAPI) {
-        return selectedLanguage === "tl"
-            ? "Hindi available ang voice recognition sa browser na ito. Gamitin ang Chrome o Edge."
-            : "Voice recognition is not available in this browser. Please use Chrome or Edge.";
-    }
-    if (!navigator.mediaDevices?.getUserMedia) {
-        return selectedLanguage === "tl"
-            ? "Hindi available ang mikropono sa browser na ito."
-            : "Microphone is not available in this browser.";
-    }
-    return selectedLanguage === "tl"
-        ? "Hindi available ang mikropono."
-        : "Microphone unavailable.";
-}
-
-async function checkMicrophonePermissionState() {
-    try {
-        if (navigator.permissions?.query) {
-            const status = await navigator.permissions.query({ name: "microphone" });
-            micPermissionState = status.state;
-            status.onchange = () => {
-                micPermissionState = status.state;
-            };
-            return status.state;
-        }
-    } catch (err) {
-        // Some browsers block microphone permission queries.
-    }
-    return micPermissionState;
-}
-
-function getMicrophoneAllowMessage() {
-    return selectedLanguage === "tl"
-        ? "🎤 Paki-click ang Allow isang beses para gumana ang mikropono."
-        : "🎤 Click Allow once so the microphone can work.";
-}
-
-async function ensureMicrophoneAccess(options = {}) {
-    const { silent = false, notifySuccess = false } = options;
-
-    if (!window.isSecureContext) {
-        if (!silent) {
-            showNotification(getMicrophoneBlockedMessage(), 5000);
-        }
-        return false;
-    }
-
-    if (micPermissionRequestInFlight) {
-        return micPermissionRequestInFlight;
-    }
-
-    if (!navigator.mediaDevices?.getUserMedia) {
-        // Speech recognition can request mic access on its own.
-        return true;
-    }
-
-    micPermissionRequestInFlight = (async () => {
-        try {
-            if (!silent && !micAllowNotificationShown) {
-                micAllowNotificationShown = true;
-                showNotification(getMicrophoneAllowMessage(), 4500);
-            }
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            stream.getTracks().forEach(track => track.stop());
-            micPermissionState = "granted";
-            localStorage.setItem("micPermissionGranted", "true");
-            if (!silent && notifySuccess) {
-                showNotification(
-                    selectedLanguage === "tl"
-                        ? "Mikropono ay pinapayagan na."
-                        : "Microphone is allowed.",
-                    2200
-                );
-            }
-            return true;
-        } catch (err) {
-            if (err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError") {
-                micPermissionState = "denied";
-            }
-            if (!silent) {
-                showNotification(getMicrophoneBlockedMessage(), 4500);
-            }
-            return false;
-        } finally {
-            micPermissionRequestInFlight = null;
-        }
-    })();
-
-    return micPermissionRequestInFlight;
-}
-
-function getSpeechRecognitionErrorMessage(errorCode) {
-    switch (errorCode) {
-        case "not-allowed":
-        case "service-not-allowed":
-            return getMicrophoneBlockedMessage();
-        case "audio-capture":
-            return selectedLanguage === "tl"
-                ? "Walang nahanap na mikropono. Ikonekta ang mic at subukan ulit."
-                : "No microphone found. Connect a mic and try again.";
-        case "no-speech":
-            return selectedLanguage === "tl"
-                ? "Walang narinig. Subukan ulit."
-                : "No speech detected. Try again.";
-        case "network":
-            return selectedLanguage === "tl"
-                ? "Kailangan ng internet para sa voice recognition."
-                : "Voice recognition needs an internet connection.";
-        case "aborted":
-            return selectedLanguage === "tl"
-                ? "Tumigil ang pakikinig."
-                : "Listening stopped.";
-        default:
-            return selectedLanguage === "tl"
-                ? `May problema sa mikropono (${errorCode}). Subukan ulit.`
-                : `Mic error (${errorCode}). Please try again.`;
-    }
-}
-
-function speakQuizQuestion() {
-    if (!quizQuestions.length) return;
-    const prefix = selectedLanguage === 'tl'
-        ? `Tanong ${currentQuizIndex + 1}. `
-        : `Question ${currentQuizIndex + 1}. `;
-    const text = prefix + quizQuestions[currentQuizIndex].prompt;
-    speakText(text);
-}
-
-function speakQuizFeedback(isCorrect, correctAnswer) {
-    const translatedAnswer = selectedLanguage === 'tl' ? translateWord(correctAnswer) : correctAnswer;
-    return speakText(
-        isCorrect
-            ? (selectedLanguage === 'tl' ? "Tama! Mahusay." : "Correct! Great job.")
-            : (selectedLanguage === 'tl'
-                ? `Ayaw! Ang tamang sagot ay ${translatedAnswer}.`
-                : `Oops, that's wrong. The correct answer is ${correctAnswer}.`)
-    );
-}
-
-function playPopSound() {
-    if (!popSound || !isSfxEnabled()) return;
-    popSound.currentTime = 0;
-    popSound.play().catch(() => {
-        // button sound blocked until user interaction is allowed
-    });
-}
-
-function updateBgMusic() {
-    if (!bgAudio) return;
-    const enabled = bgMusicToggle ? bgMusicToggle.checked : false;
-    const volume = bgMusicVolume ? Number(bgMusicVolume.value) / 100 : 0.6;
-
-    bgAudio.volume = volume;
-
-    if (!enabled) {
-        bgAudio.pause();
-        return;
-    }
-
-    bgAudio.play().catch(() => {
-        // autoplay may be blocked until user interacts with the page
-    });
-}
-
-if (bgMusicToggle) {
-    bgMusicToggle.addEventListener("change", updateBgMusic);
-}
-
-if (bgMusicVolume) {
-    bgMusicVolume.addEventListener("input", () => {
-        updateVolumeLabel(bgMusicVolume, bgMusicVolumeValue);
-        updateBgMusic();
-    });
-}
-
-if (sfxToggle) {
-    sfxToggle.addEventListener("change", playPopSound);
-}
-
-if (sfxVolume) {
-    sfxVolume.addEventListener("input", () => {
-        updateVolumeLabel(sfxVolume, sfxVolumeValue);
-        updateSfxVolume();
-    });
-}
-
-if (voiceNarrationToggle) {
-    voiceNarrationToggle.addEventListener("change", () => {
-        applyVoiceNarrationSetting(voiceNarrationToggle.checked);
-        if (voiceNarrationToggle.checked) {
-            speakText(
-                selectedLanguage === "tl"
-                    ? "Naka-on ang voice narration."
-                    : "Voice narration is on."
-            );
-        }
-    });
-}
-
-// ======================================================
-// MICROPHONE SETTINGS
-// ======================================================
-
-function saveMicrophoneEnabled(enabled) {
-    localStorage.setItem("microphoneEnabled", enabled ? "true" : "false");
-}
-
-function loadMicrophoneEnabled() {
-    const saved = localStorage.getItem("microphoneEnabled");
-    return saved === null ? true : saved === "true";
-}
-
-function updateMicrophoneStatus() {
-    if (!microphoneStatus) return;
-
-    const statusMap = {
-        "granted": { text: "✓ Allowed", class: "mic-status--granted" },
-        "denied": { text: "✗ Denied", class: "mic-status--denied" },
-        "prompt": { text: "? Ask permission", class: "mic-status--prompt" },
-        "unknown": { text: "Checking...", class: "mic-status--unknown" }
-    };
-
-    const status = statusMap[micPermissionState] || statusMap["unknown"];
-    microphoneStatus.textContent = status.text;
-    microphoneStatus.className = "mic-status " + status.class;
-
-    // Show/hide the Allow button based on permission state
-    if (microphoneAllowBtn) {
-        microphoneAllowBtn.style.display = 
-            micPermissionState === "granted" ? "none" : "block";
-    }
-}
-
-if (microphoneToggle) {
-    // Load saved state
-    microphoneToggle.checked = loadMicrophoneEnabled();
-
-    microphoneToggle.addEventListener("change", () => {
-        saveMicrophoneEnabled(microphoneToggle.checked);
-        if (microphoneToggle.checked) {
-            showNotification(
-                selectedLanguage === "tl"
-                    ? "🎤 Mikropono ay naka-on."
-                    : "🎤 Microphone is on."
-            );
-        } else {
-            showNotification(
-                selectedLanguage === "tl"
-                    ? "🎤 Mikropono ay naka-off."
-                    : "🎤 Microphone is off."
-            );
-        }
-    });
-}
-
-if (microphoneAllowBtn) {
-    microphoneAllowBtn.addEventListener("click", async () => {
-        const result = await ensureMicrophoneAccess({ silent: false, notifySuccess: true });
-        updateMicrophoneStatus();
-    });
-}
-
-// Initialize microphone status on page load
-setTimeout(() => {
-    checkMicrophonePermissionState().then(() => {
-        updateMicrophoneStatus();
-    });
-}, 100);
-
-const VOICE_FEEDBACK_NOTIFICATION_MS = 2000;
-
-function showNotification(message, duration = 2800) {
-
-    if (!notificationBox) return;
-
-    notificationBox.textContent = message;
-    notificationBox.classList.add("show");
-
-    notificationBox.classList.remove("hidden");
-
-    clearTimeout(notificationBox.hideTimer);
-
-    notificationBox.hideTimer = setTimeout(() => {
-
-        notificationBox.classList.remove("show");
-
-        notificationBox.classList.add("hidden");
-
-    }, duration);
-
-}
-
-if (notificationBox) {
-
-    notificationBox.addEventListener("click", () => {
-
-        notificationBox.classList.remove("show");
-
-        notificationBox.classList.add("hidden");
-
-    });
-
-}
-
-// ======================================================
-// AVATAR SELECTION
-// ======================================================
-
-avatars.forEach((avatar, index) => {
-
-    avatar.addEventListener("click", () => {
-
-        avatars.forEach(a => {
-
-            a.style.border = "4px solid transparent";
-
-        });
-
-        avatar.style.border = "4px solid #ffb703";
-
-        selectedAvatar = index + 1;
-
-    });
-
-});
-
-
-
-// ======================================================
-// LOAD SAVED DATA
-// ======================================================
-
-window.onload = () => {
-
-    const savedName = localStorage.getItem("studentName");
-
-    if (savedName) {
-
-        studentName.value = savedName;
-
-    }
-
-    // Do not auto-restore avatar selection; user must re-select an avatar each session.
-    // const savedAvatar = localStorage.getItem("avatar");
-
-
-    const savedFullscreen = localStorage.getItem("fullscreenEnabled") === "true";
-
-    if (fullscreenToggle) {
-
-        fullscreenToggle.checked = savedFullscreen;
-
-    }
-
-    const savedVoiceNarration = localStorage.getItem("voiceNarrationEnabled");
-    applyVoiceNarrationSetting(savedVoiceNarration === null ? true : savedVoiceNarration === "true");
-
-    updateBgMusic();
-    updateSfxVolume();
-    updateVolumeLabel(bgMusicVolume, bgMusicVolumeValue);
-    updateVolumeLabel(sfxVolume, sfxVolumeValue);
-    updateStudentHud();
-    document.addEventListener("click", () => {
-        updateBgMusic();
-        playPopSound();
-    }, { once: true });
-};
-
-// ======================================================
-// SIMPLE BUTTON ANIMATION
-// ======================================================
-
-const buttons = document.querySelectorAll("button");
-
-buttons.forEach(button => {
-
-    button.addEventListener("mousedown", () => {
-
-        button.style.transform = "scale(0.95)";
-
-    });
-
-    button.addEventListener("mouseup", () => {
-
-        button.style.transform = "scale(1)";
-
-    });
-
-    button.addEventListener("mouseleave", () => {
-
-        button.style.transform = "scale(1)";
-
-    });
-
-});
-
-document.addEventListener("click", () => {
-    playPopSound();
-});
-
-// ======================================================
-// END OF PART 1
-// ======================================================
-
-// ======================================================
-// PART 2 - UNIVERSAL LESSON ENGINE
-// Supports Alphabet, Numbers, Colors and Shapes
-// ======================================================
-
-// -------------------------------
-// LESSON DATA
-// -------------------------------
-
-const lessons = {
-
-    alphabet: [
-        {title:"Alphabet Lesson",letter:"A",word:"A",image:"alpha001.png"},
-        {title:"Alphabet Lesson",letter:"B",word:"B",image:"alpha002.png"},
-        {title:"Alphabet Lesson",letter:"C",word:"C",image:"alpha003.png"},
-        {title:"Alphabet Lesson",letter:"D",word:"D",image:"alpha004.png"},
-        {title:"Alphabet Lesson",letter:"E",word:"E",image:"alpha005.png"},
-        {title:"Alphabet Lesson",letter:"F",word:"F",image:"alpha006.png"},
-        {title:"Alphabet Lesson",letter:"G",word:"G",image:"alpha007.png"},
-        {title:"Alphabet Lesson",letter:"H",word:"H",image:"alpha008.png"},
-        {title:"Alphabet Lesson",letter:"I",word:"I",image:"alpha009.png"},
-        {title:"Alphabet Lesson",letter:"J",word:"J",image:"alpha010.png"},
-        {title:"Alphabet Lesson",letter:"K",word:"K",image:"alpha011.png"},
-        {title:"Alphabet Lesson",letter:"L",word:"L",image:"alpha012.png"},
-        {title:"Alphabet Lesson",letter:"M",word:"M",image:"alpha013.png"},
-        {title:"Alphabet Lesson",letter:"N",word:"N",image:"alpha014.png"},
-        {title:"Alphabet Lesson",letter:"O",word:"O",image:"alpha015.png"},
-        {title:"Alphabet Lesson",letter:"P",word:"P",image:"alpha016.png"},
-        {title:"Alphabet Lesson",letter:"Q",word:"Q",image:"alpha017.png"},
-        {title:"Alphabet Lesson",letter:"R",word:"R",image:"alpha018.png"},
-        {title:"Alphabet Lesson",letter:"S",word:"S",image:"alpha019.png"},
-        {title:"Alphabet Lesson",letter:"T",word:"T",image:"alpha020.png"},
-        {title:"Alphabet Lesson",letter:"U",word:"U",image:"alpha021.png"},
-        {title:"Alphabet Lesson",letter:"V",word:"V",image:"alpha022.png"},
-        {title:"Alphabet Lesson",letter:"W",word:"W",image:"alpha023.png"},
-        {title:"Alphabet Lesson",letter:"X",word:"X",image:"alpha024.png"},
-        {title:"Alphabet Lesson",letter:"Y",word:"Y",image:"alpha025.png"},
-        {title:"Alphabet Lesson",letter:"Z",word:"Z",image:"alpha026.png"}
-    ],
-
-    numbers: [
-        {title:"Numbers Lesson",letter:"",word:"One",image:"num001.png"},
-        {title:"Numbers Lesson",letter:"",word:"Two",image:"num002.png"},
-        {title:"Numbers Lesson",letter:"",word:"Three",image:"num003.png"},
-        {title:"Numbers Lesson",letter:"",word:"Four",image:"num004.png"},
-        {title:"Numbers Lesson",letter:"",word:"Five",image:"num005.png"},
-        {title:"Numbers Lesson",letter:"",word:"Six",image:"num006.png"},
-        {title:"Numbers Lesson",letter:"",word:"Seven",image:"num007.png"},
-        {title:"Numbers Lesson",letter:"",word:"Eight",image:"num008.png"},
-        {title:"Numbers Lesson",letter:"",word:"Nine",image:"num009.png"},
-        {title:"Numbers Lesson",letter:"",word:"Ten",image:"num010.png"}
-    ],
-
-    colors: [
-        {title:"Colors Lesson",letter:"",word:"Red",image:"col001.png"},
-        {title:"Colors Lesson",letter:"",word:"Blue",image:"col002.png"},
-        {title:"Colors Lesson",letter:"",word:"Yellow",image:"col003.png"},
-        {title:"Colors Lesson",letter:"",word:"Green",image:"col004.png"},
-        {title:"Colors Lesson",letter:"",word:"Orange",image:"col005.png"},
-        {title:"Colors Lesson",letter:"",word:"Purple",image:"col006.png"},
-        {title:"Colors Lesson",letter:"",word:"Black",image:"col007.png"},
-        {title:"Colors Lesson",letter:"",word:"White",image:"col008.png"},
-        {title:"Colors Lesson",letter:"",word:"Brown",image:"col009.png"},
-        {title:"Colors Lesson",letter:"",word:"Pink",image:"col010.png"}
-    ],
-
-    shapes: [
-        {title:"Shapes Lesson",letter:"",word:"Circle",image:"sha001.png"},
-        {title:"Shapes Lesson",letter:"",word:"Square",image:"sha002.png"},
-        {title:"Shapes Lesson",letter:"",word:"Triangle",image:"sha003.png"},
-        {title:"Shapes Lesson",letter:"",word:"Rectangle",image:"sha004.png"},
-        {title:"Shapes Lesson",letter:"",word:"Star",image:"sha005.png"},
-        {title:"Shapes Lesson",letter:"",word:"Heart",image:"sha006.png"},
-        {title:"Shapes Lesson",letter:"",word:"Pentagon",image:"sha007.png"},
-        {title:"Shapes Lesson",letter:"",word:"Hexagon",image:"sha008.png"},
-        {title:"Shapes Lesson",letter:"",word:"Diamond",image:"sha009.png"},
-        {title:"Shapes Lesson",letter:"",word:"Oval",image:"sha010.png"}
-    ]
-
-};
-
-const customLessonMetadata = {};
-
-function syncCustomLessons() {
-    Object.keys(customLessonMetadata).forEach(category => {
-        delete lessons[category];
-        delete customLessonMetadata[category];
-    });
-
-    getCustomLessons().forEach(customLesson => {
-        if (!customLesson.id || !customLesson.name || !Array.isArray(customLesson.items) || !customLesson.items.length) return;
-        const category = customLesson.id;
-        lessons[category] = customLesson.items.map(item => ({
-            title: `${customLesson.name} Lesson`,
-            letter: "",
-            word: item.name,
-            image: item.image
-        }));
-        customLessonMetadata[category] = customLesson;
-    });
-    renderCustomLessonGrid();
-}
-
-function renderCustomLessonGrid() {
-    if (!customLessonGrid) return;
-    customLessonGrid.innerHTML = "";
-    Object.entries(customLessonMetadata)
-        .filter(([, customLesson]) => !customLesson.hidden)
-        .forEach(([category, customLesson]) => {
-        const card = document.createElement("div");
-        card.className = "lesson-card custom-lesson-card";
-        card.innerHTML = `
-            <img alt="">
-            <h3></h3>
-            <button class="lesson-btn" type="button">Start</button>
-            <button class="quiz-menu-btn" data-quiz-category="${category}" type="button" disabled>Quiz 🔒</button>`;
-        card.querySelector("img").src = customLesson.cover;
-        card.querySelector("img").alt = `${customLesson.name} lesson cover`;
-        card.querySelector("h3").textContent = customLesson.name;
-        card.querySelector(".lesson-btn").addEventListener("click", () => openLesson(category));
-        card.querySelector(".quiz-menu-btn").addEventListener("click", () => openCategoryQuiz(category));
-        customLessonGrid.appendChild(card);
-        });
-}
-
-syncCustomLessons();
-
-const translationMap = {
-    One: "Isa",
-    Two: "Dalawa",
-    Three: "Tatlo",
-    Four: "Apat",
-    Five: "Lima",
-    Six: "Anim",
-    Seven: "Pito",
-    Eight: "Walo",
-    Nine: "Siyam",
-    Ten: "Sampu",
-    Red: "Pula",
-    Blue: "Asul",
-    Yellow: "Dilaw",
-    Green: "Berde",
-    Orange: "Kahel",
-    Purple: "Ube",
-    Black: "Itim",
-    White: "Puti",
-    Brown: "Kayumanggi",
-    Pink: "Rosas",
-    Circle: "Bilog",
-    Square: "Parisukat",
-    Triangle: "Tatsulok",
-    Rectangle: "Parihaba",
-    Star: "Bituin",
-    Heart: "Puso",
-    Pentagon: "Pentagon",
-    Hexagon: "Heksagon",
-    Diamond: "Diyamante",
-    Oval: "Obalo"
-};
-
-const titleTranslations = {
-    alphabet: "Aral ng Alpabeto",
-    numbers: "Aral ng Numero",
-    colors: "Aral ng Kulay",
-    shapes: "Aral ng Hugis"
-};
-
-const quizTitleTranslations = {
-    alphabet: "Pagsusulit ng Alpabeto",
-    numbers: "Pagsusulit ng Numero",
-    colors: "Pagsusulit ng Kulay",
-    shapes: "Pagsusulit ng Hugis"
-};
-
-function translateWord(word) {
-    if (selectedLanguage === 'tl') {
-        return translationMap[word] || word;
-    }
-    return word;
-}
-
-function translateLessonTitle(category) {
-    if (selectedLanguage === 'tl') {
-        return titleTranslations[category] || lessons[category][0].title;
-    }
-    return lessons[category][0].title;
-}
-
-function translateLessonProgress(count, total) {
-    if (selectedLanguage === 'tl') {
-        return `Aralin ${count} ng ${total}`;
-    }
-    return `Lesson ${count} of ${total}`;
-}
-
-let currentCategory = "alphabet";
-let currentLesson = 0;
-
-function getLessonSpeechAlternatives(lesson) {
-    const localizedWord = translateWord(lesson.word);
-    const letter = lesson.letter;
-    const digit = currentLesson + 1;
-    const word = selectedLanguage === "tl" ? localizedWord : lesson.word;
-
-    if (selectedLanguage === "tl") {
-        switch (currentCategory) {
-            case "alphabet":
-                return [
-                    // Existing feedback (kept)
-                    `Tingnan! Ito ang letrang ${letter}. Masasabi mo ba ang "${letter}"?`,
-                    `Ito ang letrang ${letter}. Sabihin natin ang "${letter}" nang magkasama!`,
-                    // Alternatives
-                    `Masasabi mo ba kung anong letra ang nakikita mo?`,
-                    `Anong letra ito?`,
-                    `Kilala mo ba ang letrang ito?`,
-                    `Ano ang tawag sa letrang ito?`,
-                    `Naaalala mo ba ang letrang ito?`
-                ];
-            case "numbers":
-                return [
-                    // Existing feedback (kept)
-                    `Ito ang numerong ${digit}. Masasabi mo ba, "${word}"?`,
-                    // Alternatives
-                    `Masasabi mo ba kung anong numero ang nakikita mo?`,
-                    `Anong numero ito?`,
-                    `Kilala mo ba ang numerong ito?`,
-                    `Ano ang tawag sa numerong ito?`,
-                    `Naaalala mo ba ang numerong ito?`
-                ];
-            case "colors":
-                return [
-                    // Existing feedback (kept)
-                    `Tingnan! Ang kulay na ito ay ${word}. Masasabi mo ba, "${word}"?`,
-                    // Alternatives
-                    `Masasabi mo ba kung anong kulay ang nakikita mo?`,
-                    `Anong kulay ito?`,
-                    `Kilala mo ba ang kulay na ito?`,
-                    `Ano ang tawag sa kulay na ito?`,
-                    `Naaalala mo ba ang kulay na ito?`
-                ];
-            case "shapes":
-                return [
-                    // Existing feedback (kept)
-                    `Tingnan! Ang hugis na ito ay ${word}. Masasabi mo ba, "${word}"?`,
-                    // Alternatives
-                    `Masasabi mo ba kung anong hugis ang nakikita mo?`,
-                    `Anong hugis ito?`,
-                    `Kilala mo ba ang hugis na ito?`,
-                    `Ano ang tawag sa hugis na ito?`,
-                    `Naaalala mo ba ang hugis na ito?`
-                ];
-            default:
-                return [word];
-        }
-    }
-
-    switch (currentCategory) {
-        case "alphabet":
-            return [
-                // Existing feedback (kept)
-                `Look! It's the letter ${letter}. Can you say "${letter}"?`,
-                `This is the letter ${letter}. Let's say "${letter}" together!`,
-                // Alternatives
-                `Can you tell me what letter you see?`,
-                `Which letter is this?`,
-                `Do you know this letter?`,
-                `What do we call this letter?`,
-                `Can you remember this letter?`
-            ];
-        case "numbers":
-            return [
-                // Existing feedback (kept)
-                `This is the number ${digit}. Can you say, "${word}"?`,
-                // Alternatives
-                `Can you tell me what number you see?`,
-                `Which number is this?`,
-                `Do you know this number?`,
-                `What do we call this number?`,
-                `Can you remember this number?`
-            ];
-        case "colors":
-            return [
-                // Existing feedback (kept)
-                `Look! This color is ${word}. Can you say, "${word}"?`,
-                // Alternatives
-                `Can you tell me what color you see?`,
-                `Which color is this?`,
-                `Do you know this color?`,
-                `What do we call this color?`,
-                `Can you remember this color?`
-            ];
-        case "shapes":
-            return [
-                // Existing feedback (kept)
-                `Look! This shape is ${word}. Can you say, "${word}"?`,
-                // Alternatives
-                `Can you tell me what shape you see?`,
-                `Which shape is this?`,
-                `Do you know this shape?`,
-                `What do we call this shape?`,
-                `Can you remember this shape?`
-            ];
-        default:
-            return [word];
-    }
-}
-
-function getLessonSpeechText() {
-    const lesson = lessons[currentCategory][currentLesson];
-    const alternatives = getLessonSpeechAlternatives(lesson);
-    return alternatives[currentLesson % alternatives.length];
-}
-
-function updateLessonSubtitle() {
-    if (!lessonFeedback) return;
-
-    const progressText = translateLessonProgress(
-        currentLesson + 1,
-        lessons[currentCategory].length
-    );
-    lessonFeedback.textContent = progressText;
-}
-
-
-// ======================================================
-// LESSON VOICE INTERACTION (SPEAK ANSWER)
-// ======================================================
-
-// ======================================================
-// LESSON VOICE INTERACTION (SPEAK ANSWER)
-// ======================================================
-
-// ======================================================
-// LESSON VOICE INTERACTION (SPEAK ANSWER)
-// ======================================================
-// ======================================================
-// LESSON VOICE INTERACTION (SPEAK ANSWER)
-// ======================================================
-
-
-
-
-
-// ======================================================
-// LESSON VOICE INTERACTION (SPEAK ANSWER)
-// ======================================================
-
-let lessonSpeechRecognition = null;
-let lessonVoiceListening = false;
-let lessonVoiceGotResult = false;
-let lessonVoiceSession = 0;
-let lessonVoiceListenTimer = null;
-let lessonVoiceRewardedKeys = null;
-
-// Extra spoken forms the recognizer may produce (English + Filipino + near-misses)
-const VOICE_ANSWER_ALIASES = {
-    // Alphabet letters
-    A: ["a", "ay", "ey", "letter a", "letra a", "ei"],
-    B: ["b", "bee", "be", "letter b", "letra b", "bi"],
-    C: ["c", "see", "sea", "si", "letter c", "letra c"],
-    D: ["d", "dee", "di", "letter d", "letra d"],
-    E: ["e", "ee", "letter e", "letra e"],
-    F: ["f", "ef", "eff", "letter f", "letra f"],
-    G: ["g", "jee", "ji", "letter g", "letra g"],
-    H: ["h", "aitch", "eych", "eytch", "letter h", "letra h", "eyts"],
-    I: ["i", "eye", "ay", "letter i", "letra i"],
-    J: ["j", "jay", "jey", "letter j", "letra j"],
-    K: ["k", "kay", "key", "letter k", "letra k"],
-    L: ["l", "el", "ell", "letter l", "letra l"],
-    M: ["m", "em", "letter m", "letra m"],
-    N: ["n", "en", "letter n", "letra n"],
-    O: ["o", "oh", "letter o", "letra o"],
-    P: ["p", "pee", "pi", "letter p", "letra p"],
-    Q: ["q", "cue", "kyu", "queue", "letter q", "letra q"],
-    R: ["r", "ar", "are", "letter r", "letra r"],
-    S: ["s", "es", "ess", "letter s", "letra s"],
-    T: ["t", "tee", "ti", "letter t", "letra t"],
-    U: ["u", "you", "yu", "letter u", "letra u"],
-    V: ["v", "vee", "vi", "letter v", "letra v"],
-    W: ["w", "double u", "doubleu", "double you", "letter w", "letra w", "dabalyu"],
-    X: ["x", "ex", "eks", "letter x", "letra x"],
-    Y: ["y", "why", "wai", "letter y", "letra y"],
-    Z: ["z", "zee", "zed", "zi", "letter z", "letra z"],
-
-    // Alphabet words
-
-    // Numbers
-    One: ["one", "1", "won", "isa", "uno", "wan"],
-    Two: ["two", "2", "too", "to", "dalawa", "duwa", "dos"],
-    Three: ["three", "3", "tree", "free", "tatlo", "tres"],
-    Four: ["four", "4", "for", "fore", "apat", "kwatro", "quatro"],
-    Five: ["five", "5", "fife", "lima", "singko", "cinco"],
-    Six: ["six", "6", "siks", "anim", "says", "seis"],
-    Seven: ["seven", "7", "sevn", "pito", "syete", "siete"],
-    Eight: ["eight", "8", "ate", "ait", "walo", "otso", "ocho"],
-    Nine: ["nine", "9", "nayn", "siyam", "nuwebe", "nueve"],
-    Ten: ["ten", "10", "tin", "sampu", "diyis", "diez", "dies"],
-
-    // Colors
-    Red: ["red", "read", "rad", "pula", "pulang", "rojo"],
-    Blue: ["blue", "blu", "bloo", "asul", "azul", "bughaw"],
-    Yellow: ["yellow", "yelo", "yellow", "dilaw", "dilaw", "amarillo"],
-    Green: ["green", "grin", "berde", "verde", "lunti"],
-    // Orange already listed above
-    Purple: ["purple", "purpl", "purpel", "ube", "lila", "violet", "morado"],
-    Black: ["black", "blak", "itim", "negro", "dark"],
-    White: ["white", "wite", "puti", "blanco", "blanc"],
-    Brown: ["brown", "braun", "kayumanggi", "kayumangi", "tsokolate", "chocolate"],
-    Pink: ["pink", "pinck", "rosas", "rosa", "pinkish"],
-
-    // Shapes
-    Circle: ["circle", "sirkel", "circl", "bilog", "round", "circulo"],
-    Square: ["square", "skwer", "parisukat", "kwadrado", "cuadro"],
-    Triangle: ["triangle", "trayangle", "triangel", "tatsulok", "triangulo"],
-    Rectangle: ["rectangle", "rektangle", "parihaba", "rektanggulo", "rectangulo"],
-    Star: ["star", "ster", "bituin", "bituing", "estrella"],
-    Heart: ["heart", "hart", "puso", "corazon"],
-    Pentagon: ["pentagon", "pentagono", "5 sides", "five sides"],
-    Hexagon: ["hexagon", "heksagon", "hexagono", "6 sides", "six sides"],
-    Diamond: ["diamond", "daymond", "diyamante", "rhombus", "diamante"],
-    Oval: ["oval", "ovel", "obalo", "ellipse", "egg shape", "egg"]
-};
-
-function normalizeSpokenText(text) {
-    return String(text || "")
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9\s]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-}
-
-function levenshteinDistance(a, b) {
-    const rows = a.length + 1;
-    const cols = b.length + 1;
-    const matrix = Array.from({ length: rows }, () => Array(cols).fill(0));
-
-    for (let i = 0; i < rows; i++) matrix[i][0] = i;
-    for (let j = 0; j < cols; j++) matrix[0][j] = j;
-
-    for (let i = 1; i < rows; i++) {
-        for (let j = 1; j < cols; j++) {
-            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-            matrix[i][j] = Math.min(
-                matrix[i - 1][j] + 1,
-                matrix[i][j - 1] + 1,
-                matrix[i - 1][j - 1] + cost
-            );
-        }
-    }
-
-    return matrix[a.length][b.length];
-}
-
-function speechSimilarity(a, b) {
-    if (!a || !b) return 0;
-    if (a === b) return 1;
-    const distance = levenshteinDistance(a, b);
-    return 1 - distance / Math.max(a.length, b.length);
-}
-
-function getLessonVoiceRewardKey() {
-    const lesson = lessons[currentCategory][currentLesson];
-    return `${currentCategory}:${lesson.word}:${lesson.letter || ""}`;
-}
-
-function getLessonVoiceRewardsStore() {
-    if (lessonVoiceRewardedKeys) return lessonVoiceRewardedKeys;
-    const student = localStorage.getItem("studentName") || "Unknown";
-    const raw = localStorage.getItem(getNamespacedKey(`lessonVoiceStars_${encodeURIComponent(student)}`));
-    try {
-        lessonVoiceRewardedKeys = raw ? JSON.parse(raw) : {};
-    } catch (err) {
-        lessonVoiceRewardedKeys = {};
-    }
-    return lessonVoiceRewardedKeys;
-}
-
-function saveLessonVoiceRewardsStore() {
-    const student = localStorage.getItem("studentName") || "Unknown";
-    localStorage.setItem(
-        getNamespacedKey(`lessonVoiceStars_${encodeURIComponent(student)}`),
-        JSON.stringify(getLessonVoiceRewardsStore())
-    );
-}
-
-function hasLessonVoiceStarBeenAwarded() {
-    return !!getLessonVoiceRewardsStore()[getLessonVoiceRewardKey()];
-}
-
-function markLessonVoiceStarAwarded() {
-    const store = getLessonVoiceRewardsStore();
-    store[getLessonVoiceRewardKey()] = true;
-    saveLessonVoiceRewardsStore();
-}
-
-function getExpectedVoiceAnswers() {
-    const lesson = lessons[currentCategory][currentLesson];
-    const answers = new Set();
-
-    const addAnswer = (value) => {
-        const normalized = normalizeSpokenText(value);
-        if (normalized) answers.add(normalized);
-    };
-
-    const addWithAliases = (key) => {
-        if (!key) return;
-        addAnswer(key);
-        const aliases = VOICE_ANSWER_ALIASES[key];
-        if (aliases) aliases.forEach(addAnswer);
-        const translated = translationMap[key];
-        if (translated) addAnswer(translated);
-    };
-
-    if (currentCategory === "alphabet") {
-        addWithAliases(lesson.letter);
-        addWithAliases(lesson.word);
-        addAnswer(`letter ${lesson.letter}`);
-        addAnswer(`letra ${lesson.letter}`);
-    } else if (currentCategory === "numbers") {
-        addWithAliases(lesson.word);
-        addAnswer(String(currentLesson + 1));
-    } else {
-        addWithAliases(lesson.word);
-    }
-
-    return [...answers];
-}
-
-function isSpokenAnswerCorrect(spokenRaw) {
-    const spoken = normalizeSpokenText(spokenRaw);
-    if (!spoken) return false;
-
-    const expectedList = getExpectedVoiceAnswers();
-    const spokenTokens = spoken.split(" ").filter(Boolean);
-
-    for (const expected of expectedList) {
-        if (spoken === expected) return true;
-
-        // Short answers (letters / digits): require an exact token match only
-        if (expected.length <= 2) {
-            if (spokenTokens.includes(expected)) return true;
-            continue;
-        }
-
-        if (spoken.includes(expected) || expected.includes(spoken)) return true;
-
-        // Token-level fuzzy match for longer words
-        if (spokenTokens.some(token => {
-            if (token === expected) return true;
-            if (token.length <= 2) return false;
-            return speechSimilarity(token, expected) >= 0.78;
-        })) {
-            return true;
-        }
-
-        const threshold = expected.length <= 4 ? 0.8 : 0.72;
-        if (speechSimilarity(spoken, expected) >= threshold) return true;
-    }
-
-    return false;
-}
-
-function setLessonVoiceStatus(message, state = "") {
-    if (!lessonVoiceStatus) return;
-    lessonVoiceStatus.textContent = message || "";
-    lessonVoiceStatus.classList.remove("is-correct", "is-wrong", "is-listening");
-    if (state) lessonVoiceStatus.classList.add(`is-${state}`);
-}
-
-function resetLessonVoiceUi() {
-    stopLessonVoiceListening(false);
-    setLessonVoiceStatus("");
-    if (lessonSpeakBtn) {
-        lessonSpeakBtn.classList.remove("is-listening");
-        lessonSpeakBtn.textContent = selectedLanguage === "tl" ? "🎤 Magsalita" : "🎤 Speak";
-    }
-}
-
-function awardLessonVoiceStar() {
-    if (hasLessonVoiceStarBeenAwarded()) return 0;
-    loadStudentStars();
-    const gained = 1;
-    quizStars += gained;
-    saveStudentStars();
-    recordDailyStarsEarned(gained);
-    markLessonVoiceStarAwarded();
-    updateQuizStarDisplay(true, gained);
-    updateCurrentStudentRecord();
-    return gained;
-}
-
-function stopLessonVoiceListening(updateButton = true) {
-    lessonVoiceListening = false;
-    lessonVoiceSession += 1;
-    if (lessonVoiceListenTimer) {
-        clearTimeout(lessonVoiceListenTimer);
-        lessonVoiceListenTimer = null;
-    }
-    if (lessonSpeechRecognition) {
-        try {
-            lessonSpeechRecognition.onresult = null;
-            lessonSpeechRecognition.onerror = null;
-            lessonSpeechRecognition.onend = null;
-            lessonSpeechRecognition.stop();
-        } catch (err) {
-            // ignore
-        }
-        lessonSpeechRecognition = null;
-    }
-    if (updateButton && lessonSpeakBtn) {
-        lessonSpeakBtn.classList.remove("is-listening");
-        lessonSpeakBtn.textContent = selectedLanguage === "tl" ? "🎤 Magsalita" : "🎤 Speak";
-    }
-}
-
-function handleLessonVoiceResult(spokenText) {
-    const heard = String(spokenText || "").trim();
-    if (!heard) {
-        setLessonVoiceStatus(
-            selectedLanguage === "tl" ? "Hindi marinig. Subukan ulit." : "I didn't catch that. Try again.",
-            "wrong"
-        );
-        return;
-    }
-
-    if (isSpokenAnswerCorrect(heard)) {
-        const gained = awardLessonVoiceStar();
-        const message = gained
-            ? (selectedLanguage === "tl"
-                ? `Tama! +${gained} bituin!`
-                : `Correct! +${gained} star!`)
-            : (selectedLanguage === "tl"
-                ? `Tama! (Nakuha mo na ang bituin dito.)`
-                : `Correct! (Star already earned for this item.)`);
-
-        setLessonVoiceStatus(message, "correct");
-        speakText(selectedLanguage === "tl" ? "Tama! Magaling!" : "Correct! Great job!");
-    } else {
-        const lesson = lessons[currentCategory][currentLesson];
-        const hint = currentCategory === "alphabet"
-            ? lesson.letter
-            : translateWord(lesson.word);
-        const message = selectedLanguage === "tl"
-            ? `Halos! Subukan sabihin: ${hint}`
-            : `Close! Try saying: ${hint}`;
-        setLessonVoiceStatus(message, "wrong");
-        speakText(selectedLanguage === "tl" ? "Subukan ulit!" : "Try again!");
-    }
-}
-
-async function startLessonVoiceListening() {
-    if (!isMicrophoneEnabled()) {
-        const msg = selectedLanguage === "tl"
-            ? "Naka-off ang mikropono. Buksan ito sa Settings."
-            : "Microphone is off. Turn it on in Settings.";
-        setLessonVoiceStatus(msg, "wrong");
-        showNotification(msg, 3000);
-        return;
-    }
-
-    if (!canUseVoiceFeatures()) {
-        const msg = getMicrophoneBlockedMessage();
-        setLessonVoiceStatus(msg, "wrong");
-        showNotification(msg, 5000);
-        return;
-    }
-
-    const microphoneReady = await ensureMicrophoneAccess({ silent: false, notifySuccess: false });
-    if (!microphoneReady) {
-        const msg = getMicrophoneBlockedMessage();
-        setLessonVoiceStatus(msg, "wrong");
-        return;
-    }
-
-    if (lessonVoiceListening) {
-        stopLessonVoiceListening();
-        setLessonVoiceStatus(
-            selectedLanguage === "tl" ? "Tumigil ang pakikinig." : "Listening stopped.",
-            ""
-        );
-        return;
-    }
-
-    speechSynthesis.cancel();
-    stopLessonVoiceListening(false);
-
-    const recognition = new SpeechRecognitionAPI();
-    lessonSpeechRecognition = recognition;
-    recognition.lang = selectedLanguage === "tl" ? "fil-PH" : "en-US";
-    recognition.interimResults = true;
-    recognition.maxAlternatives = 5;
-    recognition.continuous = true;
-
-    const session = lessonVoiceSession;
-    lessonVoiceGotResult = false;
-    lessonVoiceListening = true;
-
-    if (lessonSpeakBtn) {
-        lessonSpeakBtn.classList.add("is-listening");
-        lessonSpeakBtn.textContent = selectedLanguage === "tl" ? "🛑 Tumigil" : "🛑 Listening...";
-    }
-    setLessonVoiceStatus(
-        selectedLanguage === "tl" ? "Nakikinig... magsalita ngayon." : "Listening... speak now.",
-        "listening"
-    );
-
-    recognition.onresult = (event) => {
-        if (session !== lessonVoiceSession) return;
-
-        let interimTranscript = "";
-        let finalTranscript = "";
-        const alternatives = [];
-
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-            const result = event.results[i];
-            const transcript = result[0]?.transcript || "";
-            if (result.isFinal) {
-                finalTranscript += transcript;
-            } else {
-                interimTranscript += transcript;
-            }
-
-            for (let j = 0; j < result.length; j++) {
-                alternatives.push(result[j].transcript);
-            }
-        }
-
-        if (!finalTranscript) return;
-
-        lessonVoiceGotResult = true;
-        stopLessonVoiceListening();
-
-        const match = alternatives.find(text => isSpokenAnswerCorrect(text));
-        handleLessonVoiceResult(match || finalTranscript.trim());
-    };
-
-    recognition.onerror = (event) => {
-        if (session !== lessonVoiceSession) return;
-        // Chrome often fires these while still listening; keep the mic open.
-        if (event.error === "no-speech" || event.error === "aborted") return;
-
-        stopLessonVoiceListening();
-        const msg = getSpeechRecognitionErrorMessage(event.error);
-        setLessonVoiceStatus(msg, "wrong");
-        showNotification(msg, event.error === "not-allowed" ? 5000 : VOICE_FEEDBACK_NOTIFICATION_MS);
-    };
-
-    recognition.onend = () => {
-        if (session !== lessonVoiceSession) return;
-        if (lessonVoiceListening && !lessonVoiceGotResult) {
-            try {
-                recognition.start();
-            } catch (err) {
-                stopLessonVoiceListening();
-                const msg = selectedLanguage === "tl"
-                    ? "Walang narinig. Subukan ulit."
-                    : "No speech detected. Try again.";
-                setLessonVoiceStatus(msg, "wrong");
-                showNotification(msg, VOICE_FEEDBACK_NOTIFICATION_MS);
-            }
-        }
-    };
-
-    try {
-        // Must start in the same click as Speak Answer so the browser allows the mic.
-        recognition.start();
-        if (!micAllowNotificationShown) {
-            micAllowNotificationShown = true;
-            showNotification(getMicrophoneAllowMessage(), 4500);
-        } else {
-            showNotification(
-                selectedLanguage === "tl" ? "🎤 Magsalita ngayon..." : "🎤 Speak now...",
-                VOICE_FEEDBACK_NOTIFICATION_MS
-            );
-        }
-    } catch (err) {
-        stopLessonVoiceListening();
-        const msg = getMicrophoneBlockedMessage();
-        setLessonVoiceStatus(msg, "wrong");
-        showNotification(msg, 5000);
-        return;
-    }
-
-    lessonVoiceListenTimer = setTimeout(() => {
-        if (session !== lessonVoiceSession) return;
-        if (!lessonVoiceListening || lessonVoiceGotResult) return;
-        stopLessonVoiceListening();
-        const msg = selectedLanguage === "tl"
-            ? "Walang narinig. Subukan ulit."
-            : "No speech detected. Try again.";
-        setLessonVoiceStatus(msg, "wrong");
-        showNotification(msg, VOICE_FEEDBACK_NOTIFICATION_MS);
-    }, 12000);
-}
-
-function speakLessonText() {
-    speechSynthesis.cancel();
-    stopLessonVoiceListening();
-
-    const speechText = getLessonSpeechText();
-    const speech = new SpeechSynthesisUtterance(speechText);
-    applyKidFemaleVoice(speech, { rate: 0.85, pitch: 1.55, volume: 1 });
-
-    speechSynthesis.speak(speech);
-    showNotification(speechText, 2600);
-}
-
-function loadLesson() {
-
-    const lesson = lessons[currentCategory][currentLesson];
-    const localizedWord = translateWord(lesson.word);
-
-    lessonTitle.textContent = translateLessonTitle(currentCategory);
-    lessonImage.src = lesson.image;
-    lessonLetter.classList.remove("lesson-prompt-text", "lesson-color-name", "lesson-shape-name");
-
-    if (currentCategory === "alphabet") {
-        lessonLetter.textContent = lesson.letter;
-        lessonWord.textContent = localizedWord;
-        lessonWord.hidden = false;
-    } else if (currentCategory === "numbers") {
-        lessonLetter.textContent = String(currentLesson + 1);
-        lessonWord.textContent = localizedWord;
-        lessonWord.hidden = false;
-    } else if (currentCategory === "colors") {
-        lessonLetter.textContent = localizedWord.toUpperCase();
-        lessonLetter.classList.add("lesson-color-name");
-        lessonWord.textContent = "";
-        lessonWord.hidden = true;
-    } else if (currentCategory === "shapes") {
-        lessonLetter.textContent = localizedWord;
-        lessonLetter.classList.add("lesson-shape-name");
-        lessonWord.textContent = "";
-        lessonWord.hidden = true;
-    } else {
-        lessonLetter.textContent = localizedWord;
-        lessonWord.textContent = "";
-        lessonWord.hidden = true;
-    }
-
-    const progress =
-        ((currentLesson + 1) /
-        lessons[currentCategory].length) * 100;
-
-    progressFill.style.width = progress + "%";
-
-    updateLessonSubtitle();
-    resetLessonVoiceUi();
-    speakLessonText();
-}
-
-let selectedLanguage = 'en';
-
-function openLesson(category){
-    currentCategory = category;
-    currentLesson = 0;
-    openLessonContinue(category);
-}
-
-function openLessonContinue(category){
-    currentCategory = category;
-    currentLesson = 0;
-    lessonVoiceRewardedKeys = null;
-    // store category and language selection
-    loadLesson();
-    showScreen(lessonScreen);
-}
-
-// -------------------------------
-// MENU BUTTONS
-// -------------------------------
-
-function getCompletedLessonCategories() {
-    return JSON.parse(localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))) || {};
-}
-
-function updateQuizMenuButtons() {
-    const completedCategories = getCompletedLessonCategories();
-    document.querySelectorAll(".quiz-menu-btn").forEach(button => {
-        const category = button.dataset.quizCategory;
-        const unlocked = !!completedCategories[category];
-        button.disabled = !unlocked;
-        button.classList.toggle("is-unlocked", unlocked);
-        button.textContent = unlocked ? "Quiz ⭐" : "Quiz 🔒";
-        button.title = unlocked ? "Start quiz" : "Finish the lesson to unlock this quiz";
-    });
-}
-
-function openCategoryQuiz(category) {
-    if (!getCompletedLessonCategories()[category]) return;
-    currentCategory = category;
-    quizCategory = category;
-    showScreen(quizScreen);
-    initializeQuiz();
-}
-
-lessonButtons[0].onclick = () => openLesson("alphabet");
-lessonButtons[1].onclick = () => openLesson("numbers");
-lessonButtons[2].onclick = () => openLesson("colors");
-lessonButtons[3].onclick = () => openLesson("shapes");
-
-quizMenuButtons.forEach(button => {
-    button.addEventListener("click", () => openCategoryQuiz(button.dataset.quizCategory));
-});
-
-updateQuizMenuButtons();
-
-// -------------------------------
-// NEXT
-// -------------------------------
-
-nextLesson.onclick = () => {
-
-    if(currentLesson < lessons[currentCategory].length - 1){
-
-        currentLesson++;
-        loadLesson();
-
-    }else{
-
-        speechSynthesis.cancel();
-
-        alert("🎉 You finished the " +
-              currentCategory +
-              " lesson!");
-
-        // Part 3 will open the quiz here.
-        showScreen(menuScreen);
-
-    }
-
-};
-
-// -------------------------------
-// PREVIOUS
-// -------------------------------
-
-previousLesson.onclick = () => {
-
-    if(currentLesson > 0){
-
-        currentLesson--;
-        loadLesson();
-
-    }
-
-};
-
-// -------------------------------
-// BACK TO MENU
-// -------------------------------
-
-lessonHomeBtn.onclick = () => {
-
-    speechSynthesis.cancel();
-    stopLessonVoiceListening();
-    showScreen(menuScreen);
-
-};
-
-// ======================================================
-// PART 2D-1
-// Lesson Improvements
-// ======================================================
-
-// -------------------------------
-// Update Navigation Buttons
-// -------------------------------
-
-function updateLessonButtons() {
-
-    // Disable Previous on first lesson
-    previousLesson.disabled = (currentLesson === 0);
-
-    // Change Next -> Finish
-    if (currentLesson === lessons[currentCategory].length - 1) {
-
-        nextLesson.innerHTML = "Finish ✔";
-
-    } else {
-
-        nextLesson.innerHTML = "Next ➜";
-
-    }
-
-}
-
-
-
-// -------------------------------
-// Improve loadLesson()
-// -------------------------------
-
-const originalLoadLesson = loadLesson;
-
-loadLesson = function () {
-
-    lessonContainerAnimation();
-
-    originalLoadLesson();
-
-    updateLessonButtons();
-
-}
-
-// -------------------------------
-// Fade Animation
-// -------------------------------
-
-function lessonContainerAnimation() {
-
-    lessonImage.classList.remove("fade");
-    lessonLetter.classList.remove("fade");
-    lessonWord.classList.remove("fade");
-
-    void lessonImage.offsetWidth;
-
-    lessonImage.classList.add("fade");
-    lessonLetter.classList.add("fade");
-    lessonWord.classList.add("fade");
-
-}
-
-// -------------------------------
-// Image Fallback
-// -------------------------------
-
-lessonImage.onerror = function () {
-
-    lessonImage.src = "images/no-image.png";
-
-};
-
-// -------------------------------
-// Better Voice
-// -------------------------------
-
-voiceBtn.onclick = () => {
-    speakLessonText();
-};
-
-if (lessonSpeakBtn) {
-    lessonSpeakBtn.addEventListener("click", () => {
-        startLessonVoiceListening();
-    });
-}
-
-// -------------------------------
-// Keyboard Support
-// -------------------------------
-
-document.addEventListener("keydown", (event) => {
-
-    if (!lessonScreen.classList.contains("active")) return;
-
-    switch (event.key) {
-
-        case "ArrowRight":
-
-            nextLesson.click();
-
-            break;
-
-        case "ArrowLeft":
-
-            previousLesson.click();
-
-            break;
-
-        case " ":
-
-            event.preventDefault();
-
-            voiceBtn.click();
-
-            break;
-
-        case "m":
-        case "M":
-
-            event.preventDefault();
-            if (lessonSpeakBtn) lessonSpeakBtn.click();
-
-            break;
-
-    }
-
-});
-
-// -------------------------------
-// Welcome Voice
-// -------------------------------
-
-function welcomeLessonVoice() {
-
-    speechSynthesis.cancel();
-
-    const message = selectedLanguage === 'tl'
-        ? "Maligayang pagdating! Magsisimula na tayo sa pag-aaral."
-        : "Welcome! Let's start learning.";
-
-    const speech = new SpeechSynthesisUtterance(message);
-    applyKidFemaleVoice(speech, { rate: 0.95, pitch: 1.55 });
-
-    speechSynthesis.speak(speech);
-
-}
-
-// -------------------------------
-// Replace openLesson()
-// -------------------------------
-
-const oldOpenLesson = openLesson;
-
-openLesson = function(category){
-
-    oldOpenLesson(category);
-
-    updateLessonButtons();
-
-    setTimeout(() => {
-
-        welcomeLessonVoice();
-
-    },300);
-
-};
-
-// -------------------------------
-// Auto Stop Voice
-// -------------------------------
-
-window.addEventListener("beforeunload",()=>{
-
-    speechSynthesis.cancel();
-
-});
-
-// ======================================================
-// END PART 2D-1
-// ======================================================
-
-
-// ======================================================
-// PART 2D-2
-// Lesson Completion & Quiz Transition
-// ======================================================
-
-// -------------------------------
-// Quiz Screen
-// -------------------------------
-
-const quizScreen = document.getElementById("quizScreen");
-const quizTitle = document.getElementById("quizTitle");
-const currentScoreEl = document.getElementById("currentScore");
-const questionNumberEl = document.getElementById("questionNumber");
-const quizQuestionEl = document.getElementById("quizQuestion");
-const quizProgressFillEl = document.getElementById("quizProgressFill");
-const quizVoiceBtn = document.getElementById("quizVoiceBtn");
-const quizUnlockRuleEl = document.getElementById("quizUnlockRule");
-const quizUnlockProgressEl = document.getElementById("quizUnlockProgress");
-const answerButtons = document.querySelectorAll(".answer-card");
-
-const STAR_REWARDS = {
-    easy: 1,
-    medium: 2,
-    hard: 5
-};
-
-// Difficulty UI
-const difficultyButtons = document.querySelectorAll(".difficulty-btn");
-const QUIZ_DIFFICULTY = {
-    easy: { questionCount: 5 },
-    medium: { questionCount: 10 },
-    hard: { questionCount: 15 }
-};
-
-let quizDifficulty = localStorage.getItem("quizDifficulty") || "easy";
-
-function applyQuizDifficultyUI() {
-    difficultyButtons.forEach(btn => {
-        const isActive = btn.dataset.difficulty === quizDifficulty;
-        btn.classList.toggle("active", isActive);
-        btn.setAttribute("aria-pressed", isActive ? "true" : "false");
-    });
-}
-
-function updateQuizUnlockBox() {
-    if (!quizUnlockRuleEl || !quizUnlockProgressEl) return;
-
-    const total = quizQuestions.length || getExpectedQuestionCountForDifficulty(quizDifficulty);
-    const correct = quizStageState ? (quizStageState.stageScore || 0) : 0;
-    const levelName = quizDifficulty.charAt(0).toUpperCase() + quizDifficulty.slice(1);
-    const titleEl = document.querySelector(".quiz-unlock-title");
-
-    let ruleText;
-    if (selectedLanguage === "tl") {
-        if (titleEl) titleEl.textContent = "Paano Ma-unlock ang Susunod na Level";
-        if (quizDifficulty === "easy") {
-            ruleText = `Kailangan mong makuha ang lahat ng ${total} Easy na tanong nang tama para ma-unlock ang Normal.`;
-        } else if (quizDifficulty === "medium") {
-            ruleText = `Kailangan mong makuha ang lahat ng ${total} Normal na tanong nang tama para ma-unlock ang Hard.`;
-        } else {
-            ruleText = `Huling level: sagutin nang tama ang lahat ng ${total} Hard na tanong.`;
-        }
-        quizUnlockProgressEl.textContent = `Progreso: ${correct} / ${total} tama (${levelName})`;
-    } else {
-        if (titleEl) {
-            titleEl.textContent = quizDifficulty === "hard"
-                ? "Final Level Goal"
-                : "Unlock Next Level";
-        }
-        if (quizDifficulty === "easy") {
-            ruleText = `Get all ${total} Easy answers correct to unlock Normal.`;
-        } else if (quizDifficulty === "medium") {
-            ruleText = `Get all ${total} Normal answers correct to unlock Hard.`;
-        } else {
-            ruleText = `Final level: answer all ${total} Hard questions correctly.`;
-        }
-        quizUnlockProgressEl.textContent = `Progress: ${correct} / ${total} correct (${levelName})`;
-    }
-
-    quizUnlockRuleEl.textContent = ruleText;
-}
-
-difficultyButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-        // Difficulty buttons are display-only; quiz difficulty is automatic.
-    });
-});
-
-
-// Current category for quiz
-let quizCategory = "";
-let quizLessonIndex = 0; // Track which lesson the quiz is for (for adaptive learning)
-let quizQuestions = [];
-let currentQuizIndex = 0;
-let quizScore = 0;
-let quizAnswered = false;
-let quizComplete = false;
-let selectedQuizChoice = null;
-let quizStageState = null;
-
-function updateQuizStarDisplay(animate = false, gained = 0) {
-    if (quizStarCountEl) {
-        quizStarCountEl.textContent = String(quizStars);
-    }
-
-    if (!animate || !quizStarScoreEl || gained <= 0) return;
-
-    quizStarScoreEl.classList.remove("pop");
-    quizStarScoreEl.classList.remove("star-celebration");
-    // Force reflow so the animation can replay
-    void quizStarScoreEl.offsetWidth;
-    quizStarScoreEl.classList.add("pop", "star-celebration");
-
-    if (quizStarScoreEl) {
-        const reward = document.createElement("div");
-        reward.className = "star-reward-flight";
-        reward.innerHTML = `<span class="star-reward-icon">★</span><strong>+${gained}</strong>`;
-        document.body.appendChild(reward);
-
-        window.setTimeout(() => {
-            const target = quizStarScoreEl.getBoundingClientRect();
-            const targetX = target.left + target.width / 2 - window.innerWidth / 2;
-            const targetY = target.top + target.height / 2 - window.innerHeight / 2;
-            reward.style.setProperty("--fly-x", `${targetX}px`);
-            reward.style.setProperty("--fly-y", `${targetY}px`);
-            reward.classList.add("is-flying");
-        }, 500);
-
-        reward.addEventListener("animationend", () => {
-            if (reward.classList.contains("is-flying")) reward.remove();
-        });
-
-        for (let index = 0; index < 8; index++) {
-            const spark = document.createElement("span");
-            spark.className = "quiz-star-spark";
-            spark.style.setProperty("--spark-angle", `${index * 45}deg`);
-            spark.style.setProperty("--spark-distance", `${34 + (index % 2) * 10}px`);
-            quizStarScoreEl.appendChild(spark);
-            spark.addEventListener("animationend", () => spark.remove());
-        }
-
-        const ring = document.createElement("span");
-        ring.className = "quiz-star-ring";
-        quizStarScoreEl.appendChild(ring);
-        ring.addEventListener("animationend", () => ring.remove());
-
-        for (let index = 0; index < 12; index++) {
-            const ray = document.createElement("span");
-            ray.className = "quiz-star-ray";
-            ray.style.setProperty("--ray-angle", `${index * 30}deg`);
-            quizStarScoreEl.appendChild(ray);
-            ray.addEventListener("animationend", () => ray.remove());
-        }
-    }
-
-    setTimeout(() => {
-        quizStarScoreEl.classList.remove("pop", "star-celebration");
-    }, 600);
-}
-
-function awardQuizStars() {
-    const gained = STAR_REWARDS[quizDifficulty] || STAR_REWARDS.easy;
-    quizStars += gained;
-    sessionStarsGained += gained;
-    saveStudentStars();
-    recordDailyStarsEarned(gained);
-    updateQuizStarDisplay(true, gained);
-    return gained;
-}
-
-
-// -------------------------------
-// Save Lesson Progress
-// -------------------------------
-
-function saveLessonProgress() {
-
-    let progress = JSON.parse(localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))) || {};
-
-    progress[currentCategory] = true;
-
-    localStorage.setItem(
-        getCurrentStudentProgressKey("lessonProgress"),
-        JSON.stringify(progress)
-    );
-
-}
-
-// -------------------------------
-// Student Progress
-// -------------------------------
-
-function saveStudentProgress() {
-
-    let completed =
-        Number(localStorage.getItem(getCurrentStudentProgressKey("completedLessons"))) || 0;
-
-    completed++;
-
-    localStorage.setItem(
-        getCurrentStudentProgressKey("completedLessons"),
-        completed
-    );
-
-}
-
-// -------------------------------
-// Finish Lesson
-// -------------------------------
-
-function finishLesson() {
-
-    speechSynthesis.cancel();
-
-    saveLessonProgress();
-
-    saveStudentProgress();
-
-    updateCurrentStudentRecord();
-
-    quizCategory = currentCategory;
-
-    setTimeout(() => {
-
-        showScreen(quizScreen);
-
-        initializeQuiz();
-
-    },400);
-
-}
-
-// -------------------------------
-// Replace Next Button
-// -------------------------------
-
-nextLesson.onclick = () => {
-
-    if(currentLesson < lessons[currentCategory].length - 1){
-
-        currentLesson++;
-
-        loadLesson();
-
-        return;
-
-    }
-
-    finishLesson();
-
-};
-
-// -------------------------------
-// Quiz Placeholder
-// -------------------------------
-
-function initializeQuiz(){
-
-    // Always start at Easy for a new quiz session
-    quizDifficulty = 'easy';
-
-    applyQuizDifficultyUI();
-
-    quizCategory = currentCategory;
-    quizLessonIndex = currentLesson; // Track lesson for adaptive learning
-    quizScore = 0;
-    sessionStarsGained = 0;
-    loadStudentStars();
-    currentQuizIndex = 0;
-    quizAnswered = false;
-    quizComplete = false;
-    selectedQuizChoice = null;
-    quizProgressFillEl.style.width = "0%";
-    updateQuizStarDisplay(false);
-
-    quizTitle.textContent =
-        selectedLanguage === 'tl'
-            ? quizTitleTranslations[quizCategory] || (quizCategory.charAt(0).toUpperCase() + quizCategory.slice(1) + " Quiz")
-            : (quizCategory.charAt(0).toUpperCase() + quizCategory.slice(1) + " Quiz");
-
-    // Sequential stage progression: Easy (5) -> Normal (10) -> Hard (15)
-    // Must get every answer correct in a stage to unlock the next.
-    const stageConfig = [
-        { difficulty: 'easy', questionCount: QUIZ_DIFFICULTY.easy.questionCount },
-        { difficulty: 'medium', questionCount: QUIZ_DIFFICULTY.medium.questionCount },
-        { difficulty: 'hard', questionCount: QUIZ_DIFFICULTY.hard.questionCount }
-    ];
-
-    quizStageState = {
-        stageIndex: 0,
-        stageConfig,
-        stageScore: 0,
-        quizDifficulty: quizDifficulty
-    };
-
-    // First stage questions
-    quizQuestions = generateQuizQuestions(
-        quizCategory,
-        quizStageState.stageConfig[0].difficulty,
-        quizStageState.stageConfig[0].questionCount
-    );
-
-    quizDifficulty = quizStageState.stageConfig[0].difficulty;
-
-    loadQuizQuestion();
-}
-
-
-
-// -------------------------------
-// CUSTOM QUIZ QUESTION BANK (CODE-BASED CUSTOMIZATION)
-// -------------------------------
-// Teacher can edit QUESTION_BANK to fully customize prompts and correct answers per:
-// category: alphabet | numbers | colors | shapes
-// difficulty: easy | medium | hard
-//
-// Each question entry supports:
-// - id: unique string
-// - promptEN / promptTL: prompt shown based on language
-// - correct: the lesson item 'word' that is correct (also maps to images)
-// - choices: optional explicit array of choice words (WITHOUT the correct is not allowed).
-//             If not provided, choices will be auto-generated via buildQuizChoices().
-// - letterTemplate (optional): if category==='alphabet', you can reference item letter in custom prompts by
-//                               using placeholder {letter} and {word}.
-const QUESTION_BANK = {
-    alphabet: {
-        easy: [
-            {
-                id: "alpha-easy-A-1",
-                promptEN: "Which one is Apple?",
-                promptTL: "Alin sa mga ito ang Mansanas?",
-                correct: "Apple",
-                // explicit choices example; edit freely.
-                choices: ["Apple", "Ball", "Cat"]
-            },
-            {
-                id: "alpha-easy-B-1",
-                promptEN: "Where is the letter B?",
-                promptTL: "Nasaan ang letrang B?",
-                correct: "Ball",
-                choices: ["Ball", "Dog", "Fish"]
-            }
-        ],
-        medium: [],
-        hard: []
-    },
-    numbers: {
-        easy: [
-            {
-                id: "num-easy-One-1",
-                promptEN: "Which one is One?",
-                promptTL: "Alin sa mga ito ang Isa?",
-                correct: "One",
-                choices: ["One", "Two", "Three"]
-            }
-        ],
-        medium: [
-            {
-                id: "num-medium-Before-Five-1",
-                promptEN: "Which number comes before Five?",
-                promptTL: "Aling numero ang darating bago ang Lima?",
-                correct: "Four",
-                choices: ["Three", "Four", "Five"]
-            },
-            {
-                id: "num-medium-After-Two-1",
-                promptEN: "Which number comes after Two?",
-                promptTL: "Aling numero ang darating pagkatapos ng Dalawa?",
-                correct: "Three",
-                choices: ["Two", "Three", "Four"]
-            }
-        ],
-        hard: [
-            {
-                id: "num-hard-Greater-Three-1",
-                promptEN: "Which number is greater than Three?",
-                promptTL: "Aling numero ang mas malaki kaysa Tatlo?",
-                correct: "Four",
-                choices: ["Two", "Three", "Four"]
-            },
-            {
-                id: "num-hard-First-Count-1",
-                promptEN: "Which number comes first when counting?",
-                promptTL: "Aling numero ang una sa pagsasahin?",
-                correct: "One",
-                choices: ["One", "Two", "Three"]
-            }
-        ]
-    },
-    colors: {
-        easy: [
-            {
-                id: "col-easy-Red-1",
-                promptEN: "Which one is Red?",
-                promptTL: "Alin sa mga ito ang Pula?",
-                correct: "Red",
-                choices: ["Red", "Blue", "Green"]
-            }
-        ],
-        medium: [
-            {
-                id: "col-medium-Grass-1",
-                promptEN: "Which color is commonly associated with grass?",
-                promptTL: "Aling kulay ang karaniwang nauugnay sa damo?",
-                correct: "Green",
-                choices: ["Yellow", "Green", "Brown"]
-            },
-            {
-                id: "col-medium-Carrot-1",
-                promptEN: "Which color is commonly associated with a carrot?",
-                promptTL: "Aling kulay ang karaniwang nauugnay sa carrot?",
-                correct: "Orange",
-                choices: ["Red", "Yellow", "Orange"]
-            }
-        ],
-        hard: [
-            {
-                id: "col-hard-Sky-Ocean-1",
-                promptEN: "Which color is usually associated with the sky and ocean?",
-                promptTL: "Aling kulay ang karaniwang nauugnay sa kalangitan at karagatan?",
-                correct: "Blue",
-                choices: ["Green", "Blue", "Purple"]
-            },
-            {
-                id: "col-hard-Clear-Sky-1",
-                promptEN: "Which color is usually associated with the sky on a clear day?",
-                promptTL: "Aling kulay ang karaniwang nauugnay sa kalangitan sa malinaw na araw?",
-                correct: "Blue",
-                choices: ["Blue", "White", "Gray"]
-            }
-        ]
-    },
-    shapes: {
-        easy: [
-            {
-                id: "sha-easy-Circle-1",
-                promptEN: "Which one is Circle?",
-                promptTL: "Alin sa mga ito ang Bilog?",
-                correct: "Circle",
-                choices: ["Circle", "Square", "Triangle"]
-            }
-        ],
-        medium: [],
-        hard: []
-    }
-};
-
-function generateQuizQuestions(category, difficulty, overrideCount){
-
-    const customItems = getCustomQuizQuestions().filter(question =>
-        question.category === category && question.difficulty === difficulty
-    );
-    const items = [
-        ...customItems,
-        ...(lessons[category] || [])
-    ];
-    const pool = [...items];
-    const cfg = QUIZ_DIFFICULTY[difficulty] || QUIZ_DIFFICULTY.easy;
-    const questionCount = Math.max(1, overrideCount || cfg.questionCount);
-
-    // Shuffle, then reuse the pool if the category has fewer items than needed
-    // (e.g. numbers/colors/shapes have 10 items but Hard needs 15 questions).
-    const shuffledPool = () => pool
-        .map(item => ({item, sort: Math.random()}))
-        .sort((a, b) => a.sort - b.sort)
-        .map(entry => entry.item);
-
-    const selected = customItems.slice(0, questionCount);
-    while (selected.length < questionCount) {
-        const batch = shuffledPool();
-        for (const item of batch) {
-            if (selected.length >= questionCount) break;
-            if (!selected.includes(item)) selected.push(item);
-        }
-        if (!batch.length) break;
-    }
-
-    return selected.map((item, idx) => {
-        if (item.custom) {
-            return {
-                prompt: selectedLanguage === "tl" ? item.promptTL : item.promptEN,
-                correct: item.word,
-                choices: buildCustomQuizChoices(item, category, difficulty),
-                choiceImages: item.choiceImages || {}
-            };
-        }
-
-        const promptVariant = idx % 3;
-        const localizedWord = translateWord(item.word);
-        let enPrompt;
-        let tlPrompt;
-
-        if (category === 'alphabet') {
-            const letter = item.letter;
-            if (promptVariant === 0) {
-                enPrompt = `Look carefully. Which one is letter ${letter}?`;
-                tlPrompt = `Tingnan nang mabuti. Alin ang letrang ${letter}?`;
-            } else if (promptVariant === 1) {
-                enPrompt = `The letter ${letter} needs your help! Can you find the letter ${letter}?`;
-                tlPrompt = `Kailangan ng tulong ang letrang ${letter}! Maaari mo bang hanapin ang letrang ${letter}?`;
-            } else {
-                enPrompt = `Where is the letter ${letter}? Let's find it together!`;
-                tlPrompt = `Nasaan ang letrang ${letter}? Hanapin natin ito nang magkasama!`;
-            }
-        } else if (category === 'numbers') {
-            const digit = items.findIndex(entry => entry.word === item.word) + 1;
-            if (promptVariant === 0) {
-                enPrompt = `Look carefully. Which one is number ${digit}?`;
-                tlPrompt = `Tingnan nang mabuti. Alin ang numerong ${digit}?`;
-            } else if (promptVariant === 1) {
-                enPrompt = `The number ${digit} needs your help! Can you find the number ${digit}?`;
-                tlPrompt = `Kailangan ng tulong ang numerong ${digit}! Maaari mo bang hanapin ang numerong ${digit}?`;
-            } else {
-                enPrompt = `Where is the number ${digit}? Let's find it together!`;
-                tlPrompt = `Nasaan ang numerong ${digit}? Hanapin natin ito nang magkasama!`;
-            }
-        } else if (category === 'colors') {
-            if (promptVariant === 0) {
-                enPrompt = `Look carefully. Which one is ${item.word}?`;
-                tlPrompt = `Tingnan nang mabuti. Alin ang kulay na ${localizedWord}?`;
-            } else if (promptVariant === 1) {
-                enPrompt = `The color ${item.word} needs your help! Can you find the color ${item.word}?`;
-                tlPrompt = `Kailangan ng tulong ang kulay ${localizedWord}! Maaari mo bang hanapin ang kulay ${localizedWord}?`;
-            } else {
-                enPrompt = `Where is the color ${item.word}? Let's find it together!`;
-                tlPrompt = `Nasaan ang kulay ${localizedWord}? Hanapin natin ito nang magkasama!`;
-            }
-        } else if (category === 'shapes') {
-            if (promptVariant === 0) {
-                enPrompt = `Look carefully. Which one is ${item.word}?`;
-                tlPrompt = `Tingnan nang mabuti. Alin ang hugis na ${localizedWord}?`;
-            } else if (promptVariant === 1) {
-                enPrompt = `The shape ${item.word} needs your help! Can you find the shape ${item.word}?`;
-                tlPrompt = `Kailangan ng tulong ang hugis ${localizedWord}! Maaari mo bang hanapin ang hugis ${localizedWord}?`;
-            } else {
-                enPrompt = `Where is the shape ${item.word}? Let's find it together!`;
-                tlPrompt = `Nasaan ang hugis ${localizedWord}? Hanapin natin ito nang magkasama!`;
-            }
-        } else {
-            enPrompt = `Look carefully. Which one is ${item.word}?`;
-            tlPrompt = `Tingnan nang mabuti. Alin ang ${localizedWord}?`;
-        }
-
-        return {
-            prompt: selectedLanguage === 'tl' ? tlPrompt : enPrompt,
-            correct: item.word,
-            choices: buildQuizChoices(item.word, items, difficulty)
-        };
-    });
-}
-
-function buildCustomQuizChoices(item, category, difficulty) {
-    const targetCount = { easy: 3, medium: 6, hard: 10 }[difficulty] || 3;
-    const choices = [...new Set(item.choices || [])];
-    const fallbackChoices = (lessons[category] || [])
-        .map(lesson => lesson.word)
-        .filter(word => word && !choices.includes(word));
-
-    while (choices.length < targetCount && fallbackChoices.length) {
-        choices.push(fallbackChoices.shift());
-    }
-
-    return choices.slice(0, targetCount).sort(() => Math.random() - 0.5);
-}
-
-function buildQuizChoices(correctWord, items, difficulty){
-
-    const allWords = items.map(item => item.word);
-    const distractorsAll = allWords.filter(word => word !== correctWord);
-
-    // Required choice counts per difficulty:
-    // easy => 3, medium => 6, hard => 10
-    const choiceTargetByDifficulty = {
-        easy: 3,
-        medium: 6,
-        hard: 10
-    };
-
-    const requiredChoiceCount = choiceTargetByDifficulty[difficulty] || choiceTargetByDifficulty.easy;
-
-    // Use a larger distractor sample on harder difficulties
-    const fraction = difficulty === 'easy' ? 0.55 : (difficulty === 'medium' ? 0.75 : 1);
-    const sampleCount = Math.min(
-        distractorsAll.length,
-        Math.max(requiredChoiceCount - 1, Math.floor(distractorsAll.length * fraction))
-    );
-
-    const sampledDistractors = distractorsAll
-        .map(word => ({word, sort: Math.random()}))
-        .sort((a,b) => a.sort - b.sort)
-        .slice(0, sampleCount)
-        .map(x => x.word);
-
-    const choices = [correctWord];
-
-    const shuffled = sampledDistractors
-        .map(word => ({word, sort: Math.random()}))
-        .sort((a,b) => a.sort - b.sort)
-        .map(entry => entry.word);
-
-    while (choices.length < requiredChoiceCount && shuffled.length) {
-        const next = shuffled.shift();
-        if (!choices.includes(next)) choices.push(next);
-    }
-
-    // Fallback: fill remaining (without duplicates)
-    while (choices.length < requiredChoiceCount && distractorsAll.length) {
-        const fallback = distractorsAll[Math.floor(Math.random() * distractorsAll.length)];
-        if (!choices.includes(fallback)) choices.push(fallback);
-        else {
-            // If duplicate, try another random one
-            // (loop will eventually find a new value)
-        }
-    }
-
-    return choices.sort(() => Math.random() - 0.5);
-}
-
-
-
-function loadQuizQuestion(){
-
-    const question = quizQuestions[currentQuizIndex];
-
-    quizQuestionEl.textContent = question.prompt;
-
-    const displayIndex = currentQuizIndex + 1;
-    const totalQuestions = quizQuestions.length;
-    questionNumberEl.textContent = selectedLanguage === 'tl'
-        ? `Tanong ${displayIndex} ng ${totalQuestions}`
-        : `Question ${displayIndex} of ${totalQuestions}`;
-
-    currentScoreEl.textContent = String(quizScore);
-    quizProgressFillEl.style.width =
-        `${Math.round((currentQuizIndex / quizQuestions.length) * 100)}%`;
-
-    updateQuizUnlockBox();
-
-    const quizAnswerGrid = document.getElementById("quizAnswerGrid");
-    if (quizAnswerGrid) {
-        quizAnswerGrid.dataset.quizChoiceLayout = quizDifficulty;
-    }
-
-    // Enable only the required number of choice buttons per difficulty
-    const requiredChoiceCountByDifficulty = {
-        easy: 3,
-        medium: 6,
-        hard: 10
-    };
-
-    const requiredChoiceCount = Math.min(
-        requiredChoiceCountByDifficulty[quizDifficulty] || requiredChoiceCountByDifficulty.easy,
-        question.choices.length
-    );
-
-    answerButtons.forEach((button, index) => {
-        const isUsed = index < requiredChoiceCount;
-
-        button.disabled = !isUsed;
-        button.hidden = !isUsed;
-        button.classList.toggle("unused", !isUsed);
-        button.classList.remove("correct", "wrong", "selected");
-
-        const answerWord = isUsed ? (question.choices[index] || "") : "";
-        button.dataset.choice = answerWord;
-
-        const answerItem = answerWord
-            ? (lessons[currentCategory] || []).find(item => item.word === answerWord)
-            : null;
-        const imageDiv = button.querySelector(".answer-image");
-        const answerLabel = button.querySelector(".answer-label");
-        const customImage = question.choiceImages?.[answerWord];
-
-        if (answerLabel) answerLabel.textContent = answerWord;
-
-        if (imageDiv) {
-            if (isUsed && (customImage || answerItem?.image)) {
-                imageDiv.style.backgroundImage = `url('${customImage || answerItem.image}')`;
-                imageDiv.style.backgroundSize = "cover";
-                imageDiv.style.backgroundPosition = "center";
-            } else {
-                imageDiv.style.backgroundImage = "none";
-            }
-        }
-    });
-
-    selectedQuizChoice = null;
-
-    speakQuizQuestion();
-}
-
-function selectQuizAnswer(button){
-
-    if (quizAnswered || quizComplete) return;
-    if (button.hidden || button.classList.contains("unused") || !button.dataset.choice) return;
-
-    selectedQuizChoice = button.dataset.choice;
-
-    answerButtons.forEach(btn => {
-        btn.classList.toggle("selected", btn === button);
-    });
-
-    confirmQuizAnswer();
-}
-
-function confirmQuizAnswer(){
-    if (quizAnswered || quizComplete || !selectedQuizChoice) return;
-
-    quizAnswered = true;
-    const selected = selectedQuizChoice;
-    const correct = quizQuestions[currentQuizIndex].correct;
-    const normalizeAnswer = value => String(value ?? "").trim().toLowerCase();
-    const selectedNumber = Number(normalizeAnswer(selected));
-    const correctNumber = Number(normalizeAnswer(correct));
-    const isNumericMatch = Number.isFinite(selectedNumber)
-        && Number.isFinite(correctNumber)
-        && selectedNumber === correctNumber;
-    const isCorrect = normalizeAnswer(selected) === normalizeAnswer(correct) || isNumericMatch;
-
-    // Alternate correct feedback prompts so it feels more interactive
-    if (typeof quizCorrectFeedbackToggle === 'undefined') {
-        quizCorrectFeedbackToggle = 0;
-    }
-    if (typeof quizWrongFeedbackToggle === 'undefined') {
-        quizWrongFeedbackToggle = 0;
-    }
-
-    answerButtons.forEach(btn => {
-        if (btn.dataset.choice === selected) {
-            btn.classList.add(isCorrect ? "correct" : "wrong");
-        }
-        if (!isCorrect && btn.dataset.choice === correct) {
-            btn.classList.add("correct");
-        }
-        btn.disabled = true;
-    });
-
-    if (isCorrect) {
-        quizScore++;
-        if (quizStageState) quizStageState.stageScore = (quizStageState.stageScore || 0) + 1;
-        awardQuizStars();
-        updateQuizUnlockBox();
-
-        quizCorrectFeedbackToggle = (quizCorrectFeedbackToggle + 1) % 2;
-        const isEven = quizCorrectFeedbackToggle === 0;
-
-        const message = selectedLanguage === 'tl'
-            ? (isEven ? "Mahusay! Mas gumaganda ka araw-araw!" : "Awesome! Tama yan!")
-            : (isEven ? "Nice work! You're getting better every time!" : "Awesome! That's the correct answer!");
-
-        showNotification(message);
-        speakText(message).then(() => {
-            advanceQuiz();
-        });
-
-    } else {
-        quizWrongFeedbackToggle = (quizWrongFeedbackToggle + 1) % 2;
-        const isFirstWrongMessage = quizWrongFeedbackToggle === 0;
-
-        const message = selectedLanguage === 'tl'
-            ? "Nagagawa mo ito! Magpatuloy ka!"
-            : (isFirstWrongMessage
-                ? "Nice Try! it's okay to make mistakes!"
-                : "You're doing great! Keep trying!");
-
-        showNotification(message);
-        speakText(message).then(() => {
-            advanceQuiz();
-        });
-    }
-
-    currentScoreEl.textContent = String(quizScore);
-
-    const advanceQuiz = () => {
-        if (quizComplete) return;
-        if (currentQuizIndex < quizQuestions.length - 1) {
-            currentQuizIndex++;
-            quizAnswered = false;
-            loadQuizQuestion();
-        } else {
-            finishQuiz();
-        }
-    };
-
-    return;
-}
-
-function getExpectedQuestionCountForDifficulty(difficulty) {
-    const cfg = QUIZ_DIFFICULTY[difficulty] || QUIZ_DIFFICULTY.easy;
-    return cfg.questionCount;
-}
-
-function getNextDifficultyAfterCompletion(currentDifficulty, stageScore, questionCount) {
-    // Spec:
-    // Easy passed with exactly 5/5 correct -> starts Normal
-    // Normal passed with exactly 10/10 correct -> starts Hard
-    // Even 1 wrong answer -> ends quiz (no advance)
-    const expected = questionCount || getExpectedQuestionCountForDifficulty(currentDifficulty);
-
-    if (stageScore < expected) {
-        return 'end';
-    }
-
-    if (currentDifficulty === 'easy') {
-        return 'medium';
-    }
-
-    if (currentDifficulty === 'medium') {
-        return 'hard';
-    }
-
-    return 'end';
-}
-
-// ======================================================
-// ADAPTIVE LEARNING SYSTEM (80% threshold)
-// ======================================================
-
-const ADAPTIVE_LEARNING_THRESHOLD = 80;
-
-function getNextLessonCategory(currentCategory) {
-    const categoryOrder = ['alphabet', 'numbers', 'colors', 'shapes'];
-    const currentIndex = categoryOrder.indexOf(currentCategory);
-    
-    if (currentIndex === -1 || currentIndex >= categoryOrder.length - 1) {
-        return null; // No more categories
-    }
-    
-    return categoryOrder[currentIndex + 1];
-}
-
-function getNextLessonPath(category, lessonIndex) {
-    // Check if there are more lessons in the current category
-    if (lessonIndex < lessons[category].length - 1) {
-        return { category, lessonIndex: lessonIndex + 1 };
-    }
-    
-    // Move to next category's first lesson
-    const nextCategory = getNextLessonCategory(category);
-    if (nextCategory) {
-        return { category: nextCategory, lessonIndex: 0 };
-    }
-    
-    return null; // Completed all lessons
-}
-
-function getAdaptiveLessonPath(category, lessonIndex, accuracy) {
-    if (accuracy < ADAPTIVE_LEARNING_THRESHOLD) {
-        const nextCategory = getNextLessonCategory(category);
-        return nextCategory ? { category: nextCategory, lessonIndex: 0 } : null;
-    }
-
-    return getNextLessonPath(category, lessonIndex);
-}
-
-function calculateQuizAccuracy(score, total) {
-    return total > 0 ? Math.round((score / total) * 100) : 0;
-}
-
-function shouldMoveToNextCategory(accuracy) {
-    return accuracy < ADAPTIVE_LEARNING_THRESHOLD;
-}
-
-function autoProgressToNextLesson(currentCat, currentLessonIdx, accuracy) {
-    const nextPath = getAdaptiveLessonPath(currentCat, currentLessonIdx, accuracy);
-    
-    if (!nextPath) {
-        return false; // No more lessons available
-    }
-    
-    currentCategory = nextPath.category;
-    currentLesson = nextPath.lessonIndex;
-    
-    return true;
-}
-
-function finishQuiz(){
-
-    const stageScore = quizStageState ? (quizStageState.stageScore || 0) : quizScore;
-    const stageTotal = quizStageState
-        ? quizStageState.stageConfig[quizStageState.stageIndex].questionCount
-        : quizQuestions.length;
-    const nextDifficulty = getNextDifficultyAfterCompletion(quizDifficulty, stageScore, stageTotal);
-    const difficultyStageIndex = {
-        easy: 0,
-        medium: 1,
-        hard: 2
-    };
-    const currentStageIndex = difficultyStageIndex[quizDifficulty];
-    const nextStageIndex = Number.isInteger(currentStageIndex)
-        ? currentStageIndex + 1
-        : -1;
-    const canAdvance =
-        nextDifficulty !== 'end' &&
-        quizStageState &&
-        nextStageIndex >= 0 &&
-        nextStageIndex < quizStageState.stageConfig.length;
-
-    // Perfect stage score required to unlock Normal or Hard.
-    if (canAdvance) {
-
-        quizStageState.stageIndex = nextStageIndex;
-        quizStageState.stageScore = 0;
-
-        quizDifficulty = quizStageState.stageConfig[quizStageState.stageIndex].difficulty;
-
-        applyQuizDifficultyUI();
-
-        quizAnswered = false;
-        quizComplete = false;
-        selectedQuizChoice = null;
-
-        currentQuizIndex = 0;
-        quizProgressFillEl.style.width = "0%";
-
-        quizQuestions = generateQuizQuestions(
-            quizCategory,
-            quizDifficulty,
-            quizStageState.stageConfig[quizStageState.stageIndex].questionCount
-        );
-
-        const totalQuestions = quizQuestions.length;
-        questionNumberEl.textContent = selectedLanguage === 'tl'
-            ? `Tanong 1 ng ${totalQuestions}`
-            : `Question 1 of ${totalQuestions}`;
-
-        const unlockMessage = selectedLanguage === 'tl'
-            ? (nextDifficulty === 'medium'
-                ? "Perpekto! Susunod: Normal level!"
-                : "Perpekto! Susunod: Hard level!")
-            : (nextDifficulty === 'medium'
-                ? "Perfect! Next up: Normal level!"
-                : "Perfect! Next up: Hard level!");
-        showNotification(unlockMessage);
-
-        loadQuizQuestion();
-        return;
-
-    }
-
-    // Incomplete stage or Hard finished: end entire quiz session
-    const sessionTotal = quizStageState
-        ? quizStageState.stageConfig
-            .slice(0, quizStageState.stageIndex + 1)
-            .reduce((sum, stage) => sum + stage.questionCount, 0)
-        : stageTotal;
-
-    quizComplete = true;
-    quizProgressFillEl.style.width = "100%";
-    quizQuestionEl.textContent = selectedLanguage === 'tl' ? "Tapos na ang Pagsusulit!" : "Quiz Complete!";
-    questionNumberEl.textContent = selectedLanguage === 'tl'
-        ? `Pinal na Iskor: ${quizScore} / ${sessionTotal}`
-        : `Final Score: ${quizScore} / ${sessionTotal}`;
-
-    // Calculate accuracy for adaptive learning
-    const accuracy = calculateQuizAccuracy(quizScore, sessionTotal);
-    const shouldMoveToNextCategoryAfterQuiz = shouldMoveToNextCategory(accuracy);
-
-    let finishMessage;
-    const didNotAdvance = stageScore < stageTotal && quizDifficulty !== 'hard';
-    
-    if (didNotAdvance) {
-        finishMessage = selectedLanguage === 'tl'
-            ? `Kailangan mong makuha ang lahat ng tama (${stageScore}/${stageTotal}) para makapunta sa susunod na level.`
-            : `You need a perfect score (${stageScore}/${stageTotal}) to unlock the next level.`;
-    } else if (shouldMoveToNextCategoryAfterQuiz) {
-        // Scores below 80% move the student to the next category.
-        finishMessage = selectedLanguage === 'tl'
-            ? `${accuracy}% accuracy. Pupunta tayo sa susunod na kategorya...`
-            : `${accuracy}% accuracy. Moving to the next category...`;
-    } else {
-        finishMessage = selectedLanguage === 'tl'
-            ? `${accuracy}% accuracy. Magpapatuloy tayo sa kasalukuyang kategorya.`
-            : `${accuracy}% accuracy. Continuing in the current category.`;
-    }
-
-    const noticeDuration = didNotAdvance ? 10000 : 2800;
-    showNotification(finishMessage, noticeDuration);
-    if (didNotAdvance) {
-        speakText(finishMessage);
-    } else if (shouldMoveToNextCategoryAfterQuiz) {
-        speakText(selectedLanguage === 'tl' 
-            ? `Magandang gawa! Pupunta tayo sa susunod na kategorya.` 
-            : `Moving to the next category.`);
-    }
-
-    currentScoreEl.textContent = String(quizScore);
-    updateQuizStarDisplay(true, 0);
-    answerButtons.forEach(btn => {
-        btn.disabled = true;
-        btn.classList.remove("correct", "wrong");
-    });
-
-    // Persist summary for teacher dashboard
-    saveQuizSummary(sessionTotal);
-
-    // Reset stored difficulty
-    localStorage.setItem('quizDifficulty', 'easy');
-
-    setTimeout(() => {
-        if (autoProgressToNextLesson(quizCategory, quizLessonIndex, accuracy)) {
-            // Successfully progressed to next lesson
-            const nextLessonTitle = selectedLanguage === 'tl'
-                ? titleTranslations[currentCategory] || currentCategory
-                : (currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1));
-            
-            const progressMessage = selectedLanguage === 'tl'
-                ? `Abot-kamay na ang bagong aralin: ${nextLessonTitle}!`
-                : `Now learning: ${nextLessonTitle}!`;
-            showNotification(progressMessage, 2000);
-            
-            loadLesson();
-            showScreen(lessonScreen);
-        } else {
-            // No adaptive progression - return to menu
-            showScreen(menuScreen);
-        }
-    }, noticeDuration);
-}
-
-
-
-
-function saveQuizSummary(sessionTotal) {
-    const student = localStorage.getItem("studentName") || "Unknown";
-
-    // Per-student quiz summary (teacher dashboard reads from these keys)
-    const lastQuizScoreKey = getNamespacedKey(`lastQuizScore_${encodeURIComponent(student)}`);
-    const lastQuizTotalKey = getNamespacedKey(`lastQuizTotal_${encodeURIComponent(student)}`);
-    const total = sessionTotal || quizQuestions.length;
-    const accuracy = total > 0 ? Math.round((quizScore / total) * 100) : 0;
-
-    localStorage.setItem(lastQuizScoreKey, String(quizScore));
-    localStorage.setItem(lastQuizTotalKey, String(total));
-
-    appendQuizHistoryEntry(student, {
-        date: Date.now(),
-        category: quizCategory || currentCategory || "quiz",
-        levelStopped: quizDifficulty,
-        score: quizScore,
-        total,
-        accuracy,
-        starsGained: sessionStarsGained,
-        starsTotal: quizStars
-    });
-
-    updateCurrentStudentRecord();
-}
-
-
-quizVoiceBtn.onclick = () => {
-    speakQuizQuestion();
-};
-
-
-answerButtons.forEach(button => {
-    button.addEventListener("click", () => selectQuizAnswer(button));
-});    
-
-
-// -------------------------------
-// Congratulation Voice
-// -------------------------------
-
-function congratulateStudent(){
-
-    speechSynthesis.cancel();
-
-    const speech = new SpeechSynthesisUtterance(
-        "Great job! Let's answer the quiz."
-    );
-    applyKidFemaleVoice(speech, { rate: 0.95, pitch: 1.55 });
-
-    speechSynthesis.speak(speech);
-
-}
-
-// -------------------------------
-// Speak before Quiz
-// -------------------------------
-
-const oldFinishLesson = finishLesson;
-
-finishLesson = function(){
-
-    congratulateStudent();
-
-    setTimeout(()=>{
-
-        oldFinishLesson();
-
-    },1800);
-
-};
-
-// -------------------------------
-// Show Progress in Console
-// -------------------------------
-
-function showProgress(){
-
-    const progress =
-        JSON.parse(
-            localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))
-        ) || {};
-
-    console.log(progress);
-
-}
-
-showProgress();
-
-// -------------------------------
-// Continue Learning
-// -------------------------------
-
-function completedCategories(){
-
-    const progress =
-        JSON.parse(
-            localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))
-        ) || {};
-
-    return Object.keys(progress).length;
-
-}
-
-// -------------------------------
-// Optional Welcome Back
-// -------------------------------
-
-window.addEventListener("load",()=>{
-
-    const total = completedCategories();
-
-    if(total > 0){
-
-        console.log(
-            "Completed Categories:",
-            total
-        );
-
-    }
-
-});
-
-// ======================================================
-// END OF PART 2
-// ======================================================
-
-
-
-
-// 
+            <button class="answer-card" id="answer6">
+
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
+
+            </button>
+
+            <button class="answer-card" id="answer7">
+
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
+
+            </button>
+
+            <button class="answer-card" id="answer8">
+
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
+
+            </button>
+
+            <button class="answer-card" id="answer9">
+
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
+
+            </button>
+
+            <button class="answer-card" id="answer10">
+
+                <div class="answer-image"></div>
+                <span class="answer-label"></span>
+
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+<div id="notificationBox" class="notification-box"></div>
+
+<!-- Global student HUD (stars + settings) -->
+<div id="quizStarScore" class="quiz-star-score" aria-live="polite" hidden>
+    <span class="quiz-star-icon" aria-hidden="true">★</span>
+    <span id="quizStarCount" class="quiz-star-count">0</span>
+    <span class="quiz-star-label">Stars</span>
+</div>
+
+</body>
+
+   
+ <script src="script.js"></script>
+
+</html>
