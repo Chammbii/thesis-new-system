@@ -773,7 +773,7 @@ h1{
 }
 
 .custom-lesson-grid{
-    margin-top:24px;
+    display:contents;
 }
 
 .custom-lesson-card .lesson-btn{
@@ -1311,7 +1311,7 @@ h1{
 
     width:100%;
 
-    max-width:1000px;
+    max-width:1200px;
 
     margin:0 auto;
 
@@ -1331,9 +1331,9 @@ h1{
 
     display:grid;
 
-    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    grid-template-columns:repeat(4,minmax(0,1fr));
 
-    gap:24px;
+    gap:28px;
 }
 
 .lesson-card{
