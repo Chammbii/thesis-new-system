@@ -419,8 +419,6 @@
 
                 </div>
 
-                <div id="customLessonGrid" class="lesson-grid custom-lesson-grid"></div>
-
                 <!-- Numbers -->
 
                 <div class="lesson-card">
@@ -471,6 +469,8 @@
                     </button>
 
                 </div>
+
+                <div id="customLessonGrid" class="custom-lesson-grid"></div>
 
             </div>
 
