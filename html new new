@@ -34,40 +34,55 @@
 
 <body>  
 
+    <div id="loadingScreen" class="loading-screen" role="status" aria-live="polite">
+        <div class="loading-card">
+            <div class="loading-logo">Q</div>
+            <h1>QuizLand</h1>
+            <p>Getting your learning adventure ready...</p>
+            <div class="loading-spinner" aria-hidden="true"></div>
+            <div class="loading-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+        </div>
+    </div>
+
     <!-- ===================================================== -->
     <!-- HOME SCREEN -->
     <!-- ===================================================== -->
 
     <section id="homeScreen" class="screen active">
 
+        <div class="home-orbit home-orbit--one" aria-hidden="true"></div>
+        <div class="home-orbit home-orbit--two" aria-hidden="true"></div>
+        <div class="home-bubble home-bubble--one" aria-hidden="true"></div>
+        <div class="home-bubble home-bubble--two" aria-hidden="true"></div>
+        <div class="home-bubble home-bubble--three" aria-hidden="true"></div>
+        <div class="home-sparkles" aria-hidden="true"><span>✦</span><span>✧</span><span>✦</span><span>✧</span></div>
+
         <div class="home-container">
 
-
-
+            <div class="home-badge"><span>★</span> A happy place to learn</div>
             <p class="subtitle">
-                Learn • Play • Earn Stars 
+                Learn <span>•</span> Play <span>•</span> Earn Stars
             </p>
 
             <div class="button-group">
 
                 <button id="startBtn" class="main-btn">
                     <i class="fa-solid fa-play"></i>
-                    Start Learning
-                </button>
-
-                <button id="teacherBtn" class="main-btn">
-                    <i class="fa-solid fa-user-tie"></i>
-                    Teacher Login
-                </button>
-
-                <button id="settingsBtn" class="main-btn">
-                    <i class="fa-solid fa-gear"></i>
-                    Settings
+                    <span>Start Learning</span>
+                    <small>Begin your fun adventure</small>
                 </button>
 
             </div>
 
         </div>
+
+        <button type="button" id="teacherBtn" class="floating-teacher-btn" aria-label="Teacher login" title="Teacher login">
+            <i class="fa-solid fa-user-tie"></i>
+        </button>
+
+        <button type="button" id="settingsBtn" class="floating-settings-btn" aria-label="Open settings" title="Settings">
+            <i class="fa-solid fa-gear"></i>
+        </button>
 
     </section>
 
@@ -84,13 +99,35 @@
             <h2>Student Profile</h2>
 
             <p>
-                Enter your name and choose your favorite avatar.
+                Enter your details and choose your favorite avatar.
             </p>
 
-            <input
-                type="text"
-                id="studentName"
-                placeholder="Enter your name">
+            <input type="hidden" id="studentName">
+
+            <label for="studentLastName">Last Name</label>
+            <input type="text" id="studentLastName" placeholder="Last Name" autocomplete="family-name">
+
+            <label for="studentFirstName">First Name</label>
+            <input type="text" id="studentFirstName" placeholder="First Name" autocomplete="given-name">
+
+            <label for="studentMiddleName">Middle Name</label>
+            <div class="profile-middle-name">
+                <input type="text" id="studentMiddleName" placeholder="Middle Name" autocomplete="additional-name">
+                <label class="profile-none-option">
+                    <input type="checkbox" id="studentNoMiddleName">
+                    None
+                </label>
+            </div>
+
+            <label for="studentAge">Age</label>
+            <input type="number" id="studentAge" placeholder="Age" min="1" max="120" inputmode="numeric">
+
+            <label for="studentGender">Gender</label>
+            <select id="studentGender">
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+            </select>
 
             <h3>Select Avatar</h3>
 
@@ -116,6 +153,10 @@
 
             <button id="continueBtn" class="main-btn">
                 Continue
+            </button>
+
+            <button type="button" id="profileBackHome" class="back-btn">
+                ← Back to Home
             </button>
 
         </div>
@@ -191,20 +232,40 @@
 
         <div class="tdash">
 
-            <header class="tdash-header">
-                <div class="tdash-header-copy">
-                    <p class="tdash-eyebrow">QuizLand Teacher</p>
-                    <h2>Classroom Dashboard</h2>
-                    <p class="tdash-welcome">Welcome back, <span id="teacherNameDisplay">Teacher</span>.</p>
+            <aside id="teacherSidebar" class="teacher-sidebar">
+                <div class="teacher-sidebar-brand">
+                    <span class="teacher-sidebar-logo">Q</span>
+                    <div class="teacher-sidebar-brand-copy">
+                        <strong>QuizLand</strong>
+                        <span>Teacher portal</span>
+                    </div>
                 </div>
-                <div class="tdash-header-actions">
-                    <button id="teacherDashboardRefreshBtn" class="tdash-btn tdash-btn--refresh" type="button">Refresh</button>
-                    <button id="teacherCustomizeBtn" class="tdash-btn tdash-btn--soft" type="button">Customize</button>
-                    <button id="teacherDashboardPrintBtn" class="tdash-btn tdash-btn--soft" type="button">Print</button>
-                    <button id="teacherDashboardHomeBtn" class="tdash-btn tdash-btn--ghost" type="button">Home</button>
+                <nav class="teacher-sidebar-nav" aria-label="Teacher dashboard actions">
+                    <button id="teacherDashboardRefreshBtn" class="teacher-sidebar-btn teacher-sidebar-btn--refresh" type="button"><span class="teacher-sidebar-icon">↻</span><span class="teacher-sidebar-label">Refresh</span></button>
+                    <button id="teacherNotificationsBtn" class="teacher-sidebar-btn teacher-sidebar-btn--notifications" type="button"><span class="teacher-sidebar-icon">🔔</span><span class="teacher-sidebar-label">Notifications</span><span id="teacherNotificationBadge" class="teacher-notification-badge" hidden>0</span></button>
+                    <button id="teacherCustomizeBtn" class="teacher-sidebar-btn" type="button"><span class="teacher-sidebar-icon">✦</span><span class="teacher-sidebar-label">Add Quiz</span></button>
+                    <button id="teacherAddLessonBtn" class="teacher-sidebar-btn teacher-sidebar-btn--accent" type="button"><span class="teacher-sidebar-icon">＋</span><span class="teacher-sidebar-label">Add Lesson</span></button>
+                    <button id="teacherDashboardPrintBtn" class="teacher-sidebar-btn" type="button"><span class="teacher-sidebar-icon">▣</span><span class="teacher-sidebar-label">Print</span></button>
+                    <button id="teacherDashboardHomeBtn" class="teacher-sidebar-btn" type="button"><span class="teacher-sidebar-icon">⌂</span><span class="teacher-sidebar-label">Home</span></button>
+                </nav>
+                <div class="teacher-sidebar-account">
+                    <div class="teacher-sidebar-user">
+                        <span class="teacher-sidebar-avatar">★</span>
+                        <span class="teacher-sidebar-label"><strong id="teacherSidebarName">Teacher</strong><small>Signed in</small></span>
+                    </div>
                     <button id="teacherLogoutBtn" class="tdash-btn tdash-btn--solid" type="button">Logout</button>
                 </div>
-            </header>
+            </aside>
+
+            <main class="tdash-main">
+                <button id="teacherSidebarToggle" class="teacher-sidebar-toggle" type="button" aria-controls="teacherSidebar" aria-expanded="true" aria-label="Hide sidebar" title="Hide sidebar">☰</button>
+                <header class="tdash-header">
+                    <div class="tdash-header-copy">
+                        <p class="tdash-eyebrow">QuizLand Teacher</p>
+                        <h2>Classroom Dashboard</h2>
+                        <p class="tdash-welcome">Welcome back, <span id="teacherNameDisplay">Teacher</span>.</p>
+                    </div>
+                </header>
 
             <div class="tdash-charts">
                 <section class="tdash-panel">
@@ -243,6 +304,19 @@
                 <div class="tdash-panel-head">
                     <h3>Student Progress Tracker</h3>
                     <p>Name, avatar, progress, accuracy, stars, and quiz history</p>
+                    <p id="teacherStudentTrackerCount" class="teacher-student-count" aria-live="polite">0 students tracked</p>
+                    <label class="teacher-student-sort-label" for="teacherStudentSort">Sort students</label>
+                    <select id="teacherStudentSort" class="teacher-student-sort">
+                        <option value="recent">Recently updated</option>
+                        <option value="surname">Surname A-Z</option>
+                        <option value="stars">Highest stars</option>
+                    </select>
+                    <label class="teacher-student-sort-label" for="teacherStudentGenderFilter">Show gender</label>
+                    <select id="teacherStudentGenderFilter" class="teacher-student-sort">
+                        <option value="all">All students</option>
+                        <option value="male">Male students</option>
+                        <option value="female">Female students</option>
+                    </select>
                 </div>
                 <div class="teacher-progress-table">
                     <table id="teacherStudentProgressTable">
@@ -250,6 +324,8 @@
                             <tr>
                                 <th>Name</th>
                                 <th>Avatar</th>
+                                <th>Age</th>
+                                <th>Gender</th>
                                 <th>Progress</th>
                                 <th>Latest Activity Score</th>
                                 <th>Stars</th>
@@ -287,6 +363,29 @@
                 </div>
             </section>
 
+            <section class="tdash-panel tdash-panel--wide" id="activityLogPanel">
+                <div class="tdash-panel-head">
+                    <h3>Activity Log</h3>
+                    <p id="activityLogSubtitle">Select a student to view recent learning activity.</p>
+                </div>
+                <div class="quiz-history-table-wrap">
+                    <table id="teacherActivityLogTable">
+                        <thead>
+                            <tr>
+                                <th>Date &amp; time</th>
+                                <th>Activity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="quiz-history-empty">
+                                <td colspan="2">No student selected yet.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            </main>
         </div>
 
         <div id="teacherPrintModal" class="teacher-print-modal" hidden>
@@ -307,7 +406,7 @@
 
         <div id="teacherCustomizeModal" class="teacher-customize-modal" hidden>
             <div class="teacher-customize-card" role="dialog" aria-modal="true" aria-labelledby="teacherCustomizeTitle">
-                <h3 id="teacherCustomizeTitle">Customize Quiz Questions</h3>
+                <h3 id="teacherCustomizeTitle">Add a Quiz Question</h3>
                 <form id="teacherCustomizeForm" class="teacher-customize-form">
                     <label for="customQuestionCategory">Category</label>
                     <select id="customQuestionCategory" required>
@@ -344,12 +443,50 @@
                     <p id="customQuestionMessage" class="teacher-customize-message" aria-live="polite"></p>
                     <div class="teacher-customize-actions">
                         <button id="teacherCustomizeCloseBtn" class="tdash-btn tdash-btn--ghost" type="button">Close</button>
-                        <button class="tdash-btn tdash-btn--solid" type="submit">Add Question</button>
+                        <button class="tdash-btn tdash-btn--solid" type="submit">Save Question</button>
                     </div>
                 </form>
                 <div>
-                    <h4>Added Questions</h4>
+                    <h4>Your Added Quiz Questions</h4>
                     <div id="customQuestionList" class="custom-question-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="teacherLessonModal" class="teacher-customize-modal" hidden>
+            <div class="teacher-customize-card teacher-lesson-card" role="dialog" aria-modal="true" aria-labelledby="teacherLessonTitle">
+                <h3 id="teacherLessonTitle">Add a Lesson</h3>
+                <p class="teacher-lesson-help">Create a lesson such as Animals. Add a cover picture, then add each animal picture and its name.</p>
+                <form id="teacherLessonForm" class="teacher-customize-form">
+                    <label for="customLessonName">Lesson name</label>
+                    <input id="customLessonName" type="text" maxlength="50" placeholder="Animals" required>
+                    <label for="customLessonCover">Cover picture</label>
+                    <input id="customLessonCover" type="file" accept="image/*" required>
+                    <div class="teacher-lesson-items-head">
+                        <label>Lesson pictures and names</label>
+                        <button id="addLessonItemBtn" class="tdash-btn tdash-btn--soft" type="button">Add picture</button>
+                    </div>
+                    <div id="customLessonItems" class="custom-lesson-items"></div>
+                    <p id="teacherLessonMessage" class="teacher-customize-message" aria-live="polite"></p>
+                    <div class="teacher-customize-actions">
+                        <button id="teacherLessonCloseBtn" class="tdash-btn tdash-btn--ghost" type="button">Close</button>
+                        <button class="tdash-btn tdash-btn--solid" type="submit">Save Lesson</button>
+                    </div>
+                </form>
+                <div>
+                    <h4>Your Added Lessons</h4>
+                    <div id="customLessonList" class="custom-question-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="teacherNotificationsModal" class="teacher-customize-modal" hidden>
+            <div class="teacher-customize-card teacher-notifications-card" role="dialog" aria-modal="true" aria-labelledby="teacherNotificationsTitle">
+                <h3 id="teacherNotificationsTitle">Student Requests</h3>
+                <p class="teacher-lesson-help">Review students before they can enter the learning menu.</p>
+                <div id="teacherNotificationsList" class="teacher-notifications-list"></div>
+                <div class="teacher-customize-actions">
+                    <button id="teacherNotificationsCloseBtn" class="tdash-btn tdash-btn--ghost" type="button">Close</button>
                 </div>
             </div>
         </div>
@@ -436,6 +573,8 @@
                     </button>
 
                 </div>
+
+                <div id="customLessonGrid" class="custom-lesson-grid"></div>
 
             </div>
 
@@ -859,13 +998,14 @@
     <span class="quiz-star-label">Stars</span>
 </div>
 
-<button type="button" id="floatingSettingsBtn" class="floating-settings-btn" aria-label="Open settings" hidden>
-    <i class="fa-solid fa-gear"></i>
-</button>
-
 </body>
 
    
  <script src="script.js"></script>
 
 </html>
+<!-- 903 -->
+ <!-- 985 -->
+  <!-- 993 -->  
+
+  <!-- with approval 1011 -->
