@@ -6,6 +6,29 @@
 // SCRIPT.JS
 // ======================================================
 
+// ---------- STARTUP LOADING ----------
+const loadingScreen = document.getElementById("loadingScreen");
+let loadingScreenHidden = false;
+
+function hideLoadingScreen() {
+    if (!loadingScreen || loadingScreenHidden) return;
+
+    loadingScreenHidden = true;
+    loadingScreen.classList.add("loading-screen--hidden");
+    loadingScreen.addEventListener("transitionend", () => {
+        loadingScreen.remove();
+    }, { once: true });
+}
+
+if (document.readyState === "complete") {
+    window.requestAnimationFrame(hideLoadingScreen);
+} else {
+    window.addEventListener("load", hideLoadingScreen, { once: true });
+}
+
+// Keep a slow or failed external resource from leaving the app blocked.
+window.setTimeout(hideLoadingScreen, 5000);
+
 // ---------- HOME ----------
 const homeScreen = document.getElementById("homeScreen");
 const profileScreen = document.getElementById("profileScreen");
@@ -14,6 +37,7 @@ const menuScreen = document.getElementById("menuScreen");
 // ---------- BUTTONS ----------
 const startBtn = document.getElementById("startBtn");
 const continueBtn = document.getElementById("continueBtn");
+const profileBackHome = document.getElementById("profileBackHome");
 const backHome = document.getElementById("backHome");
 const teacherBtn = document.getElementById("teacherBtn");
 const teacherScreen = document.getElementById("teacherScreen");
@@ -35,7 +59,13 @@ const teacherLogoutBtn = document.getElementById("teacherLogoutBtn");
 const teacherDashboardHomeBtn = document.getElementById("teacherDashboardHomeBtn");
 const teacherDashboardRefreshBtn = document.getElementById("teacherDashboardRefreshBtn");
 const teacherDashboardPrintBtn = document.getElementById("teacherDashboardPrintBtn");
+const teacherNotificationsBtn = document.getElementById("teacherNotificationsBtn");
+const teacherNotificationBadge = document.getElementById("teacherNotificationBadge");
+const teacherNotificationsModal = document.getElementById("teacherNotificationsModal");
+const teacherNotificationsList = document.getElementById("teacherNotificationsList");
+const teacherNotificationsCloseBtn = document.getElementById("teacherNotificationsCloseBtn");
 const teacherCustomizeBtn = document.getElementById("teacherCustomizeBtn");
+const teacherAddLessonBtn = document.getElementById("teacherAddLessonBtn");
 const teacherCustomizeModal = document.getElementById("teacherCustomizeModal");
 const teacherCustomizeForm = document.getElementById("teacherCustomizeForm");
 const teacherCustomizeCloseBtn = document.getElementById("teacherCustomizeCloseBtn");
@@ -45,6 +75,16 @@ const customQuestionPrompt = document.getElementById("customQuestionPrompt");
 const customQuestionCorrect = document.getElementById("customQuestionCorrect");
 const customQuestionList = document.getElementById("customQuestionList");
 const customQuestionMessage = document.getElementById("customQuestionMessage");
+const teacherLessonModal = document.getElementById("teacherLessonModal");
+const teacherLessonForm = document.getElementById("teacherLessonForm");
+const customLessonName = document.getElementById("customLessonName");
+const customLessonCover = document.getElementById("customLessonCover");
+const customLessonItems = document.getElementById("customLessonItems");
+const addLessonItemBtn = document.getElementById("addLessonItemBtn");
+const teacherLessonCloseBtn = document.getElementById("teacherLessonCloseBtn");
+const teacherLessonMessage = document.getElementById("teacherLessonMessage");
+const customLessonList = document.getElementById("customLessonList");
+const customLessonGrid = document.getElementById("customLessonGrid");
 const teacherPrintModal = document.getElementById("teacherPrintModal");
 const teacherPrintStudent = document.getElementById("teacherPrintStudent");
 const teacherPrintCancelBtn = document.getElementById("teacherPrintCancelBtn");
@@ -56,6 +96,11 @@ const teacherStarsChart = document.getElementById("teacherStarsChart");
 const teacherDailyStarsChart = document.getElementById("teacherDailyStarsChart");
 const teacherQuizHistoryTable = document.getElementById("teacherQuizHistoryTable");
 const quizHistorySubtitle = document.getElementById("quizHistorySubtitle");
+const teacherActivityLogTable = document.getElementById("teacherActivityLogTable");
+const activityLogSubtitle = document.getElementById("activityLogSubtitle");
+const teacherStudentTrackerCount = document.getElementById("teacherStudentTrackerCount");
+const teacherStudentSort = document.getElementById("teacherStudentSort");
+const teacherStudentGenderFilter = document.getElementById("teacherStudentGenderFilter");
 let selectedHistoryStudent = null;
 let sessionStarsGained = 0;
 
@@ -63,7 +108,7 @@ const settingsBtn = document.getElementById("settingsBtn");
 const settingsModal = document.getElementById("settingsModal");
 const closeModal = document.getElementById("settingsCloseBtn") || document.querySelector("#settingsModal .close");
 const settingsDoneBtn = document.getElementById("settingsDoneBtn");
-const floatingSettingsBtn = document.getElementById("floatingSettingsBtn");
+const floatingSettingsBtn = settingsBtn;
 const quizStarScoreEl = document.getElementById("quizStarScore");
 const quizStarCountEl = document.getElementById("quizStarCount");
 const fullscreenToggle = document.getElementById("fullscreenToggle");
@@ -85,6 +130,12 @@ const bgAudio = bgMusicElement || null;
 
 // ---------- STUDENT ----------
 const studentName = document.getElementById("studentName");
+const studentLastName = document.getElementById("studentLastName");
+const studentFirstName = document.getElementById("studentFirstName");
+const studentMiddleName = document.getElementById("studentMiddleName");
+const studentNoMiddleName = document.getElementById("studentNoMiddleName");
+const studentAge = document.getElementById("studentAge");
+const studentGender = document.getElementById("studentGender");
 
 // ---------- AVATARS ----------
 const avatars = document.querySelectorAll(".avatar-card");
@@ -155,11 +206,12 @@ function saveStudentStars() {
 function updateStudentHud() {
     const active = document.querySelector(".screen.active");
     const showStars = active === menuScreen || active === lessonScreen || active === quizScreen;
-    const showSettings = hasStudentProfile()
-        && active !== teacherScreen
-        && active !== teacherDashboard
-        && active !== homeScreen
-        && active !== profileScreen;
+    const showSettings = active === homeScreen
+        || (hasStudentProfile()
+            && active !== teacherScreen
+            && active !== teacherDashboard
+            && active !== profileScreen);
+    const showTeacher = active === homeScreen;
 
     if (quizStarScoreEl) {
         quizStarScoreEl.classList.toggle("is-visible", showStars);
@@ -170,6 +222,11 @@ function updateStudentHud() {
     if (floatingSettingsBtn) {
         floatingSettingsBtn.classList.toggle("is-visible", showSettings);
         floatingSettingsBtn.hidden = !showSettings;
+    }
+
+    if (teacherBtn) {
+        teacherBtn.classList.toggle("is-visible", showTeacher);
+        teacherBtn.hidden = !showTeacher;
     }
 }
 
@@ -182,6 +239,12 @@ startBtn.addEventListener("click", () => {
     showScreen(profileScreen);
 
 });
+
+if (profileBackHome) {
+    profileBackHome.addEventListener("click", () => {
+        showScreen(homeScreen);
+    });
+}
 
 // ======================================================
 // TEACHER LOGIN BUTTON
@@ -241,6 +304,18 @@ teacherLoginForm.addEventListener("submit", (event) => {
         handleTeacherLogin();
     }
 
+});
+
+document.querySelectorAll(".password-toggle-btn").forEach(button => {
+    button.addEventListener("click", () => {
+        const passwordInput = document.getElementById(button.dataset.toggleTarget);
+        if (!passwordInput) return;
+
+        const isPasswordVisible = passwordInput.type === "text";
+        passwordInput.type = isPasswordVisible ? "password" : "text";
+        button.textContent = isPasswordVisible ? "Show" : "Hide";
+        button.setAttribute("aria-label", isPasswordVisible ? "Show password" : "Hide password");
+    });
 });
 
 // Clear error state when user starts typing in input fields
@@ -342,6 +417,38 @@ function buildTeacherPrintReport(records) {
         ${reports || "<p>No student records available.</p>"}`;
 }
 
+function getSelectedTeacherPrintRecords() {
+    const records = getStudentRecords();
+    const selectedName = teacherPrintStudent ? teacherPrintStudent.value : "all";
+    return selectedName === "all"
+        ? records
+        : records.filter(record => record.name === selectedName);
+}
+
+function downloadTeacherPrintReport() {
+    buildTeacherPrintReport(getSelectedTeacherPrintRecords());
+    const reportStyles = `
+        body{font-family:Arial,sans-serif;color:#111;margin:32px}
+        h1{font-size:24px;margin:0 0 6px}
+        body>p{color:#444;margin:0 0 24px}
+        article{margin-bottom:28px;page-break-inside:avoid}
+        h2{font-size:19px;margin:0 0 6px}
+        article p{margin:0 0 12px}
+        table{width:100%;border-collapse:collapse;font-size:12px}
+        th,td{padding:7px;border:1px solid #bbb;text-align:left}
+        th{background:#eee}`;
+    const documentHtml = `<!doctype html><html><head><meta charset="UTF-8"><title>QuizLand Student Progress</title><style>${reportStyles}</style></head><body>${teacherPrintReport.innerHTML}</body></html>`;
+    const blob = new Blob([documentHtml], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "quizland-student-progress.html";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+}
+
 if (teacherDashboardPrintBtn) {
     teacherDashboardPrintBtn.addEventListener("click", openTeacherPrintModal);
 }
@@ -350,13 +457,8 @@ if (teacherPrintCancelBtn) {
 }
 if (teacherPrintConfirmBtn) {
     teacherPrintConfirmBtn.addEventListener("click", () => {
-        const records = getStudentRecords();
-        const selectedName = teacherPrintStudent ? teacherPrintStudent.value : "all";
-        buildTeacherPrintReport(selectedName === "all"
-            ? records
-            : records.filter(record => record.name === selectedName));
+        downloadTeacherPrintReport();
         closeTeacherPrintModal();
-        window.print();
     });
 }
 
@@ -391,8 +493,27 @@ function renderCustomQuestionList() {
     });
 }
 
+function syncCustomLessonQuizCategories() {
+    if (!customQuestionCategory) return;
+    const selectedCategory = customQuestionCategory.value;
+    const customLessons = getCustomLessons();
+    customQuestionCategory.querySelectorAll("[data-custom-lesson-category]").forEach(option => option.remove());
+    customLessons.forEach(customLesson => {
+        if (!customLesson.id || !customLesson.name) return;
+        const option = document.createElement("option");
+        option.value = customLesson.id;
+        option.textContent = customLesson.name;
+        option.dataset.customLessonCategory = "true";
+        customQuestionCategory.appendChild(option);
+    });
+    if ([...customQuestionCategory.options].some(option => option.value === selectedCategory)) {
+        customQuestionCategory.value = selectedCategory;
+    }
+}
+
 function openTeacherCustomizeModal() {
     if (!teacherCustomizeModal) return;
+    syncCustomLessonQuizCategories();
     renderCustomQuestionList();
     teacherCustomizeModal.hidden = false;
     customQuestionPrompt?.focus();
@@ -440,8 +561,152 @@ if (teacherCustomizeForm) {
         });
         saveCustomQuizQuestions(questions);
         teacherCustomizeForm.reset();
+        syncCustomLessonQuizCategories();
         customQuestionMessage.textContent = "Question added to the selected quiz level.";
         renderCustomQuestionList();
+    });
+}
+
+function getCustomLessonsKey() {
+    return getNamespacedKey("customLessons");
+}
+
+function getCustomLessons() {
+    try {
+        const lessons = JSON.parse(localStorage.getItem(getCustomLessonsKey()));
+        return Array.isArray(lessons) ? lessons : [];
+    } catch (error) {
+        return [];
+    }
+}
+
+function saveCustomLessons(customLessons) {
+    localStorage.setItem(getCustomLessonsKey(), JSON.stringify(customLessons));
+}
+
+function addLessonItemField(item = {}) {
+    if (!customLessonItems) return;
+    const itemField = document.createElement("div");
+    itemField.className = "custom-lesson-item";
+    itemField.innerHTML = `
+        <div class="custom-lesson-item-fields">
+            <input class="custom-lesson-item-name" type="text" maxlength="60" placeholder="Animal name (for example, Giraffe)" value="${escapePrintText(item.name || "")}" required>
+            <input class="custom-lesson-item-image" type="file" accept="image/*" aria-label="Picture for this lesson item" ${item.image ? "" : "required"}>
+        </div>
+        <button class="tdash-btn tdash-btn--danger custom-lesson-remove" type="button">Remove</button>`;
+    if (item.image) {
+        itemField.dataset.image = item.image;
+    }
+    itemField.querySelector(".custom-lesson-remove").addEventListener("click", () => {
+        itemField.remove();
+    });
+    customLessonItems.appendChild(itemField);
+}
+
+function renderCustomLessonList() {
+    if (!customLessonList) return;
+    const customLessons = getCustomLessons();
+    customLessonList.innerHTML = "";
+    if (!customLessons.length) {
+        customLessonList.innerHTML = '<p class="custom-question-empty">No lessons added yet.</p>';
+        return;
+    }
+    customLessons.forEach(customLesson => {
+        const item = document.createElement("div");
+        item.className = "custom-question-item";
+        item.innerHTML = `
+            <div>
+                <strong></strong>
+                <span></span>
+            </div>
+            <div class="custom-lesson-actions">
+                <button class="tdash-btn tdash-btn--soft custom-lesson-visibility" type="button"></button>
+                <button class="tdash-btn tdash-btn--danger" type="button">Remove</button>
+            </div>`;
+        item.querySelector("strong").textContent = customLesson.name;
+        item.querySelector("span").textContent = `${customLesson.items.length} pictures · ${customLesson.hidden ? "Hidden from students" : "Visible to students"}`;
+        item.querySelector(".custom-lesson-visibility").textContent = customLesson.hidden ? "Show lesson" : "Hide lesson";
+        item.querySelector(".custom-lesson-visibility").addEventListener("click", () => {
+            const updatedLessons = getCustomLessons().map(entry =>
+                entry.id === customLesson.id
+                    ? { ...entry, hidden: !entry.hidden }
+                    : entry
+            );
+            saveCustomLessons(updatedLessons);
+            syncCustomLessons();
+            renderCustomLessonList();
+            showNotification(`${customLesson.name} is now ${customLesson.hidden ? "visible to" : "hidden from"} students.`);
+        });
+        item.querySelector(".tdash-btn--danger").addEventListener("click", () => {
+            saveCustomLessons(getCustomLessons().filter(entry => entry.id !== customLesson.id));
+            syncCustomLessons();
+            renderCustomLessonList();
+            showNotification(`${customLesson.name} lesson removed.`);
+        });
+        customLessonList.appendChild(item);
+    });
+}
+
+function openTeacherLessonModal() {
+    if (!teacherLessonModal) return;
+    teacherLessonForm.reset();
+    customLessonItems.innerHTML = "";
+    addLessonItemField();
+    addLessonItemField();
+    teacherLessonMessage.textContent = "";
+    renderCustomLessonList();
+    teacherLessonModal.hidden = false;
+    customLessonName.focus();
+}
+
+function closeTeacherLessonModal() {
+    if (teacherLessonModal) teacherLessonModal.hidden = true;
+}
+
+if (teacherAddLessonBtn) teacherAddLessonBtn.addEventListener("click", openTeacherLessonModal);
+if (teacherLessonCloseBtn) teacherLessonCloseBtn.addEventListener("click", closeTeacherLessonModal);
+if (addLessonItemBtn) addLessonItemBtn.addEventListener("click", () => addLessonItemField());
+if (teacherLessonForm) {
+    teacherLessonForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        const itemFields = [...customLessonItems.querySelectorAll(".custom-lesson-item")];
+        const items = [];
+        for (const itemField of itemFields) {
+            const name = itemField.querySelector(".custom-lesson-item-name").value.trim();
+            const file = itemField.querySelector(".custom-lesson-item-image").files[0];
+            const image = file ? await readImageAsDataUrl(file) : itemField.dataset.image;
+            if (name && image) items.push({ name, image });
+        }
+        if (!items.length) {
+            teacherLessonMessage.textContent = "Add at least one picture and name.";
+            return;
+        }
+        const coverFile = customLessonCover.files[0];
+        if (!coverFile) {
+            teacherLessonMessage.textContent = "Choose a cover picture.";
+            return;
+        }
+        const customLesson = {
+            id: `custom-lesson-${Date.now()}`,
+            name: customLessonName.value.trim(),
+            cover: await readImageAsDataUrl(coverFile),
+            items,
+            hidden: false
+        };
+        if (!customLesson.name) {
+            teacherLessonMessage.textContent = "Enter a lesson name.";
+            return;
+        }
+        saveCustomLessons([...getCustomLessons(), customLesson]);
+        syncCustomLessonQuizCategories();
+        syncCustomLessons();
+        renderCustomLessonList();
+        teacherLessonForm.reset();
+        customLessonItems.innerHTML = "";
+        addLessonItemField();
+        addLessonItemField();
+        teacherLessonMessage.textContent = "Lesson saved. Students can now open it from the learning menu.";
+        showNotification(`${customLesson.name} lesson added.`);
     });
 }
 
@@ -675,6 +940,7 @@ function updateCurrentStudentRecord() {
     if (!student) return;
 
     const avatarIndex = Number(localStorage.getItem("avatar")) || 1;
+    const gender = localStorage.getItem("studentGender") || "";
     const completedLessons = Number(localStorage.getItem(getCurrentStudentProgressKey("completedLessons"))) || 0;
     const lessonProgress = JSON.parse(localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))) || {};
     const categoriesDone = Object.keys(lessonProgress).length;
@@ -700,27 +966,39 @@ function updateCurrentStudentRecord() {
 
     const records = getStudentRecords();
     let record = records.find(r => r.name === student);
+    const now = Date.now();
 
     if (!record) {
         record = {
             name: student,
             avatar: avatarIndex,
+            gender,
             completedLessons,
             categoriesDone,
             progressPercent,
             accuracy,
             stars,
-            updatedAt: Date.now()
+            updatedAt: now,
+            progressHistory: [{ progressPercent, updatedAt: now }]
         };
         records.push(record);
     } else {
+        const progressHistory = Array.isArray(record.progressHistory) && record.progressHistory.length
+            ? record.progressHistory
+            : [{ progressPercent: Number(record.progressPercent) || 0, updatedAt: Number(record.updatedAt) || now }];
+        const lastProgress = progressHistory[progressHistory.length - 1];
+        if (Number(lastProgress.progressPercent) !== progressPercent) {
+            progressHistory.push({ progressPercent, updatedAt: now });
+        }
         record.avatar = avatarIndex;
+        record.gender = gender;
         record.completedLessons = completedLessons;
         record.categoriesDone = categoriesDone;
         record.progressPercent = progressPercent;
         record.accuracy = accuracy;
         record.stars = stars;
-        record.updatedAt = Date.now();
+        record.updatedAt = now;
+        record.progressHistory = progressHistory.slice(-20);
     }
 
     saveStudentRecords(records);
@@ -742,6 +1020,36 @@ function appendQuizHistoryEntry(student, entry) {
     const history = getStudentQuizHistory(student);
     history.unshift(entry);
     saveStudentQuizHistory(student, history);
+}
+
+function getActivityLogKey(student) {
+    return getNamespacedKey(`activityLog_${encodeURIComponent(student)}`);
+}
+
+function getStudentActivityLog(student) {
+    const raw = localStorage.getItem(getActivityLogKey(student));
+    try {
+        const activities = raw ? JSON.parse(raw) : [];
+        return Array.isArray(activities) ? activities : [];
+    } catch (error) {
+        return [];
+    }
+}
+
+function saveStudentActivityLog(student, activities) {
+    localStorage.setItem(getActivityLogKey(student), JSON.stringify(activities.slice(0, 100)));
+}
+
+function recordStudentActivity(activity) {
+    const student = localStorage.getItem("studentName");
+    if (!student || !activity) return;
+
+    const activities = getStudentActivityLog(student);
+    activities.unshift({
+        date: Date.now(),
+        activity
+    });
+    saveStudentActivityLog(student, activities);
 }
 
 function formatQuizHistoryDate(timestamp) {
@@ -909,6 +1217,21 @@ function renderTeacherNeedsInterpretation(records) {
     const container = document.getElementById("teacherNeedsInterpretation");
     if (!container) return;
 
+    const lessonLabels = {
+        alphabet: "Alphabet",
+        numbers: "Numbers",
+        colors: "Colors",
+        shapes: "Shapes"
+    };
+
+    function getUnfinishedLessons(studentName) {
+        const progressKey = getNamespacedKey(`student_${encodeURIComponent(studentName)}_lessonProgress`);
+        const progress = JSON.parse(localStorage.getItem(progressKey)) || {};
+        return Object.keys(lessons)
+            .filter(category => !progress[category])
+            .map(category => lessonLabels[category] || category);
+    }
+
     if (!records.length) {
         container.innerHTML = '<div class="teacher-needs-empty">No students tracked yet. Students will appear here when they begin learning.</div>';
         return;
@@ -944,12 +1267,12 @@ function renderTeacherNeedsInterpretation(records) {
         <div class="teacher-needs-item">
             <div class="teacher-needs-name">${student.name}</div>
             <div class="teacher-needs-meta">Progress: ${student.progress}% • Accuracy: ${student.accuracy}% • Stars: ${student.stars}</div>
-            <div class="teacher-needs-note">Needs more practice to master this lesson.</div>
+            <div class="teacher-needs-note">Needs more practice to master: ${getUnfinishedLessons(student.name).join(", ") || "the current lesson"}.</div>
         </div>
     `).join("");
 
     container.innerHTML = `
-        <p class="teacher-needs-summary">This is students who need to master the lesson: </p>
+        <p class="teacher-needs-summary">This is students that need to master the lesson:</p>
         <div class="teacher-needs-list">${items}</div>
     `;
 }
@@ -1001,21 +1324,86 @@ function renderQuizHistory(studentName) {
     });
 }
 
+function renderActivityLog(studentName) {
+    if (!teacherActivityLogTable) return;
+    const tbody = teacherActivityLogTable.querySelector("tbody");
+    tbody.innerHTML = "";
+
+    if (!studentName) {
+        if (activityLogSubtitle) {
+            activityLogSubtitle.textContent = "Select a student to view recent learning activity.";
+        }
+        tbody.innerHTML = '<tr class="quiz-history-empty"><td colspan="2">No student selected yet.</td></tr>';
+        return;
+    }
+
+    if (activityLogSubtitle) {
+        activityLogSubtitle.textContent = `Recent activity for ${studentName}`;
+    }
+
+    const activities = getStudentActivityLog(studentName);
+    if (!activities.length) {
+        tbody.innerHTML = `<tr class="quiz-history-empty"><td colspan="2">No activity recorded yet for ${studentName}.</td></tr>`;
+        return;
+    }
+
+    activities.forEach((entry, index) => {
+        const row = document.createElement("tr");
+        if (index === 0) row.classList.add("is-latest");
+
+        const dateCell = document.createElement("td");
+        dateCell.textContent = formatQuizHistoryDate(entry.date);
+        if (index === 0) {
+            const badge = document.createElement("span");
+            badge.className = "latest-history-badge";
+            badge.textContent = "Latest";
+            dateCell.appendChild(badge);
+        }
+
+        const activityCell = document.createElement("td");
+        activityCell.textContent = entry.activity || "Student activity";
+        row.appendChild(dateCell);
+        row.appendChild(activityCell);
+        tbody.appendChild(row);
+    });
+}
+
 function renderTeacherStudentProgress() {
     if (!teacherStudentProgressTable) return;
     const tbody = teacherStudentProgressTable.querySelector("tbody");
     tbody.innerHTML = "";
-    const records = getStudentRecords();
+    const genderFilter = teacherStudentGenderFilter?.value || "all";
+    const records = getStudentRecords().filter(record => (
+        genderFilter === "all" || record.gender === genderFilter
+    ));
     const totalCategories = Object.keys(lessons).length;
 
-    records.sort((a, b) => b.updatedAt - a.updatedAt);
+    if (teacherStudentTrackerCount) {
+        const studentCount = records.length;
+        teacherStudentTrackerCount.textContent = `${studentCount} ${studentCount === 1 ? "student" : "students"} tracked`;
+    }
+
+    const sortMode = teacherStudentSort?.value || "recent";
+    records.sort((a, b) => {
+        if (sortMode === "surname") {
+            return getSurname(a.name).localeCompare(getSurname(b.name)) || a.name.localeCompare(b.name);
+        }
+        if (sortMode === "stars") {
+            return (Number(b.stars) || 0) - (Number(a.stars) || 0) || a.name.localeCompare(b.name);
+        }
+        return (Number(b.updatedAt) || 0) - (Number(a.updatedAt) || 0);
+    });
 
     renderTeacherCharts(records);
     renderTeacherNeedsInterpretation(records);
 
     if (!records.length) {
-        tbody.innerHTML = `<tr class="quiz-history-empty"><td colspan="6">No students tracked yet.</td></tr>`;
+        const emptyMessage = genderFilter === "all"
+            ? "No students tracked yet."
+            : `No ${genderFilter} students tracked yet.`;
+        tbody.innerHTML = `<tr class="quiz-history-empty"><td colspan="7">${emptyMessage}</td></tr>`;
         renderQuizHistory(null);
+        renderActivityLog(null);
         return;
     }
 
@@ -1035,8 +1423,21 @@ function renderTeacherStudentProgress() {
         img.className = "student-avatar-cell";
         avatarTd.appendChild(img);
 
+        const genderTd = document.createElement("td");
+        genderTd.textContent = record.gender
+            ? record.gender.charAt(0).toUpperCase() + record.gender.slice(1)
+            : "Not set";
+
         const progressTd = document.createElement("td");
-        progressTd.textContent = `${record.categoriesDone}/${totalCategories} (${record.progressPercent}%)`;
+        const progressHistory = Array.isArray(record.progressHistory) && record.progressHistory.length
+            ? record.progressHistory
+            : [{ progressPercent: Number(record.progressPercent) || 0, updatedAt: record.updatedAt }];
+        const firstProgress = progressHistory[0];
+        const latestProgress = progressHistory[progressHistory.length - 1];
+        progressTd.innerHTML = `
+            <strong>${record.categoriesDone}/${totalCategories} (${record.progressPercent}%)</strong>
+            <span class="progress-history-line">Before: ${Number(firstProgress.progressPercent) || 0}% · ${formatProgressDate(firstProgress.updatedAt)}</span>
+            <span class="progress-history-line">After: ${Number(latestProgress.progressPercent) || 0}% · ${formatProgressDate(latestProgress.updatedAt)}</span>`;
 
         const latestActivity = getStudentQuizHistory(record.name)[0];
         const latestScoreTd = document.createElement("td");
@@ -1060,6 +1461,7 @@ function renderTeacherStudentProgress() {
             selectedHistoryStudent = record.name;
             renderTeacherStudentProgress();
             renderQuizHistory(record.name);
+            renderActivityLog(record.name);
             const panel = document.getElementById("quizHistoryPanel");
             if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
         });
@@ -1075,6 +1477,7 @@ function renderTeacherStudentProgress() {
             }
             renderTeacherStudentProgress();
             renderQuizHistory(selectedHistoryStudent);
+            renderActivityLog(selectedHistoryStudent);
             showNotification(`${record.name} has been removed.`);
         });
 
@@ -1084,6 +1487,7 @@ function renderTeacherStudentProgress() {
 
         row.appendChild(nameTd);
         row.appendChild(avatarTd);
+        row.appendChild(genderTd);
         row.appendChild(progressTd);
         row.appendChild(latestScoreTd);
         row.appendChild(starsTd);
@@ -1093,13 +1497,39 @@ function renderTeacherStudentProgress() {
 
     if (selectedHistoryStudent) {
         renderQuizHistory(selectedHistoryStudent);
+        renderActivityLog(selectedHistoryStudent);
     }
+}
+
+function getSurname(name) {
+    const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+    return parts.length ? parts[parts.length - 1].toLowerCase() : "";
+}
+
+function formatProgressDate(timestamp) {
+    const date = new Date(Number(timestamp) || Date.now());
+    return date.toLocaleString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+    });
+}
+
+if (teacherStudentSort) {
+    teacherStudentSort.addEventListener("change", renderTeacherStudentProgress);
+}
+
+if (teacherStudentGenderFilter) {
+    teacherStudentGenderFilter.addEventListener("change", renderTeacherStudentProgress);
 }
 
 function removeStudentRecord(studentName) {
     const records = getStudentRecords().filter(record => record.name !== studentName);
     saveStudentRecords(records);
     localStorage.removeItem(getQuizHistoryKey(studentName));
+    localStorage.removeItem(getActivityLogKey(studentName));
 }
 
 function showTeacherDashboard(){
@@ -1107,7 +1537,113 @@ function showTeacherDashboard(){
     teacherNameDisplay.textContent = currentTeacherUsername;
 
     renderTeacherStudentProgress();
+    renderTeacherNotifications();
 }
+
+const STUDENT_REQUESTS_KEY = "quizlandStudentRequests";
+
+function getStudentRequests() {
+    try {
+        const requests = JSON.parse(localStorage.getItem(STUDENT_REQUESTS_KEY)) || [];
+        return Array.isArray(requests) ? requests : [];
+    } catch (error) {
+        return [];
+    }
+}
+
+function saveStudentRequests(requests) {
+    localStorage.setItem(STUDENT_REQUESTS_KEY, JSON.stringify(requests));
+}
+
+function getStudentRequest(name) {
+    return getStudentRequests().find(request => request.name === name);
+}
+
+function updateTeacherNotificationBadge() {
+    if (!teacherNotificationBadge) return;
+    const pendingCount = getStudentRequests().filter(request => request.status === "pending").length;
+    teacherNotificationBadge.textContent = String(pendingCount);
+    teacherNotificationBadge.hidden = pendingCount === 0;
+}
+
+function renderTeacherNotifications() {
+    updateTeacherNotificationBadge();
+    if (!teacherNotificationsList) return;
+
+    const requests = getStudentRequests().sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
+    teacherNotificationsList.innerHTML = "";
+
+    if (!requests.length) {
+        teacherNotificationsList.innerHTML = '<p class="teacher-notifications-empty">No student requests yet.</p>';
+        return;
+    }
+
+    requests.forEach(request => {
+        const item = document.createElement("article");
+        item.className = `teacher-notification-item teacher-notification-item--${request.status}`;
+
+        const copy = document.createElement("div");
+        copy.className = "teacher-notification-copy";
+        const title = document.createElement("strong");
+        title.textContent = request.name;
+        const details = document.createElement("span");
+        details.textContent = `${request.gender ? request.gender.charAt(0).toUpperCase() + request.gender.slice(1) : "Gender not set"} · ${request.status}`;
+        copy.append(title, details);
+
+        const actions = document.createElement("div");
+        actions.className = "teacher-notification-actions";
+        if (request.status === "pending") {
+            const acceptBtn = document.createElement("button");
+            acceptBtn.className = "tdash-btn tdash-btn--solid";
+            acceptBtn.type = "button";
+            acceptBtn.textContent = "Accept";
+            acceptBtn.addEventListener("click", () => decideStudentRequest(request.name, "accepted"));
+
+            const rejectBtn = document.createElement("button");
+            rejectBtn.className = "tdash-btn tdash-btn--danger";
+            rejectBtn.type = "button";
+            rejectBtn.textContent = "Reject";
+            rejectBtn.addEventListener("click", () => decideStudentRequest(request.name, "rejected"));
+            actions.append(acceptBtn, rejectBtn);
+        }
+
+        item.append(copy, actions);
+        teacherNotificationsList.appendChild(item);
+    });
+}
+
+function decideStudentRequest(name, status) {
+    const requests = getStudentRequests();
+    const request = requests.find(item => item.name === name);
+    if (!request) return;
+
+    request.status = status;
+    request.decidedAt = Date.now();
+    saveStudentRequests(requests);
+    renderTeacherNotifications();
+    showNotification(`${name} was ${status}.`);
+}
+
+if (teacherNotificationsBtn) {
+    teacherNotificationsBtn.addEventListener("click", () => {
+        renderTeacherNotifications();
+        if (teacherNotificationsModal) teacherNotificationsModal.hidden = false;
+    });
+}
+
+if (teacherNotificationsCloseBtn) {
+    teacherNotificationsCloseBtn.addEventListener("click", () => {
+        if (teacherNotificationsModal) teacherNotificationsModal.hidden = true;
+    });
+}
+
+window.addEventListener("storage", event => {
+    if (event.key !== STUDENT_REQUESTS_KEY) return;
+    updateTeacherNotificationBadge();
+    if (teacherNotificationsModal && !teacherNotificationsModal.hidden) {
+        renderTeacherNotifications();
+    }
+});
 
 // ======================================================
 // CONTINUE BUTTON
@@ -1115,7 +1651,16 @@ function showTeacherDashboard(){
 
 continueBtn.addEventListener("click", () => {
 
-    const name = studentName.value.trim();
+    const nameParts = [
+        studentFirstName ? studentFirstName.value.trim() : "",
+        studentNoMiddleName && studentNoMiddleName.checked
+            ? ""
+            : studentMiddleName
+                ? studentMiddleName.value.trim()
+                : "",
+        studentLastName ? studentLastName.value.trim() : ""
+    ].filter(Boolean);
+    const name = nameParts.join(" ") || studentName.value.trim();
 
     if (name === "") {
 
@@ -1123,13 +1668,28 @@ continueBtn.addEventListener("click", () => {
         showNotification(msg);
         speakText(msg);
 
-        studentName.focus();
+        if (studentFirstName) {
+            studentFirstName.focus();
+        } else {
+            studentName.focus();
+        }
 
         return;
 
     }
 
+    const gender = studentGender.value;
+    if (!gender) {
+        const msg = "Please select a gender.";
+        showNotification(msg);
+        speakText(msg);
+        studentGender.focus();
+        return;
+    }
+
     localStorage.setItem("studentName", name);
+    localStorage.setItem("studentGender", gender);
+    if (studentAge) localStorage.setItem("studentAge", studentAge.value.trim());
 
     if (selectedAvatar === null) {
 
@@ -1141,6 +1701,30 @@ continueBtn.addEventListener("click", () => {
     }
 
     localStorage.setItem("avatar", selectedAvatar);
+
+    const existingRequest = getStudentRequest(name);
+    if (!existingRequest) {
+        const requests = getStudentRequests().filter(request => request.name !== name);
+        requests.push({
+            name,
+            avatar: Number(selectedAvatar) || 1,
+            age: studentAge ? studentAge.value.trim() : "",
+            gender,
+            status: "pending",
+            createdAt: Date.now()
+        });
+        saveStudentRequests(requests);
+        showNotification("Your request was sent to the teacher for approval.", 5000);
+        return;
+    }
+
+    if (existingRequest.status !== "accepted") {
+        const message = existingRequest.status === "rejected"
+            ? "Your request was rejected. Please ask the teacher to review it."
+            : "Please wait for the teacher to approve your request.";
+        showNotification(message, 5000);
+        return;
+    }
 
     updateCurrentStudentRecord();
 
@@ -1187,10 +1771,6 @@ function openSettingsModal() {
 }
 
 settingsBtn.addEventListener("click", openSettingsModal);
-
-if (floatingSettingsBtn) {
-    floatingSettingsBtn.addEventListener("click", openSettingsModal);
-}
 
 if (closeModal) {
     closeModal.addEventListener("click", closeSettingsModal);
@@ -1849,32 +2429,32 @@ document.addEventListener("click", () => {
 const lessons = {
 
     alphabet: [
-        {title:"Alphabet Lesson",letter:"A",word:"",image:"alpha001.png"},
-        {title:"Alphabet Lesson",letter:"B",word:"",image:"alpha002.png"},
-        {title:"Alphabet Lesson",letter:"C",word:"",image:"alpha003.png"},
-        {title:"Alphabet Lesson",letter:"D",word:"",image:"alpha004.png"},
-        {title:"Alphabet Lesson",letter:"E",word:"",image:"alpha005.png"},
-        {title:"Alphabet Lesson",letter:"F",word:"",image:"alpha006.png"},
-        {title:"Alphabet Lesson",letter:"G",word:"",image:"alpha007.png"},
-        {title:"Alphabet Lesson",letter:"H",word:"",image:"alpha008.png"},
-        {title:"Alphabet Lesson",letter:"I",word:"",image:"alpha009.png"},
-        {title:"Alphabet Lesson",letter:"J",word:"",image:"alpha010.png"},
-        {title:"Alphabet Lesson",letter:"K",word:"",image:"alpha011.png"},
-        {title:"Alphabet Lesson",letter:"L",word:"",image:"alpha012.png"},
-        {title:"Alphabet Lesson",letter:"M",word:"",image:"alpha013.png"},
-        {title:"Alphabet Lesson",letter:"N",word:"",image:"alpha014.png"},
-        {title:"Alphabet Lesson",letter:"O",word:"",image:"alpha015.png"},
-        {title:"Alphabet Lesson",letter:"P",word:"",image:"alpha016.png"},
-        {title:"Alphabet Lesson",letter:"Q",word:"",image:"alpha017.png"},
-        {title:"Alphabet Lesson",letter:"R",word:"",image:"alpha018.png"},
-        {title:"Alphabet Lesson",letter:"S",word:"",image:"alpha019.png"},
-        {title:"Alphabet Lesson",letter:"T",word:"",image:"alpha020.png"},
-        {title:"Alphabet Lesson",letter:"U",word:"",image:"alpha021.png"},
-        {title:"Alphabet Lesson",letter:"V",word:"",image:"alpha022.png"},
-        {title:"Alphabet Lesson",letter:"W",word:"",image:"alpha023.png"},
-        {title:"Alphabet Lesson",letter:"X",word:"",image:"alpha024.png"},
-        {title:"Alphabet Lesson",letter:"Y",word:"",image:"alpha025.png"},
-        {title:"Alphabet Lesson",letter:"Z",word:"",image:"alpha026.png"}
+        {title:"Alphabet Lesson",letter:"A",word:"A",image:"alpha001.png"},
+        {title:"Alphabet Lesson",letter:"B",word:"B",image:"alpha002.png"},
+        {title:"Alphabet Lesson",letter:"C",word:"C",image:"alpha003.png"},
+        {title:"Alphabet Lesson",letter:"D",word:"D",image:"alpha004.png"},
+        {title:"Alphabet Lesson",letter:"E",word:"E",image:"alpha005.png"},
+        {title:"Alphabet Lesson",letter:"F",word:"F",image:"alpha006.png"},
+        {title:"Alphabet Lesson",letter:"G",word:"G",image:"alpha007.png"},
+        {title:"Alphabet Lesson",letter:"H",word:"H",image:"alpha008.png"},
+        {title:"Alphabet Lesson",letter:"I",word:"I",image:"alpha009.png"},
+        {title:"Alphabet Lesson",letter:"J",word:"J",image:"alpha010.png"},
+        {title:"Alphabet Lesson",letter:"K",word:"K",image:"alpha011.png"},
+        {title:"Alphabet Lesson",letter:"L",word:"L",image:"alpha012.png"},
+        {title:"Alphabet Lesson",letter:"M",word:"M",image:"alpha013.png"},
+        {title:"Alphabet Lesson",letter:"N",word:"N",image:"alpha014.png"},
+        {title:"Alphabet Lesson",letter:"O",word:"O",image:"alpha015.png"},
+        {title:"Alphabet Lesson",letter:"P",word:"P",image:"alpha016.png"},
+        {title:"Alphabet Lesson",letter:"Q",word:"Q",image:"alpha017.png"},
+        {title:"Alphabet Lesson",letter:"R",word:"R",image:"alpha018.png"},
+        {title:"Alphabet Lesson",letter:"S",word:"S",image:"alpha019.png"},
+        {title:"Alphabet Lesson",letter:"T",word:"T",image:"alpha020.png"},
+        {title:"Alphabet Lesson",letter:"U",word:"U",image:"alpha021.png"},
+        {title:"Alphabet Lesson",letter:"V",word:"V",image:"alpha022.png"},
+        {title:"Alphabet Lesson",letter:"W",word:"W",image:"alpha023.png"},
+        {title:"Alphabet Lesson",letter:"X",word:"X",image:"alpha024.png"},
+        {title:"Alphabet Lesson",letter:"Y",word:"Y",image:"alpha025.png"},
+        {title:"Alphabet Lesson",letter:"Z",word:"Z",image:"alpha026.png"}
     ],
 
     numbers: [
@@ -1917,6 +2497,52 @@ const lessons = {
     ]
 
 };
+
+const customLessonMetadata = {};
+
+function syncCustomLessons() {
+    Object.keys(customLessonMetadata).forEach(category => {
+        delete lessons[category];
+        delete customLessonMetadata[category];
+    });
+
+    getCustomLessons().forEach(customLesson => {
+        if (!customLesson.id || !customLesson.name || !Array.isArray(customLesson.items) || !customLesson.items.length) return;
+        const category = customLesson.id;
+        lessons[category] = customLesson.items.map(item => ({
+            title: `${customLesson.name} Lesson`,
+            letter: "",
+            word: item.name,
+            image: item.image
+        }));
+        customLessonMetadata[category] = customLesson;
+    });
+    renderCustomLessonGrid();
+}
+
+function renderCustomLessonGrid() {
+    if (!customLessonGrid) return;
+    customLessonGrid.innerHTML = "";
+    Object.entries(customLessonMetadata)
+        .filter(([, customLesson]) => !customLesson.hidden)
+        .forEach(([category, customLesson]) => {
+        const card = document.createElement("div");
+        card.className = "lesson-card custom-lesson-card";
+        card.innerHTML = `
+            <img alt="">
+            <h3></h3>
+            <button class="lesson-btn" type="button">Start</button>
+            <button class="quiz-menu-btn" data-quiz-category="${category}" type="button" disabled>Quiz 🔒</button>`;
+        card.querySelector("img").src = customLesson.cover;
+        card.querySelector("img").alt = `${customLesson.name} lesson cover`;
+        card.querySelector("h3").textContent = customLesson.name;
+        card.querySelector(".lesson-btn").addEventListener("click", () => openLesson(category));
+        card.querySelector(".quiz-menu-btn").addEventListener("click", () => openCategoryQuiz(category));
+        customLessonGrid.appendChild(card);
+        });
+}
+
+syncCustomLessons();
 
 const translationMap = {
     One: "Isa",
@@ -2628,9 +3254,9 @@ function loadLesson() {
         lessonWord.textContent = "";
         lessonWord.hidden = true;
     } else {
-        lessonLetter.textContent = lesson.letter || localizedWord;
-        lessonWord.textContent = localizedWord;
-        lessonWord.hidden = !lesson.letter;
+        lessonLetter.textContent = localizedWord;
+        lessonWord.textContent = "";
+        lessonWord.hidden = true;
     }
 
     const progress =
@@ -2649,6 +3275,8 @@ let selectedLanguage = 'en';
 function openLesson(category){
     currentCategory = category;
     currentLesson = 0;
+    const lessonTitle = translateLessonTitle(category);
+    recordStudentActivity(`Opened ${lessonTitle}`);
     openLessonContinue(category);
 }
 
@@ -2671,7 +3299,7 @@ function getCompletedLessonCategories() {
 
 function updateQuizMenuButtons() {
     const completedCategories = getCompletedLessonCategories();
-    quizMenuButtons.forEach(button => {
+    document.querySelectorAll(".quiz-menu-btn").forEach(button => {
         const category = button.dataset.quizCategory;
         const unlocked = !!completedCategories[category];
         button.disabled = !unlocked;
@@ -2685,6 +3313,7 @@ function openCategoryQuiz(category) {
     if (!getCompletedLessonCategories()[category]) return;
     currentCategory = category;
     quizCategory = category;
+    recordStudentActivity(`Started ${translateLessonTitle(category)} quiz`);
     showScreen(quizScreen);
     initializeQuiz();
 }
@@ -3728,14 +4357,14 @@ function getExpectedQuestionCountForDifficulty(difficulty) {
     return cfg.questionCount;
 }
 
-function getNextDifficultyAfterCompletion(currentDifficulty, stageScore) {
+function getNextDifficultyAfterCompletion(currentDifficulty, stageScore, questionCount) {
     // Spec:
     // Easy passed with exactly 5/5 correct -> starts Normal
     // Normal passed with exactly 10/10 correct -> starts Hard
     // Even 1 wrong answer -> ends quiz (no advance)
-    const expected = getExpectedQuestionCountForDifficulty(currentDifficulty);
+    const expected = questionCount || getExpectedQuestionCountForDifficulty(currentDifficulty);
 
-    if (stageScore !== expected) {
+    if (stageScore < expected) {
         return 'end';
     }
 
@@ -3754,7 +4383,7 @@ function getNextDifficultyAfterCompletion(currentDifficulty, stageScore) {
 // ADAPTIVE LEARNING SYSTEM (80% threshold)
 // ======================================================
 
-const ADAPTIVE_LEARNING_THRESHOLD = 80; // 80% score required to auto-advance
+const ADAPTIVE_LEARNING_THRESHOLD = 80;
 
 function getNextLessonCategory(currentCategory) {
     const categoryOrder = ['alphabet', 'numbers', 'colors', 'shapes'];
@@ -3782,16 +4411,25 @@ function getNextLessonPath(category, lessonIndex) {
     return null; // Completed all lessons
 }
 
+function getAdaptiveLessonPath(category, lessonIndex, accuracy) {
+    if (accuracy < ADAPTIVE_LEARNING_THRESHOLD) {
+        const nextCategory = getNextLessonCategory(category);
+        return nextCategory ? { category: nextCategory, lessonIndex: 0 } : null;
+    }
+
+    return getNextLessonPath(category, lessonIndex);
+}
+
 function calculateQuizAccuracy(score, total) {
     return total > 0 ? Math.round((score / total) * 100) : 0;
 }
 
-function shouldAutoProgressLesson(accuracy) {
-    return accuracy >= ADAPTIVE_LEARNING_THRESHOLD;
+function shouldMoveToNextCategory(accuracy) {
+    return accuracy < ADAPTIVE_LEARNING_THRESHOLD;
 }
 
-function autoProgressToNextLesson(currentCat, currentLessonIdx) {
-    const nextPath = getNextLessonPath(currentCat, currentLessonIdx);
+function autoProgressToNextLesson(currentCat, currentLessonIdx, accuracy) {
+    const nextPath = getAdaptiveLessonPath(currentCat, currentLessonIdx, accuracy);
     
     if (!nextPath) {
         return false; // No more lessons available
@@ -3806,16 +4444,29 @@ function autoProgressToNextLesson(currentCat, currentLessonIdx) {
 function finishQuiz(){
 
     const stageScore = quizStageState ? (quizStageState.stageScore || 0) : quizScore;
-    const nextDifficulty = getNextDifficultyAfterCompletion(quizDifficulty, stageScore);
+    const stageTotal = quizStageState
+        ? quizStageState.stageConfig[quizStageState.stageIndex].questionCount
+        : quizQuestions.length;
+    const nextDifficulty = getNextDifficultyAfterCompletion(quizDifficulty, stageScore, stageTotal);
+    const difficultyStageIndex = {
+        easy: 0,
+        medium: 1,
+        hard: 2
+    };
+    const currentStageIndex = difficultyStageIndex[quizDifficulty];
+    const nextStageIndex = Number.isInteger(currentStageIndex)
+        ? currentStageIndex + 1
+        : -1;
     const canAdvance =
         nextDifficulty !== 'end' &&
         quizStageState &&
-        quizStageState.stageIndex < quizStageState.stageConfig.length - 1;
+        nextStageIndex >= 0 &&
+        nextStageIndex < quizStageState.stageConfig.length;
 
     // Perfect stage score required to unlock Normal or Hard.
     if (canAdvance) {
 
-        quizStageState.stageIndex++;
+        quizStageState.stageIndex = nextStageIndex;
         quizStageState.stageScore = 0;
 
         quizDifficulty = quizStageState.stageConfig[quizStageState.stageIndex].difficulty;
@@ -3855,7 +4506,6 @@ function finishQuiz(){
     }
 
     // Incomplete stage or Hard finished: end entire quiz session
-    const stageTotal = quizQuestions.length;
     const sessionTotal = quizStageState
         ? quizStageState.stageConfig
             .slice(0, quizStageState.stageIndex + 1)
@@ -3871,7 +4521,7 @@ function finishQuiz(){
 
     // Calculate accuracy for adaptive learning
     const accuracy = calculateQuizAccuracy(quizScore, sessionTotal);
-    const isAdaptiveProgressEligible = shouldAutoProgressLesson(accuracy);
+    const shouldMoveToNextCategoryAfterQuiz = shouldMoveToNextCategory(accuracy);
 
     let finishMessage;
     const didNotAdvance = stageScore < stageTotal && quizDifficulty !== 'hard';
@@ -3880,25 +4530,25 @@ function finishQuiz(){
         finishMessage = selectedLanguage === 'tl'
             ? `Kailangan mong makuha ang lahat ng tama (${stageScore}/${stageTotal}) para makapunta sa susunod na level.`
             : `You need a perfect score (${stageScore}/${stageTotal}) to unlock the next level.`;
-    } else if (isAdaptiveProgressEligible) {
-        // Adaptive learning: 80%+ triggers automatic next lesson progression
+    } else if (shouldMoveToNextCategoryAfterQuiz) {
+        // Scores below 80% move the student to the next category.
         finishMessage = selectedLanguage === 'tl'
-            ? `Kahanga-hanga! ${accuracy}% accuracy! 🎉 Pag-aabutan ka sa susunod na leksyon...`
-            : `Excellent! ${accuracy}% accuracy! 🎉 Moving to the next lesson...`;
+            ? `${accuracy}% accuracy. Pupunta tayo sa susunod na kategorya...`
+            : `${accuracy}% accuracy. Moving to the next category...`;
     } else {
         finishMessage = selectedLanguage === 'tl'
-            ? `Magaling, ${localStorage.getItem("studentName") || "Estudyante"}! Nakakuha ka ng ${quizStars} bituin!`
-            : `Great work, ${localStorage.getItem("studentName") || "Student"}! You earned ${quizStars} stars!`;
+            ? `${accuracy}% accuracy. Magpapatuloy tayo sa kasalukuyang kategorya.`
+            : `${accuracy}% accuracy. Continuing in the current category.`;
     }
 
-    const noticeDuration = didNotAdvance ? 10000 : (isAdaptiveProgressEligible ? 3500 : 2800);
+    const noticeDuration = didNotAdvance ? 10000 : 2800;
     showNotification(finishMessage, noticeDuration);
     if (didNotAdvance) {
         speakText(finishMessage);
-    } else if (isAdaptiveProgressEligible) {
+    } else if (shouldMoveToNextCategoryAfterQuiz) {
         speakText(selectedLanguage === 'tl' 
-            ? `Magandang gawa! Pag-aabutan ka sa susunod na leksyon.` 
-            : `Great job! Moving to the next lesson.`);
+            ? `Magandang gawa! Pupunta tayo sa susunod na kategorya.` 
+            : `Moving to the next category.`);
     }
 
     currentScoreEl.textContent = String(quizScore);
@@ -3915,8 +4565,7 @@ function finishQuiz(){
     localStorage.setItem('quizDifficulty', 'easy');
 
     setTimeout(() => {
-        // ADAPTIVE LEARNING: Auto-progression when accuracy >= 80%
-        if (isAdaptiveProgressEligible && autoProgressToNextLesson(quizCategory, quizLessonIndex)) {
+        if (autoProgressToNextLesson(quizCategory, quizLessonIndex, accuracy)) {
             // Successfully progressed to next lesson
             const nextLessonTitle = selectedLanguage === 'tl'
                 ? titleTranslations[currentCategory] || currentCategory
@@ -4067,11 +4716,9 @@ window.addEventListener("load",()=>{
 // ======================================================
 
 
+// line 88 html
+// <label for="studentGender">Select Gender</label>
+// 4422 
+// 4538
 
-
-
-
-
-
-
-
+// with approval 4724
