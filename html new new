@@ -4,6 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1d3557">
+    <meta name="screen-orientation" content="landscape">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="QuizLand">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icon-192.png">
 
     <title>QuizLand</title>
 
@@ -26,7 +33,7 @@
 
         <audio id="popSound" src="popclick.mp3" preload="auto"></audio>
 <!-- bg audio -->
-        <audio id="bgMusi" loop preload="auto" src="bgMusic.mp3"></audio>
+        <audio id="bgMusic" loop autoplay preload="auto" src="bgMusic.mp3"></audio>
 
 
    
@@ -34,14 +41,14 @@
 
 <body>  
 
-    <div id="loadingScreen" class="loading-screen" role="status" aria-live="polite">
-        <div class="loading-card">
-            <div class="loading-logo">Q</div>
-            <h1>QuizLand</h1>
-            <p>Getting your learning adventure ready...</p>
-            <div class="loading-spinner" aria-hidden="true"></div>
-            <div class="loading-dots" aria-hidden="true"><span></span><span></span><span></span></div>
-        </div>
+    <div class="fun-background" aria-hidden="true">
+        <span class="fun-cloud fun-cloud--one"></span>
+        <span class="fun-cloud fun-cloud--two"></span>
+        <span class="fun-cloud fun-cloud--three"></span>
+        <span class="fun-cloud fun-cloud--four"></span>
+        <span class="fun-shape fun-shape--circle"></span>
+        <span class="fun-shape fun-shape--star">★</span>
+        <span class="fun-shape fun-shape--diamond"></span>
     </div>
 
     <!-- ===================================================== -->
@@ -50,6 +57,30 @@
 
     <section id="homeScreen" class="screen active">
 
+        <div class="home-floating-cloud home-floating-cloud--one" aria-hidden="true"></div>
+        <div class="home-floating-cloud home-floating-cloud--two" aria-hidden="true"></div>
+        <div class="home-floating-cloud home-floating-cloud--three" aria-hidden="true"></div>
+        <div class="home-floating-cloud home-floating-cloud--four" aria-hidden="true"></div>
+        <div class="home-floating-cloud home-floating-cloud--five" aria-hidden="true"></div>
+        <div class="home-floating-cloud home-floating-cloud--six" aria-hidden="true"></div>
+        <svg class="home-shape-animal home-shape-animal--bird" viewBox="0 0 120 90" aria-hidden="true">
+            <ellipse cx="57" cy="53" rx="34" ry="21" fill="#ff9f1c"/>
+            <circle cx="83" cy="38" r="16" fill="#ffb703"/>
+            <ellipse cx="51" cy="48" rx="19" ry="11" fill="#ffd166" transform="rotate(-24 51 48)"/>
+            <polygon points="98,37 118,43 98,48" fill="#fb8500"/>
+            <circle cx="87" cy="34" r="2.5" fill="#1d3557"/>
+            <polygon points="32,55 12,45 19,64" fill="#ff6b6b"/>
+            <path d="M48 72l-5 9m20-9 5 9" fill="none" stroke="#1d3557" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <svg class="home-shape-animal home-shape-animal--fish" viewBox="0 0 120 90" aria-hidden="true">
+            <ellipse cx="55" cy="47" rx="35" ry="24" fill="#4cc9f0"/>
+            <polygon points="22,47 2,29 2,65" fill="#4895ef"/>
+            <polygon points="50,24 62,8 73,26" fill="#72efdd"/>
+            <polygon points="50,70 64,84 76,67" fill="#72efdd"/>
+            <circle cx="77" cy="41" r="4" fill="#fff"/>
+            <circle cx="78" cy="41" r="2" fill="#1d3557"/>
+            <path d="M83 54q-9 8-18 0" fill="none" stroke="#1d3557" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
         <div class="home-orbit home-orbit--one" aria-hidden="true"></div>
         <div class="home-orbit home-orbit--two" aria-hidden="true"></div>
         <div class="home-bubble home-bubble--one" aria-hidden="true"></div>
@@ -86,8 +117,6 @@
 
     </section>
 
-
-
     <!-- LESSON SCREEN -->
     <!-- STUDENT PROFILE -->
     <!-- ===================================================== -->
@@ -102,25 +131,23 @@
                 Enter your details and choose your favorite avatar.
             </p>
 
-            <input type="hidden" id="studentName">
+            <label for="studentClassroomCode">Classroom Code</label>
+            <input type="text" id="studentClassroomCode" placeholder="Enter 6-digit classroom code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off">
 
-            <label for="studentLastName">Last Name</label>
-            <input type="text" id="studentLastName" placeholder="Last Name" autocomplete="family-name">
-
-            <label for="studentFirstName">First Name</label>
-            <input type="text" id="studentFirstName" placeholder="First Name" autocomplete="given-name">
-
-            <label for="studentMiddleName">Middle Name</label>
-            <div class="profile-middle-name">
-                <input type="text" id="studentMiddleName" placeholder="Middle Name" autocomplete="additional-name">
-                <label class="profile-none-option">
-                    <input type="checkbox" id="studentNoMiddleName">
-                    None
-                </label>
+            <div class="profile-name-fields" role="group" aria-label="Student name">
+                <div class="profile-name-field">
+                    <label for="studentFirstName">First name</label>
+                    <input type="text" id="studentFirstName" placeholder="First name" autocomplete="given-name" required>
+                </div>
+                <div class="profile-name-field">
+                    <label for="studentLastName">Last name</label>
+                    <input type="text" id="studentLastName" placeholder="Last name" autocomplete="family-name" required>
+                </div>
+                <div class="profile-name-field">
+                    <label for="studentMiddleInitial">Middle initial</label>
+                    <input type="text" id="studentMiddleInitial" placeholder="Optional" aria-label="Middle initial, optional" maxlength="1" autocomplete="additional-name">
+                </div>
             </div>
-
-            <label for="studentAge">Age</label>
-            <input type="number" id="studentAge" placeholder="Age" min="1" max="120" inputmode="numeric">
 
             <label for="studentGender">Gender</label>
             <select id="studentGender">
@@ -155,6 +182,8 @@
                 Continue
             </button>
 
+            <p id="profileApprovalStatus" class="profile-approval-status" aria-live="polite" hidden></p>
+
             <button type="button" id="profileBackHome" class="back-btn">
                 ← Back to Home
             </button>
@@ -177,6 +206,7 @@
                 <h2 id="teacherFormTitle">Teacher Login</h2>
 
                 <p id="teacherFormSubtitle">Enter your teacher credentials to access the dashboard.</p>
+                <p id="teacherUnlockEmail" class="teacher-unlock-email teacher-hidden"></p>
 
                 <form id="teacherLoginForm" class="teacher-form">
 
@@ -187,14 +217,14 @@
                     </div>
 
                     <div class="input-wrapper">
-                        <input type="password" id="teacherPassword" placeholder="Password">
+                        <input type="password" id="teacherPassword" placeholder="Password" autocomplete="current-password">
                         <button type="button" class="password-toggle-btn" data-toggle-target="teacherPassword" aria-label="Show password">Show</button>
                         <span class="input-error-icon" aria-hidden="true">⚠</span>
                         <div class="input-error-message"></div>
                     </div>
 
                     <div class="input-wrapper teacher-hidden">
-                        <input type="password" id="teacherConfirmPassword" placeholder="Confirm Password">
+                        <input type="password" id="teacherConfirmPassword" placeholder="Confirm Password" autocomplete="new-password">
                         <button type="button" class="password-toggle-btn" data-toggle-target="teacherConfirmPassword" aria-label="Show password">Show</button>
                         <span class="input-error-icon" aria-hidden="true">⚠</span>
                         <div class="input-error-message"></div>
@@ -209,7 +239,7 @@
                     <div class="teacher-form-actions">
                         <button type="submit" class="main-btn" id="teacherSubmitBtn">Login</button>
                         <button type="button" id="teacherForgotPasswordBtn" class="secondary-btn teacher-hidden">Forgot Password</button>
-                        <button type="button" id="teacherLogoutUnlockBtn" class="secondary-btn teacher-hidden">Logout</button>
+                        <button type="button" id="teacherUseEmailLoginBtn" class="secondary-btn teacher-hidden">Use a different email</button>
                     </div>
 
                     <p class="teacher-switch">
@@ -241,11 +271,22 @@
                     </div>
                 </div>
                 <nav class="teacher-sidebar-nav" aria-label="Teacher dashboard actions">
+                    <div id="teacherClassroomCode" class="teacher-classroom-code" aria-label="Classroom code">
+                        <span class="teacher-sidebar-icon">#</span>
+                        <span class="teacher-sidebar-label">
+                            <small>Classroom code</small>
+                            <b>------</b>
+                        </span>
+                    </div>
                     <button id="teacherDashboardRefreshBtn" class="teacher-sidebar-btn teacher-sidebar-btn--refresh" type="button"><span class="teacher-sidebar-icon">↻</span><span class="teacher-sidebar-label">Refresh</span></button>
                     <button id="teacherNotificationsBtn" class="teacher-sidebar-btn teacher-sidebar-btn--notifications" type="button"><span class="teacher-sidebar-icon">🔔</span><span class="teacher-sidebar-label">Notifications</span><span id="teacherNotificationBadge" class="teacher-notification-badge" hidden>0</span></button>
-                    <button id="teacherCustomizeBtn" class="teacher-sidebar-btn" type="button"><span class="teacher-sidebar-icon">✦</span><span class="teacher-sidebar-label">Add Quiz</span></button>
-                    <button id="teacherAddLessonBtn" class="teacher-sidebar-btn teacher-sidebar-btn--accent" type="button"><span class="teacher-sidebar-icon">＋</span><span class="teacher-sidebar-label">Add Lesson</span></button>
+                    <button id="teacherCustomizeBtn" class="teacher-sidebar-btn" type="button"><span class="teacher-sidebar-icon">＋</span><span class="teacher-sidebar-label">Add Quiz</span></button>
+                    <button id="teacherAddLessonBtn" class="teacher-sidebar-btn" type="button"><span class="teacher-sidebar-icon">＋</span><span class="teacher-sidebar-label">Add Lesson</span></button>
+                    <button id="teacherActivityLogBtn" class="teacher-sidebar-btn" type="button"><span class="teacher-sidebar-icon">◷</span><span class="teacher-sidebar-label">Activity Log</span></button>
+                    <button id="teacherAnalyticsBtn" class="teacher-sidebar-btn" type="button"><span class="teacher-sidebar-icon">▥</span><span class="teacher-sidebar-label">Analytics</span></button>
+                    <button id="teacherArchiveBtn" class="teacher-sidebar-btn" type="button"><span class="teacher-sidebar-icon">▤</span><span class="teacher-sidebar-label">Archive</span></button>
                     <button id="teacherDashboardPrintBtn" class="teacher-sidebar-btn" type="button"><span class="teacher-sidebar-icon">▣</span><span class="teacher-sidebar-label">Print</span></button>
+                    <button id="teacherDashboardSettingsBtn" class="teacher-sidebar-btn" type="button"><span class="teacher-sidebar-icon">⚙</span><span class="teacher-sidebar-label">Settings</span></button>
                     <button id="teacherDashboardHomeBtn" class="teacher-sidebar-btn" type="button"><span class="teacher-sidebar-icon">⌂</span><span class="teacher-sidebar-label">Home</span></button>
                 </nav>
                 <div class="teacher-sidebar-account">
@@ -253,6 +294,7 @@
                         <span class="teacher-sidebar-avatar">★</span>
                         <span class="teacher-sidebar-label"><strong id="teacherSidebarName">Teacher</strong><small>Signed in</small></span>
                     </div>
+                    <button id="teacherChangePasswordBtn" class="tdash-btn tdash-btn--soft" type="button">Change Password</button>
                     <button id="teacherLogoutBtn" class="tdash-btn tdash-btn--solid" type="button">Logout</button>
                 </div>
             </aside>
@@ -324,7 +366,6 @@
                             <tr>
                                 <th>Name</th>
                                 <th>Avatar</th>
-                                <th>Age</th>
                                 <th>Gender</th>
                                 <th>Progress</th>
                                 <th>Latest Activity Score</th>
@@ -363,12 +404,77 @@
                 </div>
             </section>
 
-            <section class="tdash-panel tdash-panel--wide" id="activityLogPanel">
-                <div class="tdash-panel-head">
-                    <h3>Activity Log</h3>
-                    <p id="activityLogSubtitle">Select a student to view recent learning activity.</p>
+            </main>
+        </div>
+
+        <div id="teacherTutorial" class="teacher-tutorial" hidden>
+            <div class="teacher-tutorial-backdrop"></div>
+            <div class="teacher-tutorial-card" role="dialog" aria-modal="true" aria-labelledby="teacherTutorialTitle">
+                <div class="teacher-tutorial-progress" aria-hidden="true">
+                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
                 </div>
-                <div class="quiz-history-table-wrap">
+                <p class="teacher-tutorial-eyebrow">Quick dashboard tour</p>
+                <h3 id="teacherTutorialTitle"></h3>
+                <p id="teacherTutorialDescription"></p>
+                <p id="teacherTutorialKeyboardHelp" class="teacher-tutorial-keyboard-help">Use ← and → on your keyboard to move between steps.</p>
+                <div class="teacher-tutorial-actions">
+                    <button id="teacherTutorialSkipBtn" class="tdash-btn tdash-btn--ghost" type="button">Skip tutorial</button>
+                    <div class="teacher-tutorial-navigation">
+                        <button id="teacherTutorialBackBtn" class="tdash-btn tdash-btn--ghost" type="button">Back</button>
+                        <button id="teacherTutorialNextBtn" class="tdash-btn tdash-btn--solid" type="button">Next</button>
+                    </div>
+                </div>
+                <label class="teacher-tutorial-preference">
+                    <input id="teacherTutorialDontShowAgain" type="checkbox">
+                    Do not show again
+                </label>
+            </div>
+        </div>
+
+        <div id="teacherPrintModal" class="teacher-print-modal" hidden>
+            <div class="teacher-print-card" role="dialog" aria-modal="true" aria-labelledby="teacherPrintTitle">
+                <h3 id="teacherPrintTitle">Print Student Progress</h3>
+                <label for="teacherPrintStudent">Choose a student</label>
+                <select id="teacherPrintStudent">
+                    <option value="all">All students</option>
+                </select>
+                <div class="teacher-print-actions">
+                    <button id="teacherPrintCancelBtn" class="tdash-btn tdash-btn--ghost" type="button">Cancel</button>
+                    <button id="teacherPrintConfirmBtn" class="tdash-btn tdash-btn--solid" type="button">Print Progress</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="teacherArchiveModal" class="teacher-archive-modal" hidden>
+            <div class="teacher-archive-card" role="dialog" aria-modal="true" aria-labelledby="teacherArchiveTitle">
+                <div class="teacher-archive-header">
+                    <div>
+                        <h3 id="teacherArchiveTitle">Archived Students</h3>
+                        <p>Choose an archive date to view removed students.</p>
+                    </div>
+                    <button id="teacherArchiveCloseBtn" class="teacher-archive-close" type="button" aria-label="Close archive">×</button>
+                </div>
+                <div id="teacherArchiveDates" class="teacher-archive-dates"></div>
+                <div class="teacher-archive-actions">
+                    <button id="teacherArchiveDoneBtn" class="tdash-btn tdash-btn--ghost" type="button">Done</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="teacherActivityLogModal" class="teacher-archive-modal" hidden>
+            <div class="teacher-archive-card teacher-activity-log-card" role="dialog" aria-modal="true" aria-labelledby="teacherActivityLogTitle">
+                <div class="teacher-archive-header">
+                    <div>
+                        <h3 id="teacherActivityLogTitle">Activity Log</h3>
+                        <p id="activityLogSubtitle">Select a student to view recent learning activity.</p>
+                    </div>
+                    <button id="teacherActivityLogCloseBtn" class="teacher-archive-close" type="button" aria-label="Close activity log">×</button>
+                </div>
+                <div class="teacher-activity-log-student-picker">
+                    <h4>Choose a student</h4>
+                    <div id="teacherActivityLogStudents" class="teacher-activity-log-students" role="group" aria-label="Students"></div>
+                </div>
+                <div class="quiz-history-table-wrap teacher-activity-log-table-wrap">
                     <table id="teacherActivityLogTable">
                         <thead>
                             <tr>
@@ -383,22 +489,70 @@
                         </tbody>
                     </table>
                 </div>
-            </section>
-
-            </main>
+                <div class="teacher-archive-actions">
+                    <button id="teacherActivityLogDoneBtn" class="tdash-btn tdash-btn--ghost" type="button">Done</button>
+                </div>
+            </div>
         </div>
 
-        <div id="teacherPrintModal" class="teacher-print-modal" hidden>
-            <div class="teacher-print-card" role="dialog" aria-modal="true" aria-labelledby="teacherPrintTitle">
-                <h3 id="teacherPrintTitle">Print Student Progress</h3>
-                <label for="teacherPrintStudent">Choose a student</label>
-                <select id="teacherPrintStudent">
-                    <option value="all">All students</option>
-                </select>
-                <div class="teacher-print-actions">
-                    <button id="teacherPrintCancelBtn" class="tdash-btn tdash-btn--ghost" type="button">Cancel</button>
-                    <button id="teacherPrintConfirmBtn" class="tdash-btn tdash-btn--solid" type="button">Print Progress</button>
+        <div id="teacherAnalyticsModal" class="teacher-archive-modal" hidden>
+            <div class="teacher-archive-card teacher-analytics-card" role="dialog" aria-modal="true" aria-labelledby="teacherAnalyticsTitle">
+                <div class="teacher-archive-header">
+                    <div>
+                        <h3 id="teacherAnalyticsTitle">Analytics</h3>
+                    </div>
+                    <button id="teacherAnalyticsCloseBtn" class="teacher-archive-close" type="button" aria-label="Close analytics">×</button>
                 </div>
+                <div class="teacher-activity-log-student-picker">
+                    <label class="teacher-analytics-visually-hidden" for="teacherAnalyticsStudentSearch">Search students</label>
+                    <input id="teacherAnalyticsStudentSearch" class="teacher-analytics-search" type="search" placeholder="Search students..." autocomplete="off">
+                    <div id="teacherAnalyticsStudents" class="teacher-activity-log-students" role="group" aria-label="Choose a student for learning analytics"></div>
+                </div>
+                <section class="teacher-analytics-calendar" aria-live="polite">
+                    <h4 id="teacherAnalyticsStudentName">Select a student</h4>
+                    <div class="teacher-analytics-calendar-controls">
+                        <button id="teacherAnalyticsPreviousMonth" class="teacher-analytics-month-button" type="button" aria-label="Previous month">‹</button>
+                        <label class="teacher-analytics-visually-hidden" for="teacherAnalyticsMonth">Month</label>
+                        <select id="teacherAnalyticsMonth" aria-label="Calendar month">
+                            <option value="0">January</option>
+                            <option value="1">February</option>
+                            <option value="2">March</option>
+                            <option value="3">April</option>
+                            <option value="4">May</option>
+                            <option value="5">June</option>
+                            <option value="6">July</option>
+                            <option value="7">August</option>
+                            <option value="8">September</option>
+                            <option value="9">October</option>
+                            <option value="10">November</option>
+                            <option value="11">December</option>
+                        </select>
+                        <label class="teacher-analytics-visually-hidden" for="teacherAnalyticsYear">Year</label>
+                        <select id="teacherAnalyticsYear" aria-label="Calendar year">
+                            <option value="2026">2026</option>
+                            <option value="2027">2027</option>
+                            <option value="2028">2028</option>
+                            <option value="2029">2029</option>
+                            <option value="2030">2030</option>
+                        </select>
+                        <button id="teacherAnalyticsNextMonth" class="teacher-analytics-month-button" type="button" aria-label="Next month">›</button>
+                    </div>
+                    <div class="teacher-analytics-weekdays" aria-hidden="true">
+                        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+                    </div>
+                    <div id="teacherAnalyticsCalendarDays" class="teacher-analytics-calendar-days" role="group" aria-label="Choose a date"></div>
+                    <div class="teacher-analytics-legend" aria-label="Quiz accuracy legend">
+                        <span><i class="is-no-data"></i>No activity</span>
+                        <span><i class="has-lesson"></i>Lesson</span>
+                        <span><i class="is-struggling"></i>0–49%</span>
+                        <span><i class="is-growing"></i>50–69%</span>
+                        <span><i class="is-progressing"></i>70–84%</span>
+                        <span><i class="is-strong"></i>85–99%</span>
+                        <span><i class="is-perfect"></i>100%</span>
+                    </div>
+                    <h4 id="teacherAnalyticsSelectedDate" class="teacher-analytics-selected-date"></h4>
+                    <div id="teacherAnalyticsDateDetails" class="teacher-analytics-date-details" aria-live="polite"></div>
+                </section>
             </div>
         </div>
 
@@ -423,6 +577,8 @@
                     </select>
                     <label for="customQuestionPrompt">Question</label>
                     <input id="customQuestionPrompt" type="text" maxlength="160" placeholder="Which answer is correct?" required>
+                    <label for="customQuestionAudio">Question audio (optional, up to 1 MB)</label>
+                    <input id="customQuestionAudio" type="file" accept="audio/*">
                     <label for="customQuestionCorrect">Correct answer</label>
                     <input id="customQuestionCorrect" type="text" maxlength="80" placeholder="Correct answer" required>
                     <label>Multiple-choice answers</label>
@@ -448,6 +604,11 @@
                 </form>
                 <div>
                     <h4>Your Added Quiz Questions</h4>
+                    <div class="custom-question-level-tabs" role="group" aria-label="Filter quiz questions by level">
+                        <button class="custom-question-level-tab is-active" type="button" aria-pressed="true" data-question-level="easy">Easy</button>
+                        <button class="custom-question-level-tab" type="button" aria-pressed="false" data-question-level="medium">Normal</button>
+                        <button class="custom-question-level-tab" type="button" aria-pressed="false" data-question-level="hard">Hard</button>
+                    </div>
                     <div id="customQuestionList" class="custom-question-list"></div>
                 </div>
             </div>
@@ -456,14 +617,14 @@
         <div id="teacherLessonModal" class="teacher-customize-modal" hidden>
             <div class="teacher-customize-card teacher-lesson-card" role="dialog" aria-modal="true" aria-labelledby="teacherLessonTitle">
                 <h3 id="teacherLessonTitle">Add a Lesson</h3>
-                <p class="teacher-lesson-help">Create a lesson such as Animals. Add a cover picture, then add each animal picture and its name.</p>
+                <p class="teacher-lesson-help">Create a lesson such as Animals. Add a cover picture, then add each item’s picture and name. You can also attach an optional audio clip to each item.</p>
                 <form id="teacherLessonForm" class="teacher-customize-form">
                     <label for="customLessonName">Lesson name</label>
                     <input id="customLessonName" type="text" maxlength="50" placeholder="Animals" required>
                     <label for="customLessonCover">Cover picture</label>
                     <input id="customLessonCover" type="file" accept="image/*" required>
                     <div class="teacher-lesson-items-head">
-                        <label>Lesson pictures and names</label>
+                        <label>Lesson pictures, names, and audio</label>
                         <button id="addLessonItemBtn" class="tdash-btn tdash-btn--soft" type="button">Add picture</button>
                     </div>
                     <div id="customLessonItems" class="custom-lesson-items"></div>
@@ -491,6 +652,24 @@
             </div>
         </div>
 
+        <div id="teacherChangePasswordModal" class="teacher-customize-modal" hidden>
+            <div class="teacher-customize-card teacher-password-card" role="dialog" aria-modal="true" aria-labelledby="teacherChangePasswordTitle">
+                <h3 id="teacherChangePasswordTitle">Change Password</h3>
+                <p class="teacher-lesson-help">Set a new password for your signed-in teacher account.</p>
+                <form id="teacherChangePasswordForm" class="teacher-password-form">
+                    <label for="teacherNewPassword">New password</label>
+                    <input id="teacherNewPassword" type="password" autocomplete="new-password" minlength="8" required>
+                    <label for="teacherNewPasswordConfirm">Confirm new password</label>
+                    <input id="teacherNewPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required>
+                    <p id="teacherChangePasswordMessage" class="teacher-customize-message" role="status" aria-live="polite"></p>
+                    <div class="teacher-customize-actions">
+                        <button id="teacherChangePasswordCancelBtn" class="tdash-btn tdash-btn--ghost" type="button">Cancel</button>
+                        <button class="tdash-btn tdash-btn--solid" type="submit">Save Password</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
     </section>
 
 
@@ -508,15 +687,12 @@
 
                 <!-- Alphabet -->
 
-                <div class="lesson-card">
+                <div class="lesson-card" data-lesson-category="alphabet" tabindex="0" role="button" aria-label="Select Alphabet lesson">
 
                     <img src="alphabetlesson.png">
 
                     <h3>Alphabet</h3>
 
-                    <button class="lesson-btn">
-                        Start
-                    </button>
                     <button class="quiz-menu-btn" data-quiz-category="alphabet" type="button" disabled>
                         Quiz 🔒
                     </button>
@@ -525,15 +701,12 @@
 
                 <!-- Numbers -->
 
-                <div class="lesson-card">
+                <div class="lesson-card" data-lesson-category="numbers" tabindex="0" role="button" aria-label="Select Numbers lesson">
 
                     <img src="numberlesson.png">
 
                     <h3>Numbers</h3>
 
-                    <button class="lesson-btn">
-                        Start
-                    </button>
                     <button class="quiz-menu-btn" data-quiz-category="numbers" type="button" disabled>
                         Quiz 🔒
                     </button>
@@ -542,15 +715,12 @@
 
                 <!-- Colors -->
 
-                <div class="lesson-card">
+                <div class="lesson-card" data-lesson-category="colors" tabindex="0" role="button" aria-label="Select Colors lesson">
 
                     <img src="colorlesson.png">
 
                     <h3>Colors</h3>
 
-                    <button class="lesson-btn">
-                        Start
-                    </button>
                     <button class="quiz-menu-btn" data-quiz-category="colors" type="button" disabled>
                         Quiz 🔒
                     </button>
@@ -559,15 +729,12 @@
 
                 <!-- Shapes -->
 
-                <div class="lesson-card">
+                <div class="lesson-card" data-lesson-category="shapes" tabindex="0" role="button" aria-label="Select Shapes lesson">
 
                     <img src="shapelesson.png">
 
                     <h3>Shapes</h3>
 
-                    <button class="lesson-btn">
-                        Start
-                    </button>
                     <button class="quiz-menu-btn" data-quiz-category="shapes" type="button" disabled>
                         Quiz 🔒
                     </button>
@@ -577,6 +744,10 @@
                 <div id="customLessonGrid" class="custom-lesson-grid"></div>
 
             </div>
+
+            <button id="menuStartBtn" class="main-btn menu-start-btn" type="button" disabled>
+                Start Selected Lesson
+            </button>
 
             <button id="backHome" class="back-btn">
                 ← Back to Home
@@ -612,11 +783,11 @@
 
             <div class="settings-body">
 
-                <section class="settings-section" aria-labelledby="settingsSoundTitle">
-                    <h3 id="settingsSoundTitle" class="settings-section-title">
+                <details class="settings-section">
+                    <summary id="settingsSoundTitle" class="settings-section-title">
                         <i class="fa-solid fa-music"></i>
-                        Sound
-                    </h3>
+                        <span>Sound</span>
+                    </summary>
 
                     <div class="setting-row">
                         <div class="setting-copy">
@@ -632,9 +803,9 @@
                     <div class="setting-row setting-row--stack">
                         <div class="setting-copy setting-copy--inline">
                             <span class="setting-label">Music Volume</span>
-                            <span class="setting-value" id="bgMusicVolumeValue">60%</span>
+                            <span class="setting-value" id="bgMusicVolumeValue">10%</span>
                         </div>
-                        <input id="bgMusicVolume" class="setting-range" type="range" min="0" max="100" value="60">
+                        <input id="bgMusicVolume" class="setting-range" type="range" min="0" max="100" value="10">
                     </div>
 
                     <div class="setting-row">
@@ -651,17 +822,17 @@
                     <div class="setting-row setting-row--stack">
                         <div class="setting-copy setting-copy--inline">
                             <span class="setting-label">Effects Volume</span>
-                            <span class="setting-value" id="sfxVolumeValue">80%</span>
+                            <span class="setting-value" id="sfxVolumeValue">10%</span>
                         </div>
-                        <input id="sfxVolume" class="setting-range" type="range" min="0" max="100" value="80">
+                        <input id="sfxVolume" class="setting-range" type="range" min="0" max="100" value="10">
                     </div>
-                </section>
+                </details>
 
-                <section class="settings-section" aria-labelledby="settingsLearningTitle">
-                    <h3 id="settingsLearningTitle" class="settings-section-title">
+                <details class="settings-section">
+                    <summary id="settingsLearningTitle" class="settings-section-title">
                         <i class="fa-solid fa-graduation-cap"></i>
-                        Learning
-                    </h3>
+                        <span>Learning</span>
+                    </summary>
 
                     <div class="setting-row">
                         <div class="setting-copy">
@@ -677,7 +848,7 @@
                     <div class="setting-row">
                         <div class="setting-copy">
                             <span class="setting-label">Microphone</span>
-                            <span class="setting-hint">Use your voice for Speak Answer in lessons</span>
+                            <span class="setting-hint">Use your voice for Speak Answer in lessons and quizzes</span>
                         </div>
                         <label class="switch" for="microphoneToggle">
                             <input id="microphoneToggle" type="checkbox" checked>
@@ -694,13 +865,24 @@
                             </button>
                         </div>
                     </div>
-                </section>
 
-                <section class="settings-section" aria-labelledby="settingsDisplayTitle">
-                    <h3 id="settingsDisplayTitle" class="settings-section-title">
+                    <div class="setting-row">
+                        <div class="setting-copy">
+                            <span class="setting-label">Tutorial</span>
+                            <span class="setting-hint">Show the teacher dashboard walkthrough when you sign in</span>
+                        </div>
+                        <label class="switch" for="tutorialToggle">
+                            <input id="tutorialToggle" type="checkbox" checked>
+                            <span class="switch-track" aria-hidden="true"></span>
+                        </label>
+                    </div>
+                </details>
+
+                <details class="settings-section">
+                    <summary id="settingsDisplayTitle" class="settings-section-title">
                         <i class="fa-solid fa-display"></i>
-                        Display
-                    </h3>
+                        <span>Display</span>
+                    </summary>
 
                     <div class="setting-row">
                         <div class="setting-copy">
@@ -712,7 +894,7 @@
                             <span class="switch-track" aria-hidden="true"></span>
                         </label>
                     </div>
-                </section>
+                </details>
 
             </div>
 
@@ -791,6 +973,9 @@
             <button id="voiceBtn" class="voice-btn" type="button">
                 🔊 Listen
             </button>
+            <button id="lessonAudioBtn" class="voice-btn voice-btn--audio" type="button" hidden>
+                🔉 Sound
+            </button>
             <button id="lessonSpeakBtn" class="voice-btn voice-btn--speak" type="button">
                 🎤 Speak Answer
             </button>
@@ -820,13 +1005,25 @@
 
         <button id="lessonHomeBtn" class="back-btn">
 
-            🏠 Back to Menu
+            🏠 Back to Lesson Menu
 
         </button>
 
     </div>
 
 </section>
+
+<div id="lessonHomeConfirmModal" class="lesson-home-confirm-modal" hidden>
+    <div class="lesson-home-confirm-card" role="dialog" aria-modal="true" aria-labelledby="lessonHomeConfirmTitle" aria-describedby="lessonHomeConfirmMessage">
+        <div class="lesson-home-confirm-icon" aria-hidden="true">?</div>
+        <h2 id="lessonHomeConfirmTitle">Are you sure?</h2>
+        <p id="lessonHomeConfirmMessage">Do you want to leave the lesson menu and go back to Home?</p>
+        <div class="lesson-home-confirm-actions">
+            <button id="lessonHomeCancelBtn" class="tdash-btn tdash-btn--ghost" type="button">Stay Here</button>
+            <button id="lessonHomeConfirmBtn" class="tdash-btn tdash-btn--solid" type="button">Yes, Go Home</button>
+        </div>
+    </div>
+</div>
 
 <!-- ===================================================== -->
 <!-- QUIZ SCREEN -->
@@ -903,11 +1100,15 @@
 
         <!-- Voice -->
 
-        <button id="quizVoiceBtn" class="voice-btn">
-
-            🔊 Read Question
-
-        </button>
+        <div class="quiz-voice-controls">
+            <button id="quizVoiceBtn" class="voice-btn" type="button">
+                🔊 Read Question
+            </button>
+            <button id="quizVoiceInteractionBtn" class="voice-btn quiz-voice-interaction-btn" type="button" aria-pressed="false">
+                🎤 Answer by Voice
+            </button>
+        </div>
+        <p id="quizVoiceStatus" class="quiz-voice-status" role="status" aria-live="polite"></p>
 
         <!-- Answer Cards -->
 
@@ -991,7 +1192,7 @@
 
 <div id="notificationBox" class="notification-box"></div>
 
-<!-- Global student HUD (stars + settings) -->
+<!-- Global student HUD (stars + settings) -->   
 <div id="quizStarScore" class="quiz-star-score" aria-live="polite" hidden>
     <span class="quiz-star-icon" aria-hidden="true">★</span>
     <span id="quizStarCount" class="quiz-star-count">0</span>
@@ -1000,12 +1201,19 @@
 
 </body>
 
-   
  <script src="script.js"></script>
+ <script>
+    
+    if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
+    }
+ </script>
 
 </html>
-<!-- 903 -->
- <!-- 985 -->
-  <!-- 993 -->  
 
-  <!-- with approval 1011 -->
+
+  
+      <!-- 1177 defense full force -->
+       <!-- 1217  analytics-->
+
+       
