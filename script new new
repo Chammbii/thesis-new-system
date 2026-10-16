@@ -6,29 +6,6 @@
 // SCRIPT.JS
 // ======================================================
 
-// ---------- STARTUP LOADING ----------
-const loadingScreen = document.getElementById("loadingScreen");
-let loadingScreenHidden = false;
-
-function hideLoadingScreen() {
-    if (!loadingScreen || loadingScreenHidden) return;
-
-    loadingScreenHidden = true;
-    loadingScreen.classList.add("loading-screen--hidden");
-    loadingScreen.addEventListener("transitionend", () => {
-        loadingScreen.remove();
-    }, { once: true });
-}
-
-if (document.readyState === "complete") {
-    window.requestAnimationFrame(hideLoadingScreen);
-} else {
-    window.addEventListener("load", hideLoadingScreen, { once: true });
-}
-
-// Keep a slow or failed external resource from leaving the app blocked.
-window.setTimeout(hideLoadingScreen, 5000);
-
 // ---------- HOME ----------
 const homeScreen = document.getElementById("homeScreen");
 const profileScreen = document.getElementById("profileScreen");
@@ -39,6 +16,7 @@ const startBtn = document.getElementById("startBtn");
 const continueBtn = document.getElementById("continueBtn");
 const profileBackHome = document.getElementById("profileBackHome");
 const backHome = document.getElementById("backHome");
+const menuStartBtn = document.getElementById("menuStartBtn");
 const teacherBtn = document.getElementById("teacherBtn");
 const teacherScreen = document.getElementById("teacherScreen");
 const teacherLoginForm = document.getElementById("teacherLoginForm");
@@ -49,16 +27,33 @@ const teacherFullName = document.getElementById("teacherFullName");
 const teacherError = document.getElementById("teacherError");
 const teacherBackHome = document.getElementById("teacherBackHome");
 const teacherToggleMode = document.getElementById("teacherToggleMode");
+const teacherForgotPasswordBtn = document.getElementById("teacherForgotPasswordBtn");
 const teacherFormTitle = document.getElementById("teacherFormTitle");
 const teacherFormSubtitle = document.getElementById("teacherFormSubtitle");
+const teacherUnlockEmail = document.getElementById("teacherUnlockEmail");
 const teacherSwitchText = document.getElementById("teacherSwitchText");
 const teacherSubmitBtn = document.getElementById("teacherSubmitBtn");
+const teacherUseEmailLoginBtn = document.getElementById("teacherUseEmailLoginBtn");
 const teacherDashboard = document.getElementById("teacherDashboard");
+const teacherSidebarToggle = document.getElementById("teacherSidebarToggle");
 const teacherNameDisplay = document.getElementById("teacherNameDisplay");
+const teacherSidebarName = document.getElementById("teacherSidebarName");
+const teacherClassroomCode = document.getElementById("teacherClassroomCode");
 const teacherLogoutBtn = document.getElementById("teacherLogoutBtn");
+const teacherChangePasswordBtn = document.getElementById("teacherChangePasswordBtn");
+const teacherChangePasswordModal = document.getElementById("teacherChangePasswordModal");
+const teacherChangePasswordForm = document.getElementById("teacherChangePasswordForm");
+const teacherNewPassword = document.getElementById("teacherNewPassword");
+const teacherNewPasswordConfirm = document.getElementById("teacherNewPasswordConfirm");
+const teacherChangePasswordMessage = document.getElementById("teacherChangePasswordMessage");
+const teacherChangePasswordCancelBtn = document.getElementById("teacherChangePasswordCancelBtn");
 const teacherDashboardHomeBtn = document.getElementById("teacherDashboardHomeBtn");
 const teacherDashboardRefreshBtn = document.getElementById("teacherDashboardRefreshBtn");
+const teacherActivityLogBtn = document.getElementById("teacherActivityLogBtn");
+const teacherAnalyticsBtn = document.getElementById("teacherAnalyticsBtn");
+const teacherArchiveBtn = document.getElementById("teacherArchiveBtn");
 const teacherDashboardPrintBtn = document.getElementById("teacherDashboardPrintBtn");
+const teacherDashboardSettingsBtn = document.getElementById("teacherDashboardSettingsBtn");
 const teacherNotificationsBtn = document.getElementById("teacherNotificationsBtn");
 const teacherNotificationBadge = document.getElementById("teacherNotificationBadge");
 const teacherNotificationsModal = document.getElementById("teacherNotificationsModal");
@@ -72,9 +67,11 @@ const teacherCustomizeCloseBtn = document.getElementById("teacherCustomizeCloseB
 const customQuestionCategory = document.getElementById("customQuestionCategory");
 const customQuestionDifficulty = document.getElementById("customQuestionDifficulty");
 const customQuestionPrompt = document.getElementById("customQuestionPrompt");
+const customQuestionAudio = document.getElementById("customQuestionAudio");
 const customQuestionCorrect = document.getElementById("customQuestionCorrect");
 const customQuestionList = document.getElementById("customQuestionList");
 const customQuestionMessage = document.getElementById("customQuestionMessage");
+const customQuestionLevelTabs = document.querySelectorAll(".custom-question-level-tab");
 const teacherLessonModal = document.getElementById("teacherLessonModal");
 const teacherLessonForm = document.getElementById("teacherLessonForm");
 const customLessonName = document.getElementById("customLessonName");
@@ -90,6 +87,38 @@ const teacherPrintStudent = document.getElementById("teacherPrintStudent");
 const teacherPrintCancelBtn = document.getElementById("teacherPrintCancelBtn");
 const teacherPrintConfirmBtn = document.getElementById("teacherPrintConfirmBtn");
 const teacherPrintReport = document.getElementById("teacherPrintReport");
+const teacherArchiveModal = document.getElementById("teacherArchiveModal");
+const teacherArchiveDates = document.getElementById("teacherArchiveDates");
+const teacherArchiveCloseBtn = document.getElementById("teacherArchiveCloseBtn");
+const teacherArchiveDoneBtn = document.getElementById("teacherArchiveDoneBtn");
+const teacherActivityLogModal = document.getElementById("teacherActivityLogModal");
+const teacherActivityLogCloseBtn = document.getElementById("teacherActivityLogCloseBtn");
+const teacherActivityLogDoneBtn = document.getElementById("teacherActivityLogDoneBtn");
+const teacherActivityLogStudents = document.getElementById("teacherActivityLogStudents");
+const teacherAnalyticsModal = document.getElementById("teacherAnalyticsModal");
+const teacherAnalyticsCloseBtn = document.getElementById("teacherAnalyticsCloseBtn");
+const teacherAnalyticsStudentSearch = document.getElementById("teacherAnalyticsStudentSearch");
+const teacherAnalyticsStudents = document.getElementById("teacherAnalyticsStudents");
+const teacherAnalyticsStudentName = document.getElementById("teacherAnalyticsStudentName");
+const teacherAnalyticsMonth = document.getElementById("teacherAnalyticsMonth");
+const teacherAnalyticsYear = document.getElementById("teacherAnalyticsYear");
+const teacherAnalyticsPreviousMonth = document.getElementById("teacherAnalyticsPreviousMonth");
+const teacherAnalyticsNextMonth = document.getElementById("teacherAnalyticsNextMonth");
+const teacherAnalyticsCalendarDays = document.getElementById("teacherAnalyticsCalendarDays");
+const teacherAnalyticsSelectedDate = document.getElementById("teacherAnalyticsSelectedDate");
+const teacherAnalyticsDateDetails = document.getElementById("teacherAnalyticsDateDetails");
+const ANALYTICS_MIN_YEAR = 2026;
+const ANALYTICS_MAX_YEAR = 2030;
+const todayForAnalytics = new Date();
+let selectedAnalyticsYear = Math.min(ANALYTICS_MAX_YEAR, Math.max(ANALYTICS_MIN_YEAR, todayForAnalytics.getFullYear()));
+let selectedAnalyticsMonth = selectedAnalyticsYear === todayForAnalytics.getFullYear()
+    ? todayForAnalytics.getMonth()
+    : selectedAnalyticsYear === ANALYTICS_MIN_YEAR ? 0 : 11;
+let selectedAnalyticsDate = toDateKey(new Date(
+    selectedAnalyticsYear,
+    selectedAnalyticsMonth,
+    selectedAnalyticsYear === todayForAnalytics.getFullYear() ? todayForAnalytics.getDate() : 1
+).getTime());
 const teacherStudentProgressTable = document.getElementById("teacherStudentProgressTable");
 const teacherProgressChart = document.getElementById("teacherProgressChart");
 const teacherStarsChart = document.getElementById("teacherStarsChart");
@@ -98,11 +127,109 @@ const teacherQuizHistoryTable = document.getElementById("teacherQuizHistoryTable
 const quizHistorySubtitle = document.getElementById("quizHistorySubtitle");
 const teacherActivityLogTable = document.getElementById("teacherActivityLogTable");
 const activityLogSubtitle = document.getElementById("activityLogSubtitle");
+let selectedActivityLogStudent = null;
 const teacherStudentTrackerCount = document.getElementById("teacherStudentTrackerCount");
 const teacherStudentSort = document.getElementById("teacherStudentSort");
 const teacherStudentGenderFilter = document.getElementById("teacherStudentGenderFilter");
+const teacherTutorial = document.getElementById("teacherTutorial");
+const teacherTutorialTitle = document.getElementById("teacherTutorialTitle");
+const teacherTutorialDescription = document.getElementById("teacherTutorialDescription");
+const teacherTutorialBackBtn = document.getElementById("teacherTutorialBackBtn");
+const teacherTutorialNextBtn = document.getElementById("teacherTutorialNextBtn");
+const teacherTutorialSkipBtn = document.getElementById("teacherTutorialSkipBtn");
+const teacherTutorialDontShowAgain = document.getElementById("teacherTutorialDontShowAgain");
+const supabaseConfig = window.QUIZLAND_SUPABASE;
+const supabaseClient = supabaseConfig?.enabled
+    && supabaseConfig.url
+    && supabaseConfig.anonKey
+    && window.supabase?.createClient
+    ? window.supabase.createClient(supabaseConfig.url, supabaseConfig.anonKey, {
+        auth: {
+            autoRefreshToken: true,
+            persistSession: true,
+            detectSessionInUrl: true
+        }
+    })
+    : null;
 let selectedHistoryStudent = null;
+let selectedAnalyticsStudent = null;
 let sessionStarsGained = 0;
+let studentProfileEditing = false;
+let activeUploadedAudio = null;
+
+const TEACHER_TUTORIAL_DONT_SHOW_KEY = "quizlandTeacherTutorialDontShow";
+const teacherTutorialSteps = [
+    {
+        target: ".tdash-header",
+        title: "What is this dashboard?",
+        description: "This is your classroom control center. It gives you a quick view of student learning, progress, stars, and activity."
+    },
+    {
+        target: "#teacherClassroomCode",
+        title: "Your classroom code",
+        description: "Give this six-digit code to your students. They must enter it in their profile to join your classroom."
+    },
+    {
+        target: "#teacherNotificationsBtn",
+        title: "Review student requests",
+        description: "Open Notifications to approve or reject students. Approved students can enter the lesson menu."
+    },
+    {
+        target: "#teacherCustomizeBtn",
+        title: "Add a quiz",
+        description: "Use Add Quiz to create custom questions for alphabet, numbers, colors, shapes, or your own lesson."
+    },
+    {
+        target: "#teacherAddLessonBtn",
+        title: "Add a lesson",
+        description: "Use Add Lesson to create a new lesson with a cover image and learning items."
+    },
+    {
+        target: "#teacherDashboardPrintBtn",
+        title: "Print progress reports",
+        description: "Use Print to choose one student or all students and create a printable progress report."
+    },
+    {
+        target: "#teacherNeedsInterpretation",
+        title: "See who needs practice",
+        description: "This section highlights students who may need extra support. Green means online; gray means offline."
+    },
+    {
+        target: "#teacherStudentProgressTable",
+        title: "Track learning progress",
+        description: "Use the student tracker to review progress, quiz history, activity, and remove a student when needed."
+    }
+];
+let teacherTutorialStep = 0;
+
+function getTeacherTutorialPreferenceKey() {
+    const teacher = getTeacherSession() || currentTeacherUsername || "new";
+    return `${TEACHER_TUTORIAL_DONT_SHOW_KEY}_${encodeURIComponent(teacher)}`;
+}
+
+function setStudentNameFields(fullName) {
+    savedStudentFullName = String(fullName || "").trim();
+    studentNameFieldsEdited = false;
+    const nameParts = savedStudentFullName.split(/\s+/).filter(Boolean);
+    if (studentFirstName) studentFirstName.value = nameParts[0] || "";
+    if (studentLastName) studentLastName.value = nameParts.length > 1 ? nameParts[nameParts.length - 1] : "";
+    if (studentMiddleInitial) {
+        studentMiddleInitial.value = nameParts.length > 2
+            ? (nameParts[1].match(/\p{L}/u) || [""])[0].toUpperCase()
+            : "";
+    }
+}
+
+function getStudentFullName() {
+    if (savedStudentFullName && !studentNameFieldsEdited) return savedStudentFullName;
+
+    const firstName = studentFirstName?.value.trim() || "";
+    const lastName = studentLastName?.value.trim() || "";
+    const middleInitial = studentMiddleInitial?.value.trim().replace(/\.$/, "").toUpperCase() || "";
+    return [firstName, middleInitial ? `${middleInitial}.` : "", lastName]
+        .filter(Boolean)
+        .join(" ");
+}
 
 const settingsBtn = document.getElementById("settingsBtn");
 const settingsModal = document.getElementById("settingsModal");
@@ -120,6 +247,7 @@ const sfxVolume = document.getElementById("sfxVolume");
 const sfxVolumeValue = document.getElementById("sfxVolumeValue");
 const voiceNarrationToggle = document.getElementById("voiceNarrationToggle");
 const microphoneToggle = document.getElementById("microphoneToggle");
+const tutorialToggle = document.getElementById("tutorialToggle");
 const microphoneAllowBtn = document.getElementById("microphoneAllowBtn");
 const microphoneStatus = document.getElementById("microphoneStatus");
 const microphoneExtraRow = document.getElementById("microphoneExtraRow");
@@ -128,22 +256,82 @@ const bgMusicElement = document.getElementById("bgMusic");
 const popSound = document.getElementById("popSound");
 const bgAudio = bgMusicElement || null;
 
+if (bgMusicVolume) bgMusicVolume.value = "10";
+if (sfxVolume) sfxVolume.value = "10";
+
+if (bgAudio && bgMusicVolume) {
+    bgAudio.volume = Number(bgMusicVolume.value) / 100;
+}
+if (popSound && sfxVolume) {
+    popSound.volume = Number(sfxVolume.value) / 100;
+}
+
+if (tutorialToggle) {
+    tutorialToggle.addEventListener("change", () => {
+        localStorage.setItem("quizlandTutorialEnabled", String(tutorialToggle.checked));
+        if (tutorialToggle.checked) {
+            localStorage.removeItem(getTeacherTutorialPreferenceKey());
+            if (teacherDashboard?.classList.contains("active")) {
+                closeSettingsModal();
+                openTeacherTutorial();
+            }
+        } else {
+            closeTeacherTutorial();
+        }
+    });
+}
+
+function setTeacherSidebarCollapsed(collapsed) {
+    if (!teacherDashboard || !teacherSidebarToggle) return;
+
+    teacherDashboard.classList.toggle("teacher-sidebar-collapsed", collapsed);
+    teacherSidebarToggle.setAttribute("aria-expanded", String(!collapsed));
+    teacherSidebarToggle.setAttribute("aria-label", collapsed ? "Show sidebar" : "Hide sidebar");
+    teacherSidebarToggle.setAttribute("title", collapsed ? "Show sidebar" : "Hide sidebar");
+    teacherSidebarToggle.textContent = collapsed ? "☰" : "×";
+}
+
+if (teacherSidebarToggle) {
+    teacherSidebarToggle.addEventListener("click", () => {
+        const collapsed = !teacherDashboard.classList.contains("teacher-sidebar-collapsed");
+        setTeacherSidebarCollapsed(collapsed);
+    });
+}
+
+async function requestLandscapeMode() {
+    if (!window.matchMedia("(max-width: 900px)").matches || !screen.orientation?.lock) return;
+
+    try {
+        await screen.orientation.lock("landscape-primary");
+    } catch (error) {
+        try {
+            await screen.orientation.lock("landscape");
+        } catch (fallbackError) {
+            console.warn("Landscape orientation could not be locked by this browser.", fallbackError);
+        }
+    }
+}
+
+window.addEventListener("load", requestLandscapeMode);
+window.addEventListener("orientationchange", requestLandscapeMode);
+
 // ---------- STUDENT ----------
-const studentName = document.getElementById("studentName");
-const studentLastName = document.getElementById("studentLastName");
 const studentFirstName = document.getElementById("studentFirstName");
-const studentMiddleName = document.getElementById("studentMiddleName");
-const studentNoMiddleName = document.getElementById("studentNoMiddleName");
-const studentAge = document.getElementById("studentAge");
+const studentLastName = document.getElementById("studentLastName");
+const studentMiddleInitial = document.getElementById("studentMiddleInitial");
+let savedStudentFullName = "";
+let studentNameFieldsEdited = false;
+const studentClassroomCode = document.getElementById("studentClassroomCode");
 const studentGender = document.getElementById("studentGender");
+const profileApprovalStatus = document.getElementById("profileApprovalStatus");
 
 // ---------- AVATARS ----------
 const avatars = document.querySelectorAll(".avatar-card");
 
 // ---------- LESSON ----------
 const lessonScreen = document.getElementById("lessonScreen");
-const lessonButtons = document.querySelectorAll(".lesson-btn");
 const quizMenuButtons = document.querySelectorAll(".quiz-menu-btn");
+let selectedLessonCategory = null;
 const progressFill = document.getElementById("progressFill");
 const lessonTitle = document.getElementById("lessonTitle");
 const lessonImage = document.getElementById("lessonImage");
@@ -151,11 +339,19 @@ const lessonLetter = document.getElementById("lessonLetter");
 const lessonWord = document.getElementById("lessonWord");
 const lessonFeedback = document.getElementById("lessonFeedback");
 const voiceBtn = document.getElementById("voiceBtn");
+const lessonAudioBtn = document.getElementById("lessonAudioBtn");
 const lessonSpeakBtn = document.getElementById("lessonSpeakBtn");
 const lessonVoiceStatus = document.getElementById("lessonVoiceStatus");
 const previousLesson = document.getElementById("previousLesson");
 const nextLesson = document.getElementById("nextLesson");
 const lessonHomeBtn = document.getElementById("lessonHomeBtn");
+const lessonHomeConfirmModal = document.getElementById("lessonHomeConfirmModal");
+const lessonHomeConfirmTitle = document.getElementById("lessonHomeConfirmTitle");
+const lessonHomeConfirmMessage = document.getElementById("lessonHomeConfirmMessage");
+const lessonHomeCancelBtn = document.getElementById("lessonHomeCancelBtn");
+const lessonHomeConfirmBtn = document.getElementById("lessonHomeConfirmBtn");
+let lessonHomeConfirmationTrigger = null;
+let lessonHomeConfirmationAction = null;
 
 
 let selectedAvatar = null;
@@ -180,13 +376,119 @@ function showScreen(screen) {
     hideAllScreens();
 
     screen.classList.add("active");
+    requestLandscapeMode();
     updateStudentHud();
     if (screen === menuScreen) updateQuizMenuButtons();
 
 }
 
 function hasStudentProfile() {
-    return !!(localStorage.getItem("studentName") && localStorage.getItem("avatar"));
+    return !!(localStorage.getItem("studentName") && localStorage.getItem("avatar") && localStorage.getItem("studentClassroomCode"));
+}
+
+function getStudentProfileSubmittedKey(name, classroomCode) {
+    return `quizlandProfileSubmitted_${encodeURIComponent(classroomCode)}_${encodeURIComponent(name)}`;
+}
+
+function hasSubmittedStudentProfile(name, classroomCode) {
+    return localStorage.getItem(getStudentProfileSubmittedKey(name, classroomCode)) === "true";
+}
+
+function markStudentProfileSubmitted(name, classroomCode) {
+    localStorage.setItem(getStudentProfileSubmittedKey(name, classroomCode), "true");
+}
+
+function setProfileCompletionState(completed) {
+    if (continueBtn) continueBtn.hidden = completed;
+    if (profileApprovalStatus) {
+        profileApprovalStatus.hidden = !completed;
+        profileApprovalStatus.textContent = completed
+            ? "Your profile is waiting for teacher approval."
+            : "";
+    }
+}
+
+function isValidClassroomCode(code) {
+    if (!/^\d{6}$/.test(code)) return false;
+    return Object.values(getTeacherUsers()).some(user => user.classroomCode === code);
+}
+
+function unlockProfileContinueOnEdit() {
+    if (!profileScreen?.classList.contains("active")) return;
+    studentProfileEditing = true;
+    setProfileCompletionState(false);
+}
+
+function markProfileEditing() {
+    if (profileScreen?.classList.contains("active")) {
+        studentProfileEditing = true;
+    }
+}
+
+function openApprovedStudentMenu(name) {
+    updateCurrentStudentRecord();
+    syncStudentPresence();
+    setProfileCompletionState(false);
+    showScreen(menuScreen);
+
+    setTimeout(() => {
+        const msg = `Welcome, ${name}! Let's start learning!`;
+        showNotification(msg);
+        speakText(msg);
+    }, 300);
+}
+
+function syncProfileApproval() {
+    if (!profileScreen || !profileScreen.classList.contains("active")) return;
+    if (studentProfileEditing) return;
+
+    const name = localStorage.getItem("studentName");
+    if (!name) {
+        setProfileCompletionState(false);
+        return;
+    }
+
+    const request = getStudentRequest(name);
+    if (!request) {
+        setProfileCompletionState(false);
+        return;
+    }
+
+    const classroomCode = localStorage.getItem("studentClassroomCode") || "";
+    if (!hasSubmittedStudentProfile(name, classroomCode)) {
+        setProfileCompletionState(false);
+        return;
+    }
+
+    if (request.status === "accepted") {
+        openApprovedStudentMenu(name);
+        return;
+    }
+
+    setProfileCompletionState(true);
+}
+
+function loadSavedStudentProfile() {
+    studentProfileEditing = false;
+    const savedName = localStorage.getItem("studentName") || "";
+    setStudentNameFields(savedName);
+    if (studentClassroomCode) studentClassroomCode.value = localStorage.getItem("studentClassroomCode") || "";
+    if (studentGender) studentGender.value = localStorage.getItem("studentGender") || "";
+
+    const savedAvatar = Number(localStorage.getItem("avatar"));
+    selectedAvatar = savedAvatar > 0 ? savedAvatar : null;
+    avatars.forEach((avatarCard, index) => {
+        avatarCard.style.border = index + 1 === selectedAvatar
+            ? "4px solid #ffb703"
+            : "4px solid transparent";
+    });
+}
+
+function resumeStudentSession() {
+    if (!hasStudentProfile()) return;
+    loadSavedStudentProfile();
+    showScreen(profileScreen);
+    syncProfileApproval();
 }
 
 function getStudentStarsKey() {
@@ -235,15 +537,49 @@ function updateStudentHud() {
 // ======================================================
 
 startBtn.addEventListener("click", () => {
-
+    if (!startBtn || startBtn.disabled) return;
+    startBtn.disabled = true;
     showScreen(profileScreen);
-
+    loadSavedStudentProfile();
+    syncProfileApproval();
+    startBtn.disabled = false;
 });
 
 if (profileBackHome) {
     profileBackHome.addEventListener("click", () => {
         showScreen(homeScreen);
     });
+}
+
+if (studentClassroomCode) {
+    studentClassroomCode.addEventListener("input", () => {
+        studentClassroomCode.value = studentClassroomCode.value.replace(/\D/g, "").slice(0, 6);
+        markProfileEditing();
+    });
+}
+
+[studentFirstName, studentLastName, studentMiddleInitial]
+    .filter(Boolean)
+    .forEach(input => {
+        const markNameEdited = () => {
+            studentNameFieldsEdited = true;
+            unlockProfileContinueOnEdit();
+        };
+        input.addEventListener("input", markNameEdited);
+        input.addEventListener("change", markNameEdited);
+    });
+
+if (studentMiddleInitial) {
+    studentMiddleInitial.addEventListener("input", () => {
+        studentMiddleInitial.value = studentMiddleInitial.value
+            .replace(/[^\p{L}]/gu, "")
+            .slice(0, 1)
+            .toUpperCase();
+    });
+}
+
+if (studentGender) {
+    studentGender.addEventListener("change", markProfileEditing);
 }
 
 // ======================================================
@@ -263,6 +599,7 @@ function openTeacherLoginScreen() {
         // Returning teacher: password-only unlock screen
         setTeacherMode("unlock");
         teacherEmail.value = sessionEmail;
+        teacherUnlockEmail.textContent = `Logging in as ${sessionEmail}`;
         teacherPassword.value = "";
         teacherPassword.focus();
         return;
@@ -299,12 +636,29 @@ teacherLoginForm.addEventListener("submit", (event) => {
     event.preventDefault();
     if (teacherMode === "register") {
         handleTeacherRegister();
+    } else if (teacherMode === "resetPassword") {
+        handleTeacherPasswordReset();
     } else {
-        // login + unlock both verify password
+        // Login and locked-dashboard access both require password verification.
         handleTeacherLogin();
     }
 
 });
+
+if (teacherForgotPasswordBtn) {
+    teacherForgotPasswordBtn.addEventListener("click", beginTeacherInAppPasswordReset);
+}
+
+if (teacherUseEmailLoginBtn) {
+    teacherUseEmailLoginBtn.addEventListener("click", () => {
+        const sessionEmail = getTeacherSession();
+        clearTeacherError();
+        setTeacherMode("login");
+        teacherEmail.value = sessionEmail || "";
+        teacherPassword.value = "";
+        teacherEmail.focus();
+    });
+}
 
 document.querySelectorAll(".password-toggle-btn").forEach(button => {
     button.addEventListener("click", () => {
@@ -318,44 +672,274 @@ document.querySelectorAll(".password-toggle-btn").forEach(button => {
     });
 });
 
-// Clear error state when user starts typing in input fields
+function setTeacherChangePasswordMessage(message, isError = false) {
+    if (!teacherChangePasswordMessage) return;
+    teacherChangePasswordMessage.textContent = message;
+    teacherChangePasswordMessage.classList.toggle("is-error", isError);
+}
+
+async function beginTeacherInAppPasswordReset() {
+    const expectedEmail = (
+        teacherMode === "unlock"
+            ? getTeacherSession()
+            : teacherEmail.value.trim().toLowerCase()
+    ) || "";
+    if (!expectedEmail) {
+        setTeacherError("Enter your account email first.", teacherEmail);
+        teacherEmail.focus();
+        return;
+    }
+    if (!supabaseClient) {
+        setTeacherError("Password changes are unavailable. Please refresh and try again.", teacherPassword);
+        return;
+    }
+
+    if (teacherForgotPasswordBtn) teacherForgotPasswordBtn.disabled = true;
+    try {
+        const { data, error } = await supabaseClient.auth.getUser();
+        if (error) throw error;
+        const signedInEmail = data.user?.email?.trim().toLowerCase();
+        if (!signedInEmail || signedInEmail !== expectedEmail) {
+            setTeacherError(
+                "There is no verified teacher session for this account. Log in first, then use Change Password in the dashboard.",
+                teacherMode === "unlock" ? teacherPassword : teacherEmail
+            );
+            return;
+        }
+
+        clearTeacherError();
+        const verifiedEmail = signedInEmail;
+        teacherLoginForm.reset();
+        setTeacherMode("resetPassword");
+        teacherEmail.value = verifiedEmail;
+        teacherUnlockEmail.textContent = `Verified account: ${verifiedEmail}`;
+        teacherUnlockEmail.classList.remove("teacher-hidden");
+        showScreen(teacherScreen);
+        teacherPassword.focus();
+    } catch (error) {
+        console.error("Unable to verify teacher session for password change.", error);
+        setTeacherError(error.message || "Unable to verify the teacher session. Please log in again.", teacherMode === "unlock" ? teacherPassword : teacherEmail);
+    } finally {
+        if (teacherForgotPasswordBtn) teacherForgotPasswordBtn.disabled = false;
+    }
+}
+
+async function handleTeacherPasswordReset() {
+    const password = teacherPassword.value;
+    const confirmation = teacherConfirmPassword.value;
+    const expectedEmail = teacherEmail.value.trim().toLowerCase();
+    if (password.length < 8) {
+        setTeacherError("Use at least 8 characters for the new password.", teacherPassword);
+        teacherPassword.focus();
+        return;
+    }
+    if (password !== confirmation) {
+        setTeacherError("The passwords do not match.", teacherConfirmPassword);
+        teacherConfirmPassword.focus();
+        return;
+    }
+    if (!supabaseClient) {
+        setTeacherError("Password changes are unavailable. Please refresh and try again.", teacherPassword);
+        return;
+    }
+
+    teacherSubmitBtn.disabled = true;
+    try {
+        const { data: sessionData, error: sessionError } = await supabaseClient.auth.getUser();
+        if (sessionError) throw sessionError;
+        const verifiedUser = sessionData.user;
+        const signedInEmail = verifiedUser?.email?.trim().toLowerCase();
+        if (!verifiedUser || !signedInEmail || signedInEmail !== expectedEmail) {
+            setTeacherError("Your verified teacher session has expired. Log in again before changing the password.", teacherPassword);
+            return;
+        }
+
+        const { error } = await supabaseClient.auth.updateUser({ password });
+        if (error) throw error;
+        clearTeacherError();
+        teacherLoginForm.reset();
+        setTeacherMode("login");
+        teacherEmail.value = signedInEmail;
+        showScreen(teacherScreen);
+        showNotification("Password updated. Log in with your new password.");
+        teacherPassword.focus();
+    } catch (error) {
+        console.error("Unable to update teacher password from the login screen.", error);
+        setTeacherError(error.message || "Unable to update the password. Please try again.", teacherPassword);
+    } finally {
+        teacherSubmitBtn.disabled = false;
+    }
+}
+
+function closeTeacherChangePasswordModal() {
+    if (teacherChangePasswordModal) teacherChangePasswordModal.hidden = true;
+    teacherChangePasswordForm?.reset();
+    setTeacherChangePasswordMessage("");
+    teacherChangePasswordBtn?.focus();
+}
+
+if (teacherChangePasswordBtn) {
+    teacherChangePasswordBtn.addEventListener("click", () => {
+        if (!getTeacherSession() || !supabaseClient || !teacherDashboard.classList.contains("active")) {
+            showNotification("Log in to the teacher dashboard before changing the password.");
+            return;
+        }
+        setTeacherChangePasswordMessage("");
+        teacherChangePasswordForm?.reset();
+        teacherChangePasswordModal.hidden = false;
+        teacherNewPassword.focus();
+    });
+}
+
+if (teacherChangePasswordCancelBtn) {
+    teacherChangePasswordCancelBtn.addEventListener("click", closeTeacherChangePasswordModal);
+}
+
+if (teacherChangePasswordForm) {
+    teacherChangePasswordForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        const password = teacherNewPassword.value;
+        const confirmation = teacherNewPasswordConfirm.value;
+        if (password.length < 8) {
+            setTeacherChangePasswordMessage("Use at least 8 characters for the new password.", true);
+            teacherNewPassword.focus();
+            return;
+        }
+        if (password !== confirmation) {
+            setTeacherChangePasswordMessage("The passwords do not match.", true);
+            teacherNewPasswordConfirm.focus();
+            return;
+        }
+        if (!supabaseClient) {
+            setTeacherChangePasswordMessage("Password changes are unavailable. Please refresh and try again.", true);
+            return;
+        }
+
+        const submitButton = teacherChangePasswordForm.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
+        try {
+            const { data: userData, error: userError } = await supabaseClient.auth.getUser();
+            if (userError) throw userError;
+            const signedInEmail = userData.user?.email?.trim().toLowerCase();
+            if (!signedInEmail || signedInEmail !== getTeacherSession()?.trim().toLowerCase()) {
+                setTeacherChangePasswordMessage("Your teacher session could not be verified. Log in again before changing the password.", true);
+                return;
+            }
+
+            const { error } = await supabaseClient.auth.updateUser({ password });
+            if (error) throw error;
+            closeTeacherChangePasswordModal();
+            showNotification("Teacher password updated successfully.");
+        } catch (error) {
+            console.error("Unable to update teacher password.", error);
+            setTeacherChangePasswordMessage(error.message || "Unable to update the password. Please try again.", true);
+        } finally {
+            if (submitButton) submitButton.disabled = false;
+        }
+    });
+}
+
+// Clear the complete form error when the teacher returns to any credential field.
 [teacherEmail, teacherPassword, teacherConfirmPassword, teacherFullName].forEach(input => {
     if (input) {
-        input.addEventListener("input", () => {
-            const wrapper = input.closest(".input-wrapper");
-            if (wrapper) {
-                wrapper.classList.remove("error");
-                const errorMsg = wrapper.querySelector(".input-error-message");
-                if (errorMsg) {
-                    errorMsg.textContent = "";
+        ["input", "focus", "click"].forEach(eventName => {
+            input.addEventListener(eventName, () => {
+                const wrapper = input.closest(".input-wrapper");
+                if (wrapper) {
+                    wrapper.classList.remove("error");
+                    const errorMsg = wrapper.querySelector(".input-error-message");
+                    if (errorMsg) errorMsg.textContent = "";
+                    input.setAttribute("aria-invalid", "false");
                 }
-            }
+            });
         });
     }
 });
 
 
 teacherLogoutBtn.addEventListener("click", () => {
-
-    currentTeacherUsername = "Teacher";
-    clearTeacherSession();
-    showScreen(homeScreen);
-    showNotification("Teacher logged out successfully.");
-
+    openLessonHomeConfirmation(teacherLogoutBtn, {
+        message: "Are you sure you want to log out of the teacher dashboard?",
+        confirmText: "Yes, Log Out",
+        action: logOutTeacher
+    });
 });
 
 teacherDashboardHomeBtn.addEventListener("click", () => {
-    // Leave dashboard but keep classroom session for student progress tracking.
-    // Re-opening Teacher Login shows password-only unlock.
-    showScreen(homeScreen);
-    showNotification("Dashboard locked. Enter the password to open it again.", 4000);
+    openLessonHomeConfirmation(teacherDashboardHomeBtn, {
+        message: "Are you sure you want to go back to Home?",
+        confirmText: "Yes, Go Home",
+        action: () => {
+            showScreen(homeScreen);
+            showNotification("Dashboard locked. Enter the password to open it again.", 4000);
+        }
+    });
 });
+
+function logOutTeacher() {
+    currentTeacherUsername = "Teacher";
+    clearTeacherSession();
+    if (supabaseClient) {
+        supabaseClient.auth.signOut().then(({ error }) => {
+            if (error) {
+                console.error("Unable to sign out teacher.", error);
+                showNotification("Could not end the teacher account session. Please try again.");
+                return;
+            }
+            showScreen(homeScreen);
+            showNotification("Teacher logged out successfully.");
+        }).catch(error => {
+            console.error("Teacher sign-out request failed.", error);
+            showNotification("Could not end the teacher account session. Please try again.");
+        });
+        return;
+    }
+    showScreen(homeScreen);
+    showNotification("Teacher logged out successfully.");
+}
 
 if (teacherDashboardRefreshBtn) {
     teacherDashboardRefreshBtn.addEventListener("click", () => {
-        showTeacherDashboard();
-        showNotification("Dashboard refreshed.");
+        refreshTeacherDashboard();
     });
+}
+
+function refreshTeacherDashboard() {
+    if (!getTeacherSession()) {
+        showNotification("Log in to a teacher account to refresh the dashboard.");
+        return;
+    }
+
+    if (teacherClassroomCode) {
+        teacherClassroomCode.querySelector("b").textContent = getCurrentTeacherClassroomCode() || "------";
+    }
+    syncCustomLessons();
+    syncCustomLessonQuizCategories();
+    renderCustomQuestionList();
+    renderCustomLessonList();
+    renderTeacherStudentProgress();
+    renderTeacherNotifications();
+
+    if (selectedHistoryStudent) {
+        const studentStillExists = getStudentRecords().some(record => record.name === selectedHistoryStudent);
+        if (studentStillExists) {
+            renderQuizHistory(selectedHistoryStudent);
+            renderActivityLog(selectedHistoryStudent);
+        } else {
+            selectedHistoryStudent = null;
+            renderQuizHistory(null);
+            renderActivityLog(null);
+        }
+    }
+    if (selectedAnalyticsStudent) {
+        const studentStillExists = getStudentRecords().some(record => record.name === selectedAnalyticsStudent);
+        if (!studentStillExists) {
+            selectedAnalyticsStudent = null;
+            renderStudentAnalytics(null);
+        }
+    }
+
+    showNotification("Teacher dashboard refreshed.");
 }
 
 function escapePrintText(value) {
@@ -452,6 +1036,24 @@ function downloadTeacherPrintReport() {
 if (teacherDashboardPrintBtn) {
     teacherDashboardPrintBtn.addEventListener("click", openTeacherPrintModal);
 }
+
+if (teacherActivityLogBtn) {
+    teacherActivityLogBtn.addEventListener("click", () => {
+        if (!teacherActivityLogModal) {
+            console.error("Activity Log dialog is not available.");
+            showNotification("Activity Log could not be opened. Please refresh the dashboard.");
+            return;
+        }
+        renderActivityLogStudentPicker();
+        teacherActivityLogModal.hidden = false;
+    });
+}
+if (teacherAnalyticsBtn) {
+    teacherAnalyticsBtn.addEventListener("click", () => openTeacherAnalytics());
+}
+if (teacherDashboardSettingsBtn) {
+    teacherDashboardSettingsBtn.addEventListener("click", openSettingsModal);
+}
 if (teacherPrintCancelBtn) {
     teacherPrintCancelBtn.addEventListener("click", closeTeacherPrintModal);
 }
@@ -460,6 +1062,160 @@ if (teacherPrintConfirmBtn) {
         downloadTeacherPrintReport();
         closeTeacherPrintModal();
     });
+}
+
+function closeTeacherArchive() {
+    if (teacherArchiveModal) teacherArchiveModal.hidden = true;
+}
+
+if (teacherArchiveBtn) {
+    teacherArchiveBtn.addEventListener("click", () => {
+        try {
+            renderTeacherArchive();
+            if (teacherArchiveModal) teacherArchiveModal.hidden = false;
+        } catch (error) {
+            console.error("Unable to open the student archive.", error);
+            showNotification("The student archive could not be opened. Please refresh the dashboard.");
+        }
+    });
+}
+
+[teacherArchiveCloseBtn, teacherArchiveDoneBtn].forEach(button => {
+    button?.addEventListener("click", closeTeacherArchive);
+});
+
+function closeTeacherActivityLog() {
+    if (teacherActivityLogModal) teacherActivityLogModal.hidden = true;
+}
+
+[teacherActivityLogCloseBtn, teacherActivityLogDoneBtn].forEach(button => {
+    button?.addEventListener("click", closeTeacherActivityLog);
+});
+
+function closeTeacherAnalytics() {
+    if (teacherAnalyticsModal) teacherAnalyticsModal.hidden = true;
+}
+
+teacherAnalyticsCloseBtn?.addEventListener("click", closeTeacherAnalytics);
+teacherAnalyticsStudentSearch?.addEventListener("input", renderTeacherAnalyticsStudentPicker);
+
+function selectTeacherAnalyticsMonth(year, month) {
+    const date = new Date(year, month, 1);
+    if (date.getFullYear() < ANALYTICS_MIN_YEAR || date.getFullYear() > ANALYTICS_MAX_YEAR) return;
+    selectedAnalyticsYear = date.getFullYear();
+    selectedAnalyticsMonth = date.getMonth();
+    selectedAnalyticsDate = toDateKey(date.getTime());
+    renderStudentAnalytics(selectedAnalyticsStudent);
+}
+
+teacherAnalyticsMonth?.addEventListener("change", () => {
+    selectTeacherAnalyticsMonth(selectedAnalyticsYear, Number(teacherAnalyticsMonth.value));
+});
+teacherAnalyticsYear?.addEventListener("change", () => {
+    selectTeacherAnalyticsMonth(Number(teacherAnalyticsYear.value), selectedAnalyticsMonth);
+});
+teacherAnalyticsPreviousMonth?.addEventListener("click", () => {
+    selectTeacherAnalyticsMonth(selectedAnalyticsYear, selectedAnalyticsMonth - 1);
+});
+teacherAnalyticsNextMonth?.addEventListener("click", () => {
+    selectTeacherAnalyticsMonth(selectedAnalyticsYear, selectedAnalyticsMonth + 1);
+});
+
+function openTeacherAnalytics(studentName = null) {
+    if (!teacherAnalyticsModal) {
+        console.error("Learning Analytics dialog is not available.");
+        showNotification("Learning Analytics could not be opened. Please refresh the dashboard.");
+        return;
+    }
+    if (studentName) selectedAnalyticsStudent = studentName;
+    renderTeacherAnalyticsStudentPicker();
+    teacherAnalyticsModal.hidden = false;
+}
+
+function renderTeacherAnalyticsStudentPicker() {
+    if (!teacherAnalyticsStudents) return;
+    teacherAnalyticsStudents.replaceChildren();
+    const students = getStudentRecords().sort((a, b) => a.name.localeCompare(b.name));
+
+    if (!students.some(student => student.name === selectedAnalyticsStudent)) {
+        selectedAnalyticsStudent = students.some(student => student.name === selectedHistoryStudent)
+            ? selectedHistoryStudent
+            : students[0]?.name || null;
+    }
+
+    if (!students.length) {
+        const empty = document.createElement("p");
+        empty.className = "teacher-archive-empty";
+        empty.textContent = "No students";
+        teacherAnalyticsStudents.appendChild(empty);
+        renderStudentAnalytics(null);
+        return;
+    }
+
+    const query = teacherAnalyticsStudentSearch?.value.trim().toLocaleLowerCase() || "";
+    const filteredStudents = students.filter(student => student.name.toLocaleLowerCase().includes(query));
+    if (!filteredStudents.length) {
+        const empty = document.createElement("p");
+        empty.className = "teacher-archive-empty";
+        empty.textContent = "No students found";
+        teacherAnalyticsStudents.appendChild(empty);
+        return;
+    }
+
+    filteredStudents.forEach(student => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "teacher-activity-log-student";
+        button.textContent = student.name;
+        const isSelected = student.name === selectedAnalyticsStudent;
+        button.classList.toggle("is-selected", isSelected);
+        button.setAttribute("aria-pressed", String(isSelected));
+        button.addEventListener("click", () => {
+            selectedAnalyticsStudent = student.name;
+            renderTeacherAnalyticsStudentPicker();
+        });
+        teacherAnalyticsStudents.appendChild(button);
+    });
+
+    renderStudentAnalytics(selectedAnalyticsStudent);
+}
+
+function renderActivityLogStudentPicker() {
+    if (!teacherActivityLogStudents) return;
+    teacherActivityLogStudents.replaceChildren();
+    const students = getStudentRecords().sort((a, b) => a.name.localeCompare(b.name));
+
+    if (!students.some(student => student.name === selectedActivityLogStudent)) {
+        selectedActivityLogStudent = students.some(student => student.name === selectedHistoryStudent)
+            ? selectedHistoryStudent
+            : null;
+    }
+
+    if (!students.length) {
+        const empty = document.createElement("p");
+        empty.className = "teacher-archive-empty";
+        empty.textContent = "No students are available.";
+        teacherActivityLogStudents.appendChild(empty);
+        renderActivityLog(null);
+        return;
+    }
+
+    students.forEach(student => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "teacher-activity-log-student";
+        button.textContent = student.name;
+        const isSelected = student.name === selectedActivityLogStudent;
+        button.classList.toggle("is-selected", isSelected);
+        button.setAttribute("aria-pressed", String(isSelected));
+        button.addEventListener("click", () => {
+            selectedActivityLogStudent = student.name;
+            renderActivityLogStudentPicker();
+        });
+        teacherActivityLogStudents.appendChild(button);
+    });
+
+    renderActivityLog(selectedActivityLogStudent);
 }
 
 function getCustomQuestionsKey() {
@@ -474,16 +1230,19 @@ function saveCustomQuizQuestions(questions) {
     localStorage.setItem(getCustomQuestionsKey(), JSON.stringify(questions));
 }
 
+let selectedCustomQuestionLevel = "easy";
+
 function renderCustomQuestionList() {
     if (!customQuestionList) return;
-    const questions = getCustomQuizQuestions();
+    const questions = getCustomQuizQuestions()
+        .filter(question => question.difficulty === selectedCustomQuestionLevel);
     customQuestionList.innerHTML = questions.length
         ? questions.map(question => `
             <div class="custom-question-item">
-                <div><strong>${escapePrintText(question.promptEN)}</strong><span>${escapePrintText(question.category)} · ${escapePrintText(question.difficulty)}</span></div>
+                <div><strong>${escapePrintText(question.promptEN)}</strong><span>${escapePrintText(getLessonDisplayName(question.category))} · ${escapePrintText(question.difficulty)}${question.audio ? " · Audio attached" : ""}</span></div>
                 <button class="tdash-btn tdash-btn--danger" type="button" data-custom-question-id="${escapePrintText(question.id)}">Remove</button>
             </div>`).join("")
-        : '<p class="custom-question-empty">No custom questions added yet.</p>';
+        : `<p class="custom-question-empty">No ${selectedCustomQuestionLevel === "medium" ? "normal" : selectedCustomQuestionLevel} questions added yet.</p>`;
 
     customQuestionList.querySelectorAll("[data-custom-question-id]").forEach(button => {
         button.addEventListener("click", () => {
@@ -492,6 +1251,18 @@ function renderCustomQuestionList() {
         });
     });
 }
+
+customQuestionLevelTabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+        selectedCustomQuestionLevel = tab.dataset.questionLevel || "easy";
+        customQuestionLevelTabs.forEach(levelTab => {
+            const isSelected = levelTab === tab;
+            levelTab.classList.toggle("is-active", isSelected);
+            levelTab.setAttribute("aria-pressed", String(isSelected));
+        });
+        renderCustomQuestionList();
+    });
+});
 
 function syncCustomLessonQuizCategories() {
     if (!customQuestionCategory) return;
@@ -531,6 +1302,7 @@ if (teacherCustomizeForm) {
         const choiceInputs = [...teacherCustomizeForm.querySelectorAll(".custom-choice")];
         const imageInputs = [...teacherCustomizeForm.querySelectorAll(".custom-choice-image")];
         const choices = choiceInputs.map(input => input.value.trim()).filter(Boolean);
+        const audioFile = customQuestionAudio?.files[0];
         const correct = customQuestionCorrect.value.trim();
         const uniqueChoices = [...new Set(choices)];
         if (!uniqueChoices.includes(correct)) {
@@ -538,32 +1310,45 @@ if (teacherCustomizeForm) {
             return;
         }
 
-        const choiceImages = {};
-        for (let index = 0; index < choiceInputs.length; index++) {
-            const choice = choiceInputs[index].value.trim();
-            const file = imageInputs[index]?.files[0];
-            if (choice && file) {
-                choiceImages[choice] = await readImageAsDataUrl(file);
+        try {
+            const choiceImages = {};
+            for (let index = 0; index < choiceInputs.length; index++) {
+                const choice = choiceInputs[index].value.trim();
+                const file = imageInputs[index]?.files[0];
+                if (choice && file) {
+                    choiceImages[choice] = await readImageAsDataUrl(file);
+                }
             }
-        }
+            const audio = audioFile ? await readAudioAsDataUrl(audioFile) : "";
 
-        const questions = getCustomQuizQuestions();
-        questions.push({
-            id: `custom-${Date.now()}`,
-            category: customQuestionCategory.value,
-            difficulty: customQuestionDifficulty.value,
-            promptEN: customQuestionPrompt.value.trim(),
-            promptTL: customQuestionPrompt.value.trim(),
-            word: correct,
-            choices: uniqueChoices,
-            choiceImages,
-            custom: true
-        });
-        saveCustomQuizQuestions(questions);
-        teacherCustomizeForm.reset();
-        syncCustomLessonQuizCategories();
-        customQuestionMessage.textContent = "Question added to the selected quiz level.";
-        renderCustomQuestionList();
+            const questions = getCustomQuizQuestions();
+            questions.push({
+                id: `custom-${Date.now()}`,
+                category: customQuestionCategory.value,
+                difficulty: customQuestionDifficulty.value,
+                promptEN: customQuestionPrompt.value.trim(),
+                promptTL: customQuestionPrompt.value.trim(),
+                word: correct,
+                choices: uniqueChoices,
+                choiceImages,
+                audio,
+                custom: true
+            });
+            saveCustomQuizQuestions(questions);
+            selectedCustomQuestionLevel = customQuestionDifficulty.value;
+            customQuestionLevelTabs.forEach(tab => {
+                const isSelected = tab.dataset.questionLevel === selectedCustomQuestionLevel;
+                tab.classList.toggle("is-active", isSelected);
+                tab.setAttribute("aria-pressed", String(isSelected));
+            });
+            teacherCustomizeForm.reset();
+            syncCustomLessonQuizCategories();
+            customQuestionMessage.textContent = "Question added to the selected quiz level.";
+            renderCustomQuestionList();
+        } catch (error) {
+            console.error("Unable to save the custom quiz question.", error);
+            customQuestionMessage.textContent = error.message || "The question could not be saved. Try a smaller audio or image file.";
+        }
     });
 }
 
@@ -580,8 +1365,25 @@ function getCustomLessons() {
     }
 }
 
+function getLessonDisplayName(category) {
+    const builtInNames = {
+        alphabet: "Alphabet",
+        numbers: "Numbers",
+        colors: "Colors",
+        shapes: "Shapes"
+    };
+    if (builtInNames[category]) return builtInNames[category];
+
+    const customLesson = getCustomLessons().find(lesson => lesson.id === category);
+    return customLesson?.name || category;
+}
+
 function saveCustomLessons(customLessons) {
     localStorage.setItem(getCustomLessonsKey(), JSON.stringify(customLessons));
+}
+
+function createCustomLessonId() {
+    return `custom-lesson-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function addLessonItemField(item = {}) {
@@ -592,10 +1394,16 @@ function addLessonItemField(item = {}) {
         <div class="custom-lesson-item-fields">
             <input class="custom-lesson-item-name" type="text" maxlength="60" placeholder="Animal name (for example, Giraffe)" value="${escapePrintText(item.name || "")}" required>
             <input class="custom-lesson-item-image" type="file" accept="image/*" aria-label="Picture for this lesson item" ${item.image ? "" : "required"}>
+            <label class="custom-lesson-audio-label">Audio (optional, up to 1 MB)
+                <input class="custom-lesson-item-audio" type="file" accept="audio/*" aria-label="Audio for this lesson item">
+            </label>
         </div>
         <button class="tdash-btn tdash-btn--danger custom-lesson-remove" type="button">Remove</button>`;
     if (item.image) {
         itemField.dataset.image = item.image;
+    }
+    if (item.audio) {
+        itemField.dataset.audio = item.audio;
     }
     itemField.querySelector(".custom-lesson-remove").addEventListener("click", () => {
         itemField.remove();
@@ -671,11 +1479,19 @@ if (teacherLessonForm) {
         event.preventDefault();
         const itemFields = [...customLessonItems.querySelectorAll(".custom-lesson-item")];
         const items = [];
-        for (const itemField of itemFields) {
-            const name = itemField.querySelector(".custom-lesson-item-name").value.trim();
-            const file = itemField.querySelector(".custom-lesson-item-image").files[0];
-            const image = file ? await readImageAsDataUrl(file) : itemField.dataset.image;
-            if (name && image) items.push({ name, image });
+        try {
+            for (const itemField of itemFields) {
+                const name = itemField.querySelector(".custom-lesson-item-name").value.trim();
+                const file = itemField.querySelector(".custom-lesson-item-image").files[0];
+                const image = file ? await readImageAsDataUrl(file) : itemField.dataset.image;
+                const audioFile = itemField.querySelector(".custom-lesson-item-audio").files[0];
+                const audio = audioFile ? await readAudioAsDataUrl(audioFile) : itemField.dataset.audio || "";
+                if (name && image) items.push({ name, image, audio });
+            }
+        } catch (error) {
+            console.error("Unable to read custom lesson media.", error);
+            teacherLessonMessage.textContent = error.message || "A lesson picture or audio clip could not be read. Please choose the files again.";
+            return;
         }
         if (!items.length) {
             teacherLessonMessage.textContent = "Add at least one picture and name.";
@@ -686,10 +1502,18 @@ if (teacherLessonForm) {
             teacherLessonMessage.textContent = "Choose a cover picture.";
             return;
         }
+        let cover;
+        try {
+            cover = await readImageAsDataUrl(coverFile);
+        } catch (error) {
+            console.error("Unable to prepare custom lesson images.", error);
+            teacherLessonMessage.textContent = "The lesson images could not be prepared. Please choose them again.";
+            return;
+        }
         const customLesson = {
-            id: `custom-lesson-${Date.now()}`,
+            id: createCustomLessonId(),
             name: customLessonName.value.trim(),
-            cover: await readImageAsDataUrl(coverFile),
+            cover,
             items,
             hidden: false
         };
@@ -697,7 +1521,21 @@ if (teacherLessonForm) {
             teacherLessonMessage.textContent = "Enter a lesson name.";
             return;
         }
-        saveCustomLessons([...getCustomLessons(), customLesson]);
+        try {
+            const existingLessons = await Promise.all(getCustomLessons().map(async lesson => ({
+                ...lesson,
+                cover: await compressImageDataUrl(lesson.cover),
+                items: await Promise.all((lesson.items || []).map(async item => ({
+                    ...item,
+                    image: await compressImageDataUrl(item.image)
+                })))
+            })));
+            saveCustomLessons([...existingLessons, customLesson]);
+        } catch (error) {
+            console.error("Unable to save custom lesson.", error);
+            teacherLessonMessage.textContent = "This lesson could not be saved. Please use smaller images or audio clips.";
+            return;
+        }
         syncCustomLessonQuizCategories();
         syncCustomLessons();
         renderCustomLessonList();
@@ -713,9 +1551,87 @@ if (teacherLessonForm) {
 function readImageAsDataUrl(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
+        reader.onload = async () => {
+            try {
+                resolve(await compressImageDataUrl(reader.result));
+            } catch (error) {
+                reject(error);
+            }
+        };
         reader.onerror = reject;
         reader.readAsDataURL(file);
+    });
+}
+
+const MAX_UPLOADED_AUDIO_BYTES = 1024 * 1024;
+
+function readAudioAsDataUrl(file) {
+    if (file.size > MAX_UPLOADED_AUDIO_BYTES) {
+        return Promise.reject(new Error("Audio files must be 1 MB or smaller."));
+    }
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            if (typeof reader.result !== "string") {
+                reject(new Error("The audio file could not be read. Please choose it again."));
+                return;
+            }
+            resolve(reader.result);
+        };
+        reader.onerror = () => reject(new Error("The audio file could not be read. Please choose it again."));
+        reader.readAsDataURL(file);
+    });
+}
+
+function playUploadedAudio(audioData) {
+    if (!audioData) return Promise.reject(new Error("No audio was added for this item."));
+    if (activeUploadedAudio) {
+        activeUploadedAudio.pause();
+        activeUploadedAudio.currentTime = 0;
+    }
+    return Promise.resolve().then(() => {
+        const audio = new Audio(audioData);
+        activeUploadedAudio = audio;
+        audio.addEventListener("ended", () => {
+            if (activeUploadedAudio === audio) activeUploadedAudio = null;
+        }, { once: true });
+        return audio.play().catch(error => {
+            if (activeUploadedAudio === audio) activeUploadedAudio = null;
+            throw error;
+        });
+    });
+}
+
+function stopUploadedAudio() {
+    if (!activeUploadedAudio) return;
+    activeUploadedAudio.pause();
+    activeUploadedAudio.currentTime = 0;
+    activeUploadedAudio = null;
+}
+
+function compressImageDataUrl(dataUrl) {
+    if (!dataUrl || typeof dataUrl !== "string") {
+        return Promise.resolve(dataUrl);
+    }
+
+    return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => {
+            const maxDimension = 1000;
+            const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+            canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+            const context = canvas.getContext("2d");
+            if (!context) {
+                resolve(dataUrl);
+                return;
+            }
+            context.drawImage(image, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL("image/jpeg", 0.78));
+        };
+        image.onerror = reject;
+        image.src = dataUrl;
     });
 }
 
@@ -728,6 +1644,10 @@ function clearTeacherError(){
         if (errorMsg) {
             errorMsg.textContent = "";
         }
+        const input = wrapper.querySelector("input");
+        if (input) {
+            input.setAttribute("aria-invalid", "false");
+        }
     });
 }
 
@@ -736,15 +1656,29 @@ function setTeacherMode(mode){
 
     const isRegister = mode === "register";
     const isUnlock = mode === "unlock";
+    const isPasswordReset = mode === "resetPassword";
+    teacherPassword.autocomplete = isRegister || isPasswordReset ? "new-password" : "current-password";
+    teacherConfirmPassword.autocomplete = "new-password";
 
     if (isUnlock) {
         teacherFormTitle.textContent = "Enter the Password";
         teacherFormSubtitle.textContent = "";
         teacherFormSubtitle.classList.add("teacher-hidden");
-        teacherSubmitBtn.textContent = "Unlock";
+        teacherUnlockEmail.textContent = `Logging in as ${getTeacherSession() || ""}`;
+        teacherUnlockEmail.classList.remove("teacher-hidden");
+        teacherSubmitBtn.textContent = "Log in";
         teacherPassword.placeholder = "Enter the password";
         teacherLoginForm.classList.add("teacher-form--unlock");
+    } else if (isPasswordReset) {
+        teacherFormTitle.textContent = "Set a New Password";
+        teacherFormSubtitle.textContent = "Enter and confirm a new password for your verified teacher account.";
+        teacherFormSubtitle.classList.remove("teacher-hidden");
+        teacherSubmitBtn.textContent = "Update Password";
+        teacherPassword.placeholder = "New password";
+        teacherConfirmPassword.placeholder = "Confirm new password";
+        teacherLoginForm.classList.remove("teacher-form--unlock");
     } else {
+        teacherUnlockEmail.classList.add("teacher-hidden");
         teacherFormSubtitle.classList.remove("teacher-hidden");
         teacherLoginForm.classList.remove("teacher-form--unlock");
         teacherFormTitle.textContent = isRegister ? "Teacher Register" : "Teacher Login";
@@ -753,31 +1687,79 @@ function setTeacherMode(mode){
             : "Enter your teacher credentials to access the dashboard.";
         teacherSubmitBtn.textContent = isRegister ? "Register" : "Login";
         teacherPassword.placeholder = "Password";
+        teacherConfirmPassword.placeholder = "Confirm Password";
         teacherSwitchText.textContent = isRegister
             ? "Already have an account?"
             : "Don't have an account?";
         teacherToggleMode.textContent = isRegister ? "Login" : "Register";
     }
 
-    teacherEmail.closest(".input-wrapper").classList.toggle("teacher-hidden", isUnlock);
-    teacherConfirmPassword.closest(".input-wrapper").classList.toggle("teacher-hidden", !isRegister);
+    teacherEmail.closest(".input-wrapper").classList.toggle("teacher-hidden", isUnlock || isPasswordReset);
+    teacherConfirmPassword.closest(".input-wrapper").classList.toggle("teacher-hidden", !isRegister && !isPasswordReset);
     teacherFullName.closest(".input-wrapper").classList.toggle("teacher-hidden", !isRegister);
+    if (teacherForgotPasswordBtn) {
+        teacherForgotPasswordBtn.classList.toggle("teacher-hidden", isRegister || isPasswordReset);
+    }
+    if (teacherUseEmailLoginBtn) {
+        teacherUseEmailLoginBtn.classList.toggle("teacher-hidden", !isUnlock || isPasswordReset);
+    }
     if (teacherSwitchRow) {
-        teacherSwitchRow.classList.toggle("teacher-hidden", isUnlock);
+        teacherSwitchRow.classList.toggle("teacher-hidden", isUnlock || isPasswordReset);
     }
 }
 
 function getTeacherUsers(){
     const raw = localStorage.getItem("teacherUsers");
     try {
-        return raw ? JSON.parse(raw) : {};
+        const parsed = raw ? JSON.parse(raw) : {};
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+        const profiles = {};
+        let removedPasswords = false;
+        Object.entries(parsed).forEach(([email, profile]) => {
+            if (!profile || typeof profile !== "object") return;
+            const { password, ...safeProfile } = profile;
+            if (password !== undefined) removedPasswords = true;
+            profiles[email] = safeProfile;
+        });
+        if (removedPasswords) localStorage.setItem("teacherUsers", JSON.stringify(profiles));
+        return profiles;
     } catch (error) {
         return {};
     }
 }
 
 function saveTeacherUsers(users){
-    localStorage.setItem("teacherUsers", JSON.stringify(users));
+    const profiles = Object.fromEntries(Object.entries(users).map(([email, profile]) => {
+        const { password, ...safeProfile } = profile;
+        return [email, safeProfile];
+    }));
+    localStorage.setItem("teacherUsers", JSON.stringify(profiles));
+}
+
+getTeacherUsers();
+
+function createClassroomCode(users) {
+    const usedCodes = new Set(Object.values(users).map(user => user.classroomCode).filter(Boolean));
+    let code = "";
+    do {
+        code = String(Math.floor(100000 + Math.random() * 900000));
+    } while (usedCodes.has(code));
+    return code;
+}
+
+function getCurrentTeacherRecord() {
+    const email = getTeacherSession();
+    const users = getTeacherUsers();
+    if (!email || !users[email]) return null;
+    if (!/^\d{6}$/.test(users[email].classroomCode || "")) {
+        users[email].classroomCode = createClassroomCode(users);
+        saveTeacherUsers(users);
+    }
+    return users[email];
+}
+
+function getCurrentTeacherClassroomCode() {
+    return getCurrentTeacherRecord()?.classroomCode || "";
 }
 
 function saveTeacherSession(email){
@@ -811,7 +1793,21 @@ function restoreTeacherSession(){
     return true;
 }
 
-function handleTeacherRegister(){
+function saveTeacherProfile(authUser, preferredName = "") {
+    const email = authUser.email?.trim().toLowerCase();
+    if (!email) throw new Error("Supabase returned a teacher account without an email.");
+
+    const users = getTeacherUsers();
+    const existingProfile = users[email] || {};
+    const metadata = authUser.user_metadata || {};
+    const fullName = preferredName || metadata.full_name || existingProfile.fullName || email;
+    const classroomCode = metadata.classroom_code || existingProfile.classroomCode || createClassroomCode(users);
+    users[email] = { email, fullName, classroomCode };
+    saveTeacherUsers(users);
+    return users[email];
+}
+
+async function handleTeacherRegister(){
     const email = teacherEmail.value.trim().toLowerCase();
     const password = teacherPassword.value;
     const confirmPassword = teacherConfirmPassword.value;
@@ -827,40 +1823,76 @@ function handleTeacherRegister(){
         return;
     }
 
+    if (!supabaseClient) {
+        setTeacherError("Teacher authentication is unavailable. Please refresh and try again.", teacherEmail);
+        return;
+    }
     const users = getTeacherUsers();
-    const userKey = email;
-
-    if (users[userKey]) {
-        setTeacherError("This email is already registered.");
+    const classroomCode = users[email]?.classroomCode || createClassroomCode(users);
+    let data;
+    let error;
+    try {
+        ({ data, error } = await supabaseClient.auth.signUp({
+            email,
+            password,
+            options: {
+                data: { full_name: fullName, classroom_code: classroomCode }
+            }
+        }));
+    } catch (requestError) {
+        console.error("Teacher registration request failed.", requestError);
+        setTeacherError("Unable to connect to the account service. Please try again.", teacherEmail);
+        return;
+    }
+    if (error) {
+        setTeacherError(error.message || "Unable to create the teacher account.", teacherEmail);
+        return;
+    }
+    let profile;
+    try {
+        if (data.user) profile = saveTeacherProfile(data.user, fullName);
+    } catch (profileError) {
+        console.error("Unable to save the new teacher profile.", profileError);
+        setTeacherError("Your account was created, but the teacher profile could not be saved.", teacherEmail);
         return;
     }
 
-    users[userKey] = {
-        email: email,
-        fullName: fullName,
-        password: password
-    };
-
-    saveTeacherUsers(users);
     setTeacherMode("login");
-    showScreen(teacherScreen);
     teacherEmail.value = email;
     teacherPassword.value = "";
     teacherConfirmPassword.value = "";
     teacherFullName.value = "";
-    teacherEmail.focus();
-    showNotification("Registration successful. Please login with your new email.");
+    if (data.session) {
+        currentTeacherUsername = profile?.fullName || fullName || email;
+        saveTeacherSession(email);
+        selectedHistoryStudent = null;
+        selectedAnalyticsStudent = null;
+        syncCustomLessons();
+        syncCustomLessonQuizCategories();
+        renderCustomQuestionList();
+        if (teacherClassroomCode) {
+            teacherClassroomCode.querySelector("b").textContent = getCurrentTeacherClassroomCode();
+        }
+        showTeacherDashboard();
+        showNotification("Registration successful. Welcome to your teacher dashboard!");
+    } else {
+        showScreen(teacherScreen);
+        setTeacherError(
+            "Email confirmation is still enabled in Supabase. Disable email confirmation in the Supabase Auth settings to open the dashboard immediately.",
+            teacherEmail
+        );
+    }
 }
 
-function handleTeacherLogin(){
+async function handleTeacherLogin(){
     const isUnlock = teacherMode === "unlock";
     const email = (isUnlock ? getTeacherSession() : teacherEmail.value.trim().toLowerCase()) || "";
     const password = teacherPassword.value;
 
     if (isUnlock) {
         if (!password) {
-            setTeacherError("Please enter the password.");
             teacherPassword.focus();
+            setTeacherError("Please enter the password.", teacherPassword);
             return;
         }
     } else if (!email || !password) {
@@ -868,37 +1900,85 @@ function handleTeacherLogin(){
         return;
     }
 
-    const users = getTeacherUsers();
-    const user = users[email];
-
-    if (!user || user.password !== password) {
-        setTeacherError(isUnlock ? "Incorrect password." : "Invalid email or password.");
-        teacherPassword.value = "";
-        teacherPassword.focus();
+    if (!supabaseClient) {
+        setTeacherError("Teacher authentication is unavailable. Please refresh and try again.", isUnlock ? teacherPassword : teacherEmail);
         return;
     }
 
-    currentTeacherUsername = user.fullName || user.email;
+    let data;
+    let error;
+    try {
+        ({ data, error } = await supabaseClient.auth.signInWithPassword({ email, password }));
+    } catch (requestError) {
+        console.error("Teacher login request failed.", requestError);
+        setTeacherError("Unable to connect to the account service. Please try again.", teacherPassword);
+        return;
+    }
+    if (error || !data.user) {
+        teacherPassword.value = "";
+        teacherPassword.focus();
+        const isUnconfirmed = error?.code === "email_not_confirmed"
+            || /email not confirmed/i.test(error?.message || "");
+        const isInvalidCredentials = error?.code === "invalid_credentials"
+            || /invalid login credentials/i.test(error?.message || "");
+        setTeacherError(
+            isUnconfirmed
+                ? "Email confirmation is still enabled in Supabase. Disable it in the Supabase Auth settings, then try logging in again."
+                : isInvalidCredentials
+                    ? "Email or password was not accepted. Check the email shown and try again, or use Forgot Password."
+                    : error?.message || "Unable to log in. Please try again.",
+            teacherPassword
+        );
+        return;
+    }
+
+    let profile;
+    try {
+        profile = saveTeacherProfile(data.user);
+    } catch (profileError) {
+        console.error("Unable to load teacher profile.", profileError);
+        setTeacherError("Signed in, but the teacher profile could not be loaded.", teacherEmail);
+        return;
+    }
+    const metadata = data.user.user_metadata || {};
+    if (!metadata.classroom_code || !metadata.full_name) {
+        try {
+            const { error: metadataError } = await supabaseClient.auth.updateUser({
+                data: { full_name: profile.fullName, classroom_code: profile.classroomCode }
+            });
+            if (metadataError) {
+                console.error("Unable to sync teacher profile metadata.", metadataError);
+            }
+        } catch (metadataError) {
+            console.error("Unable to sync teacher profile metadata.", metadataError);
+        }
+    }
+    currentTeacherUsername = profile.fullName || data.user.email;
     saveTeacherSession(email);
+    selectedHistoryStudent = null;
+    selectedAnalyticsStudent = null;
+    syncCustomLessons();
+    syncCustomLessonQuizCategories();
+    renderCustomQuestionList();
+    if (teacherClassroomCode) {
+        teacherClassroomCode.querySelector("b").textContent = getCurrentTeacherClassroomCode();
+    }
     teacherPassword.value = "";
     showTeacherDashboard();
     showNotification("Welcome back, " + currentTeacherUsername + "!");
 }
 
-function setTeacherError(message){
-    // Find the first visible input wrapper and display the error there
-    const inputWrappers = document.querySelectorAll(".input-wrapper");
-    let targetWrapper = null;
-    
-    for (let wrapper of inputWrappers) {
-        if (!wrapper.classList.contains("teacher-hidden")) {
-            targetWrapper = wrapper;
-            break;
-        }
-    }
-    
+function setTeacherError(message, targetInput = null){
+    const targetWrapper = targetInput?.closest(".input-wrapper") ||
+        [...document.querySelectorAll(".input-wrapper")]
+            .find(wrapper => !wrapper.classList.contains("teacher-hidden"));
+
     if (targetWrapper) {
         targetWrapper.classList.add("error");
+        const input = targetWrapper.querySelector("input");
+        if (input) {
+            input.setAttribute("aria-invalid", "true");
+        }
         const errorMsg = targetWrapper.querySelector(".input-error-message");
         if (errorMsg) {
             errorMsg.textContent = message;
@@ -932,6 +2012,92 @@ function getStudentRecords() {
 function saveStudentRecords(records) {
     const key = getNamespacedKey("studentRecords");
     localStorage.setItem(key, JSON.stringify(records));
+}
+
+function getStudentArchiveKey() {
+    return getNamespacedKey("studentArchive");
+}
+
+function getStudentArchive() {
+    const raw = localStorage.getItem(getStudentArchiveKey());
+    if (!raw) return [];
+    try {
+        const archive = JSON.parse(raw);
+        if (!Array.isArray(archive)) throw new Error("Student archive data is not a list.");
+        return archive;
+    } catch (error) {
+        console.error("Unable to read student archive data.", error);
+        throw new Error("Student archive data could not be read.");
+    }
+}
+
+function saveStudentArchive(archive) {
+    localStorage.setItem(getStudentArchiveKey(), JSON.stringify(archive));
+}
+
+const STUDENT_PRESENCE_KEY = "quizlandStudentPresence";
+const STUDENT_PRESENCE_TIMEOUT = 15000;
+
+function getStudentPresence() {
+    try {
+        const presence = JSON.parse(localStorage.getItem(STUDENT_PRESENCE_KEY)) || {};
+        return presence && typeof presence === "object" ? presence : {};
+    } catch (error) {
+        return {};
+    }
+}
+
+function isStudentOnline(name) {
+    const lastSeen = Number(getStudentPresence()[name]);
+    return lastSeen > 0 && Date.now() - lastSeen < STUDENT_PRESENCE_TIMEOUT;
+}
+
+function syncStudentPresence() {
+    const name = localStorage.getItem("studentName");
+    const avatar = localStorage.getItem("avatar");
+    const request = name ? getStudentRequest(name) : null;
+    const presence = getStudentPresence();
+
+    if (name && avatar && request?.status === "accepted" && !document.hidden) {
+        presence[name] = Date.now();
+    } else if (name && (!request || request.status !== "accepted")) {
+        delete presence[name];
+    }
+
+    localStorage.setItem(STUDENT_PRESENCE_KEY, JSON.stringify(presence));
+}
+
+function clearStudentSession() {
+    const name = localStorage.getItem("studentName");
+    const presence = getStudentPresence();
+    if (name) delete presence[name];
+    localStorage.setItem(STUDENT_PRESENCE_KEY, JSON.stringify(presence));
+    localStorage.removeItem("studentName");
+    localStorage.removeItem("studentClassroomCode");
+    localStorage.removeItem("studentGender");
+    localStorage.removeItem("avatar");
+    if (studentFirstName) studentFirstName.value = "";
+    if (studentLastName) studentLastName.value = "";
+    if (studentMiddleInitial) studentMiddleInitial.value = "";
+    savedStudentFullName = "";
+    studentNameFieldsEdited = false;
+    if (studentClassroomCode) studentClassroomCode.value = "";
+    if (studentGender) studentGender.value = "";
+    selectedAvatar = null;
+    avatars.forEach(avatarCard => {
+        avatarCard.classList.remove("selected");
+        avatarCard.style.border = "4px solid transparent";
+    });
+    setProfileCompletionState(false);
+}
+
+function handleRemovedCurrentStudent() {
+    const name = localStorage.getItem("studentName");
+    if (!name || getStudentRecords().some(record => record.name === name)) return;
+
+    clearStudentSession();
+    showScreen(profileScreen);
+    showNotification("Your student account was removed. Please log in again.");
 }
 
 function updateCurrentStudentRecord() {
@@ -1012,8 +2178,10 @@ function getStudentQuizHistory(student) {
     return JSON.parse(localStorage.getItem(getQuizHistoryKey(student))) || [];
 }
 
+const MAX_STUDENT_QUIZ_HISTORY = 365;
+
 function saveStudentQuizHistory(student, history) {
-    localStorage.setItem(getQuizHistoryKey(student), JSON.stringify(history.slice(0, 40)));
+    localStorage.setItem(getQuizHistoryKey(student), JSON.stringify(history.slice(0, MAX_STUDENT_QUIZ_HISTORY)));
 }
 
 function appendQuizHistoryEntry(student, entry) {
@@ -1040,14 +2208,15 @@ function saveStudentActivityLog(student, activities) {
     localStorage.setItem(getActivityLogKey(student), JSON.stringify(activities.slice(0, 100)));
 }
 
-function recordStudentActivity(activity) {
+function recordStudentActivity(activity, details = {}) {
     const student = localStorage.getItem("studentName");
     if (!student || !activity) return;
 
     const activities = getStudentActivityLog(student);
     activities.unshift({
         date: Date.now(),
-        activity
+        activity,
+        ...details
     });
     saveStudentActivityLog(student, activities);
 }
@@ -1217,19 +2386,12 @@ function renderTeacherNeedsInterpretation(records) {
     const container = document.getElementById("teacherNeedsInterpretation");
     if (!container) return;
 
-    const lessonLabels = {
-        alphabet: "Alphabet",
-        numbers: "Numbers",
-        colors: "Colors",
-        shapes: "Shapes"
-    };
-
     function getUnfinishedLessons(studentName) {
         const progressKey = getNamespacedKey(`student_${encodeURIComponent(studentName)}_lessonProgress`);
         const progress = JSON.parse(localStorage.getItem(progressKey)) || {};
         return Object.keys(lessons)
             .filter(category => !progress[category])
-            .map(category => lessonLabels[category] || category);
+            .map(getLessonDisplayName);
     }
 
     if (!records.length) {
@@ -1248,7 +2410,8 @@ function renderTeacherNeedsInterpretation(records) {
                 ...record,
                 progress,
                 accuracy,
-                stars
+                stars,
+                online: isStudentOnline(record.name)
             } : null;
         })
         .filter(Boolean)
@@ -1265,7 +2428,11 @@ function renderTeacherNeedsInterpretation(records) {
 
     const items = needsStudents.map(student => `
         <div class="teacher-needs-item">
-            <div class="teacher-needs-name">${student.name}</div>
+            <div class="teacher-needs-name">
+                <span class="student-presence-dot ${student.online ? "is-online" : "is-offline"}" aria-label="${student.online ? "Online" : "Offline"}"></span>
+                ${student.name}
+            </div>
+            <div class="teacher-needs-status">${student.online ? "Online now" : "Offline"}</div>
             <div class="teacher-needs-meta">Progress: ${student.progress}% • Accuracy: ${student.accuracy}% • Stars: ${student.stars}</div>
             <div class="teacher-needs-note">Needs more practice to master: ${getUnfinishedLessons(student.name).join(", ") || "the current lesson"}.</div>
         </div>
@@ -1368,6 +2535,173 @@ function renderActivityLog(studentName) {
     });
 }
 
+function renderStudentAnalytics(studentName) {
+    if (!teacherAnalyticsCalendarDays || !teacherAnalyticsStudentName) return;
+    teacherAnalyticsStudentName.textContent = studentName || "Select a student";
+    teacherAnalyticsCalendarDays.replaceChildren();
+    if (teacherAnalyticsMonth) teacherAnalyticsMonth.value = String(selectedAnalyticsMonth);
+    if (teacherAnalyticsYear) teacherAnalyticsYear.value = String(selectedAnalyticsYear);
+    if (teacherAnalyticsPreviousMonth) {
+        teacherAnalyticsPreviousMonth.disabled = selectedAnalyticsYear === ANALYTICS_MIN_YEAR && selectedAnalyticsMonth === 0;
+    }
+    if (teacherAnalyticsNextMonth) {
+        teacherAnalyticsNextMonth.disabled = selectedAnalyticsYear === ANALYTICS_MAX_YEAR && selectedAnalyticsMonth === 11;
+    }
+
+    const activityByDate = new Map();
+    const getDay = key => {
+        if (!activityByDate.has(key)) {
+            activityByDate.set(key, { correct: 0, questions: 0, quizzes: [], lessons: [], mistakes: [] });
+        }
+        return activityByDate.get(key);
+    };
+
+    if (studentName) {
+        getStudentActivityLog(studentName).forEach(entry => {
+            const timestamp = Number(entry?.date);
+            if (!Number.isFinite(timestamp)) return;
+            const day = getDay(toDateKey(timestamp));
+            if (entry.kind === "lesson") day.lessons.push(entry);
+            if (entry.kind === "quiz-mistake") day.mistakes.push(entry);
+        });
+
+        getStudentQuizHistory(studentName).forEach(entry => {
+            const timestamp = Number(entry?.date);
+            const total = Number(entry?.total);
+            if (!Number.isFinite(timestamp) || !Number.isFinite(total) || total <= 0) return;
+            const day = getDay(toDateKey(timestamp));
+            day.correct += Number(entry.score) || 0;
+            day.questions += total;
+            day.quizzes.push(entry);
+        });
+    }
+
+    const firstWeekday = new Date(selectedAnalyticsYear, selectedAnalyticsMonth, 1).getDay();
+    const daysInMonth = new Date(selectedAnalyticsYear, selectedAnalyticsMonth + 1, 0).getDate();
+    for (let blank = 0; blank < firstWeekday; blank += 1) {
+        const spacer = document.createElement("span");
+        spacer.className = "teacher-analytics-calendar-spacer";
+        spacer.setAttribute("aria-hidden", "true");
+        teacherAnalyticsCalendarDays.appendChild(spacer);
+    }
+
+    const today = new Date();
+    const todayKey = toDateKey(today.getTime());
+    for (let dayNumber = 1; dayNumber <= daysInMonth; dayNumber += 1) {
+        const date = new Date(selectedAnalyticsYear, selectedAnalyticsMonth, dayNumber);
+        const dateKey = toDateKey(date.getTime());
+        const data = activityByDate.get(dateKey);
+        const dayButton = document.createElement("button");
+        dayButton.type = "button";
+        dayButton.className = "teacher-analytics-calendar-day";
+        dayButton.textContent = String(dayNumber);
+        dayButton.setAttribute("aria-pressed", String(dateKey === selectedAnalyticsDate));
+        if (dateKey === selectedAnalyticsDate) dayButton.classList.add("is-selected");
+        if (dateKey === todayKey) dayButton.classList.add("is-today");
+
+        if (!data || (!data.questions && !data.lessons.length && !data.mistakes.length)) {
+            dayButton.classList.add("is-no-data");
+            dayButton.title = `${date.toLocaleDateString()}: no learning activity`;
+        } else if (data.questions) {
+            const accuracy = Math.round((data.correct / data.questions) * 100);
+            const level = accuracy < 50 ? "struggling"
+                : accuracy < 70 ? "growing"
+                    : accuracy < 85 ? "progressing"
+                        : accuracy < 100 ? "strong"
+                            : "perfect";
+            dayButton.classList.add(`is-${level}`);
+            if (data.lessons.length) dayButton.classList.add("has-lesson");
+            dayButton.title = `${date.toLocaleDateString()}: ${accuracy}% quiz accuracy`;
+        } else {
+            if (data.lessons.length) dayButton.classList.add("has-lesson");
+            if (data.mistakes.length) dayButton.classList.add("is-struggling");
+            dayButton.title = `${date.toLocaleDateString()}: ${data.mistakes.length ? "quiz mistakes" : "lesson activity"}`;
+        }
+
+        dayButton.addEventListener("click", () => {
+            selectedAnalyticsDate = dateKey;
+            renderStudentAnalytics(selectedAnalyticsStudent);
+        });
+        teacherAnalyticsCalendarDays.appendChild(dayButton);
+    }
+
+    if (teacherAnalyticsSelectedDate) {
+        const selectedDate = new Date(`${selectedAnalyticsDate}T00:00:00`);
+        teacherAnalyticsSelectedDate.textContent = selectedDate.toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "long",
+            day: "numeric"
+        });
+    }
+    renderTeacherAnalyticsDateDetails(studentName, activityByDate.get(selectedAnalyticsDate));
+}
+
+function renderTeacherAnalyticsDateDetails(studentName, dayData) {
+    if (!teacherAnalyticsDateDetails) return;
+    teacherAnalyticsDateDetails.replaceChildren();
+    if (!studentName || !dayData) {
+        const empty = document.createElement("p");
+        empty.className = "teacher-analytics-empty";
+        empty.textContent = studentName ? "No learning activity" : "Select a student";
+        teacherAnalyticsDateDetails.appendChild(empty);
+        return;
+    }
+
+    const lessonGroups = new Map();
+    dayData.lessons.forEach(entry => {
+        const category = entry.category || "lesson";
+        const items = lessonGroups.get(category) || new Set();
+        if (entry.item) items.add(entry.item);
+        lessonGroups.set(category, items);
+    });
+    lessonGroups.forEach((items, category) => {
+        const row = document.createElement("p");
+        const itemList = [...items].join(", ");
+        row.textContent = `Lesson · ${getLessonDisplayName(category)}${itemList ? ` · ${itemList}` : ""}`;
+        teacherAnalyticsDateDetails.appendChild(row);
+    });
+
+    const usedMistakes = new Set();
+    dayData.quizzes.forEach(entry => {
+        const category = entry.category || "quiz";
+        const mistakes = dayData.mistakes.filter(mistake => {
+            if (entry.attemptId) return mistake.attemptId === entry.attemptId;
+            return !mistake.attemptId
+                && !usedMistakes.has(mistake)
+                && (mistake.category || "quiz") === category;
+        });
+        mistakes.forEach(mistake => usedMistakes.add(mistake));
+        const missedItems = [...new Set(mistakes.map(mistake => mistake.item).filter(Boolean))];
+        const row = document.createElement("p");
+        row.textContent = `Quiz · ${getLessonDisplayName(category)} · ${Number(entry.score) || 0}/${Number(entry.total) || 0}`
+            + (missedItems.length ? ` · Missed: ${missedItems.join(", ")}` : "");
+        teacherAnalyticsDateDetails.appendChild(row);
+    });
+
+    const unmatchedMistakes = dayData.mistakes.filter(mistake => !usedMistakes.has(mistake));
+    if (unmatchedMistakes.length) {
+        const groupedMistakes = new Map();
+        unmatchedMistakes.forEach(mistake => {
+            const category = mistake.category || "quiz";
+            const items = groupedMistakes.get(category) || new Set();
+            if (mistake.item) items.add(mistake.item);
+            groupedMistakes.set(category, items);
+        });
+        groupedMistakes.forEach((items, category) => {
+            const row = document.createElement("p");
+            row.textContent = `Quiz · ${getLessonDisplayName(category)} · Missed: ${[...items].join(", ")}`;
+            teacherAnalyticsDateDetails.appendChild(row);
+        });
+    }
+
+    if (!teacherAnalyticsDateDetails.childElementCount) {
+        const empty = document.createElement("p");
+        empty.className = "teacher-analytics-empty";
+        empty.textContent = "No learning activity";
+        teacherAnalyticsDateDetails.appendChild(empty);
+    }
+}
+
 function renderTeacherStudentProgress() {
     if (!teacherStudentProgressTable) return;
     const tbody = teacherStudentProgressTable.querySelector("tbody");
@@ -1404,6 +2738,7 @@ function renderTeacherStudentProgress() {
         tbody.innerHTML = `<tr class="quiz-history-empty"><td colspan="7">${emptyMessage}</td></tr>`;
         renderQuizHistory(null);
         renderActivityLog(null);
+        renderStudentAnalytics(null);
         return;
     }
 
@@ -1471,17 +2806,40 @@ function renderTeacherStudentProgress() {
         removeBtn.className = "tdash-btn tdash-btn--danger";
         removeBtn.type = "button";
         removeBtn.addEventListener("click", () => {
-            removeStudentRecord(record.name);
+            try {
+                const archived = removeStudentRecord(record.name);
+                if (!archived) {
+                    showNotification(`${record.name} could not be found in the student tracker.`);
+                    return;
+                }
+            } catch (error) {
+                console.error("Unable to archive student.", error);
+                showNotification(`${record.name} could not be archived. Please try again.`);
+                return;
+            }
             if (selectedHistoryStudent === record.name) {
                 selectedHistoryStudent = null;
+            }
+            if (selectedAnalyticsStudent === record.name) {
+                selectedAnalyticsStudent = null;
             }
             renderTeacherStudentProgress();
             renderQuizHistory(selectedHistoryStudent);
             renderActivityLog(selectedHistoryStudent);
-            showNotification(`${record.name} has been removed.`);
+            showNotification(`${record.name} was moved to the archive.`);
+        });
+
+        const signOutBtn = document.createElement("button");
+        signOutBtn.textContent = "Sign out";
+        signOutBtn.className = "tdash-btn tdash-btn--ghost";
+        signOutBtn.type = "button";
+        signOutBtn.addEventListener("click", () => {
+            signOutStudentSession(record.name);
+            showNotification(`${record.name} was signed out. They can log in again from the student profile.`);
         });
 
         actionsWrap.appendChild(historyBtn);
+        actionsWrap.appendChild(signOutBtn);
         actionsWrap.appendChild(removeBtn);
         actionsTd.appendChild(actionsWrap);
 
@@ -1498,6 +2856,9 @@ function renderTeacherStudentProgress() {
     if (selectedHistoryStudent) {
         renderQuizHistory(selectedHistoryStudent);
         renderActivityLog(selectedHistoryStudent);
+    }
+    if (selectedAnalyticsStudent) {
+        renderStudentAnalytics(selectedAnalyticsStudent);
     }
 }
 
@@ -1517,6 +2878,166 @@ function formatProgressDate(timestamp) {
     });
 }
 
+function formatArchiveDate(timestamp) {
+    const date = new Date(Number(timestamp));
+    if (Number.isNaN(date.getTime())) return "Unknown date";
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    return `${day}/${month}/${date.getFullYear()}`;
+}
+
+function renderTeacherArchive() {
+    if (!teacherArchiveDates) return;
+    teacherArchiveDates.replaceChildren();
+    const archive = getStudentArchive()
+        .filter(entry => entry?.student?.name && entry.archiveId)
+        .sort((a, b) => Number(b.archivedAt) - Number(a.archivedAt));
+
+    if (!archive.length) {
+        const empty = document.createElement("p");
+        empty.className = "teacher-archive-empty";
+        empty.textContent = "No students have been archived.";
+        teacherArchiveDates.appendChild(empty);
+        return;
+    }
+
+    const groups = new Map();
+    archive.forEach(entry => {
+        const dateLabel = formatArchiveDate(entry.archivedAt);
+        if (!groups.has(dateLabel)) groups.set(dateLabel, []);
+        groups.get(dateLabel).push(entry);
+    });
+
+    groups.forEach((entries, dateLabel) => {
+        const group = document.createElement("details");
+        group.className = "teacher-archive-date";
+        const summary = document.createElement("summary");
+        const date = document.createElement("span");
+        date.textContent = dateLabel;
+        const count = document.createElement("span");
+        count.textContent = `${entries.length} ${entries.length === 1 ? "student" : "students"}`;
+        summary.append(date, count);
+
+        const studentList = document.createElement("div");
+        studentList.className = "teacher-archive-date-list";
+        entries.forEach(entry => {
+            const studentRow = document.createElement("div");
+            studentRow.className = "teacher-archive-student";
+            const name = document.createElement("span");
+            name.className = "teacher-archive-student-name";
+            name.textContent = entry.student.name;
+
+            const actions = document.createElement("div");
+            actions.className = "teacher-archive-student-actions";
+            const restoreButton = document.createElement("button");
+            restoreButton.type = "button";
+            restoreButton.className = "tdash-btn tdash-btn--soft";
+            restoreButton.textContent = "Restore";
+            restoreButton.addEventListener("click", () => {
+                try {
+                    restoreArchivedStudent(entry.archiveId);
+                } catch (error) {
+                    console.error("Unable to restore archived student.", error);
+                    showNotification("The archived student could not be restored. Please try again.");
+                }
+            });
+
+            const deleteButton = document.createElement("button");
+            deleteButton.type = "button";
+            deleteButton.className = "tdash-btn tdash-btn--danger";
+            deleteButton.textContent = "Delete Permanently";
+            deleteButton.addEventListener("click", () => {
+                if (!window.confirm(`Are you sure to delete permanently? This will erase ${entry.student.name}'s archived student data.`)) return;
+                try {
+                    permanentlyDeleteArchivedStudent(entry.archiveId);
+                } catch (error) {
+                    console.error("Unable to permanently delete archived student.", error);
+                    showNotification("The archived student could not be permanently deleted. Please try again.");
+                }
+            });
+            actions.append(restoreButton, deleteButton);
+            studentRow.append(name, actions);
+            studentList.appendChild(studentRow);
+        });
+
+        group.append(summary, studentList);
+        teacherArchiveDates.appendChild(group);
+    });
+}
+
+function restoreArchivedStudent(archiveId) {
+    const archive = getStudentArchive();
+    const entry = archive.find(item => item.archiveId === archiveId);
+    if (!entry) {
+        showNotification("This archived student could not be found. Refresh the archive and try again.");
+        return;
+    }
+    const records = getStudentRecords();
+    if (records.some(record => record.name === entry.student.name)) {
+        showNotification(`${entry.student.name} is already in the student tracker.`);
+        return;
+    }
+
+    saveStudentRecords([...records, entry.student]);
+    const requests = getStudentRequests().filter(request => request.name !== entry.student.name);
+    saveStudentRequests([...requests, ...(Array.isArray(entry.requests) ? entry.requests : [])]);
+    saveStudentArchive(archive.filter(item => item.archiveId !== archiveId));
+    selectedHistoryStudent = null;
+    selectedAnalyticsStudent = null;
+    renderTeacherStudentProgress();
+    renderTeacherNotifications();
+    renderTeacherArchive();
+    showNotification(`${entry.student.name} has been restored.`);
+}
+
+function permanentlyDeleteArchivedStudent(archiveId) {
+    const archive = getStudentArchive();
+    const entry = archive.find(item => item.archiveId === archiveId);
+    if (!entry) {
+        showNotification("This archived student could not be found. Refresh the archive and try again.");
+        return;
+    }
+    const studentName = entry.student.name;
+    saveStudentArchive(archive.filter(item => item.archiveId !== archiveId));
+
+    const encodedName = encodeURIComponent(studentName);
+    const studentKeyPrefix = getNamespacedKey(`student_${encodedName}_`);
+    const keysToRemove = new Set([
+        getQuizHistoryKey(studentName),
+        getActivityLogKey(studentName),
+        getNamespacedKey(`totalStars_${encodedName}`),
+        getNamespacedKey(`lastQuizScore_${encodedName}`),
+        getNamespacedKey(`lastQuizTotal_${encodedName}`),
+        getNamespacedKey(`lessonVoiceStars_${encodedName}`)
+    ]);
+    (Array.isArray(entry.requests) ? entry.requests : []).forEach(request => {
+        if (request.classroomCode) {
+            keysToRemove.add(`quizlandProfileSubmitted_${encodeURIComponent(request.classroomCode)}_${encodedName}`);
+        }
+    });
+    for (let index = 0; index < localStorage.length; index++) {
+        const key = localStorage.key(index);
+        if (key?.startsWith(studentKeyPrefix)) keysToRemove.add(key);
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+
+    const requests = getStudentRequests().filter(request => request.name !== studentName);
+    saveStudentRequests(requests);
+    const presence = getStudentPresence();
+    delete presence[studentName];
+    localStorage.setItem(STUDENT_PRESENCE_KEY, JSON.stringify(presence));
+    try {
+        const signedOut = JSON.parse(localStorage.getItem(STUDENT_SIGNED_OUT_KEY) || "null");
+        if (signedOut?.name === studentName) localStorage.removeItem(STUDENT_SIGNED_OUT_KEY);
+    } catch (error) {
+        console.error("Unable to inspect the signed-out student session.", error);
+    }
+
+    renderTeacherNotifications();
+    renderTeacherArchive();
+    showNotification(`${studentName} and their saved student data were permanently deleted.`);
+}
+
 if (teacherStudentSort) {
     teacherStudentSort.addEventListener("change", renderTeacherStudentProgress);
 }
@@ -1526,21 +3047,182 @@ if (teacherStudentGenderFilter) {
 }
 
 function removeStudentRecord(studentName) {
-    const records = getStudentRecords().filter(record => record.name !== studentName);
-    saveStudentRecords(records);
-    localStorage.removeItem(getQuizHistoryKey(studentName));
-    localStorage.removeItem(getActivityLogKey(studentName));
+    const records = getStudentRecords();
+    const student = records.find(record => record.name === studentName);
+    if (!student) return false;
+    const requests = getStudentRequests().filter(request => request.name === studentName);
+    const archive = getStudentArchive().filter(entry => entry.student?.name !== studentName);
+    archive.push({
+        archiveId: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        archivedAt: Date.now(),
+        student,
+        requests
+    });
+    saveStudentArchive(archive);
+    saveStudentRecords(records.filter(record => record.name !== studentName));
+    saveStudentRequests(getStudentRequests().filter(request => request.name !== studentName));
+    updateTeacherNotificationBadge();
+    const presence = getStudentPresence();
+    delete presence[studentName];
+    localStorage.setItem(STUDENT_PRESENCE_KEY, JSON.stringify(presence));
+    return true;
+}
+
+function signOutStudentSession(studentName) {
+    const activeStudent = localStorage.getItem("studentName");
+    if (activeStudent !== studentName) return;
+
+    const presence = getStudentPresence();
+    delete presence[studentName];
+    localStorage.setItem(STUDENT_PRESENCE_KEY, JSON.stringify(presence));
+    localStorage.removeItem("studentName");
+    localStorage.removeItem("studentClassroomCode");
+    localStorage.removeItem("studentGender");
+    localStorage.removeItem("avatar");
+    localStorage.setItem(STUDENT_SIGNED_OUT_KEY, JSON.stringify({
+        name: studentName,
+        signedOutAt: Date.now()
+    }));
 }
 
 function showTeacherDashboard(){
     showScreen(teacherDashboard);
+    setTeacherSidebarCollapsed(false);
+    if (teacherClassroomCode) {
+        teacherClassroomCode.querySelector("b").textContent = getCurrentTeacherClassroomCode() || "------";
+    }
     teacherNameDisplay.textContent = currentTeacherUsername;
+    if (teacherSidebarName) {
+        const signedInEmail = getTeacherSession() || currentTeacherUsername;
+        teacherSidebarName.textContent = signedInEmail;
+        teacherSidebarName.title = signedInEmail;
+    }
 
     renderTeacherStudentProgress();
     renderTeacherNotifications();
+    window.setTimeout(maybeShowTeacherTutorial, 250);
 }
 
+function clearTeacherTutorialHighlight() {
+    document.querySelectorAll(".teacher-tutorial-highlight, .teacher-tutorial-focus").forEach(element => {
+        element.classList.remove("teacher-tutorial-highlight");
+        element.classList.remove("teacher-tutorial-focus");
+    });
+}
+
+function closeTeacherTutorial(savePreference = false) {
+    clearTeacherTutorialHighlight();
+    if (teacherTutorial) teacherTutorial.hidden = true;
+    if (savePreference || teacherTutorialDontShowAgain?.checked) {
+        localStorage.setItem(getTeacherTutorialPreferenceKey(), "true");
+        localStorage.setItem("quizlandTutorialEnabled", "false");
+        if (tutorialToggle) tutorialToggle.checked = false;
+    }
+}
+
+function renderTeacherTutorialStep() {
+    const step = teacherTutorialSteps[teacherTutorialStep];
+    if (!step || !teacherTutorial) return;
+
+    clearTeacherTutorialHighlight();
+    const target = document.querySelector(step.target);
+    if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+        target.classList.add("teacher-tutorial-highlight");
+        target.classList.add("teacher-tutorial-focus");
+    }
+
+    teacherTutorialTitle.textContent = step.title;
+    teacherTutorialDescription.textContent = step.description;
+    teacherTutorialNextBtn.textContent = teacherTutorialStep === teacherTutorialSteps.length - 1
+        ? "Done"
+        : "Next";
+    teacherTutorialBackBtn.disabled = teacherTutorialStep === 0;
+    document.querySelectorAll(".teacher-tutorial-progress span").forEach((dot, index) => {
+        dot.classList.toggle("is-active", index === teacherTutorialStep);
+        dot.classList.toggle("is-complete", index < teacherTutorialStep);
+    });
+    window.requestAnimationFrame(() => positionTeacherTutorialCard(target));
+}
+
+function positionTeacherTutorialCard(target) {
+    if (!teacherTutorial || !target) return;
+    const card = teacherTutorial.querySelector(".teacher-tutorial-card");
+    if (!card) return;
+
+    const targetRect = target.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    const margin = 14;
+    const edge = 16;
+    let left = targetRect.left + (targetRect.width / 2) - (cardRect.width / 2);
+    let top = targetRect.bottom + margin;
+
+    if (top + cardRect.height > window.innerHeight - edge) {
+        top = targetRect.top - cardRect.height - margin;
+    }
+    if (top < edge) top = edge;
+    left = Math.max(edge, Math.min(left, window.innerWidth - cardRect.width - edge));
+
+    card.style.left = `${left}px`;
+    card.style.top = `${top}px`;
+    card.style.transform = "none";
+}
+
+function openTeacherTutorial() {
+    if (!teacherTutorial) return;
+    teacherTutorialStep = 0;
+    teacherTutorialDontShowAgain.checked = false;
+    teacherTutorial.hidden = false;
+    renderTeacherTutorialStep();
+}
+
+function maybeShowTeacherTutorial() {
+    if (!teacherDashboard?.classList.contains("active")) return;
+    if (localStorage.getItem("quizlandTutorialEnabled") === "false") return;
+    if (localStorage.getItem(getTeacherTutorialPreferenceKey()) === "true") return;
+    openTeacherTutorial();
+}
+
+if (teacherTutorialNextBtn) {
+    teacherTutorialNextBtn.addEventListener("click", () => {
+        if (teacherTutorialStep >= teacherTutorialSteps.length - 1) {
+            closeTeacherTutorial();
+            return;
+        }
+        teacherTutorialStep += 1;
+        renderTeacherTutorialStep();
+    });
+}
+
+if (teacherTutorialBackBtn) {
+    teacherTutorialBackBtn.addEventListener("click", () => {
+        if (teacherTutorialStep === 0) return;
+        teacherTutorialStep -= 1;
+        renderTeacherTutorialStep();
+    });
+}
+
+if (teacherTutorialSkipBtn) {
+    teacherTutorialSkipBtn.addEventListener("click", () => closeTeacherTutorial());
+}
+
+document.addEventListener("keydown", event => {
+    if (!teacherTutorial || teacherTutorial.hidden) return;
+
+    if (event.key === "ArrowRight") {
+        event.preventDefault();
+        teacherTutorialNextBtn.click();
+    } else if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        teacherTutorialBackBtn.click();
+    } else if (event.key === "Escape") {
+        event.preventDefault();
+        closeTeacherTutorial();
+    }
+});
+
 const STUDENT_REQUESTS_KEY = "quizlandStudentRequests";
+const STUDENT_SIGNED_OUT_KEY = "quizlandStudentSignedOut";
 
 function getStudentRequests() {
     try {
@@ -1556,12 +3238,18 @@ function saveStudentRequests(requests) {
 }
 
 function getStudentRequest(name) {
-    return getStudentRequests().find(request => request.name === name);
+    const classroomCode = localStorage.getItem("studentClassroomCode");
+    return getStudentRequests().find(request => (
+        request.name === name && request.classroomCode === classroomCode
+    ));
 }
 
 function updateTeacherNotificationBadge() {
     if (!teacherNotificationBadge) return;
-    const pendingCount = getStudentRequests().filter(request => request.status === "pending").length;
+    const classroomCode = getCurrentTeacherClassroomCode();
+    const pendingCount = getStudentRequests().filter(request => (
+        request.classroomCode === classroomCode && request.status === "pending"
+    )).length;
     teacherNotificationBadge.textContent = String(pendingCount);
     teacherNotificationBadge.hidden = pendingCount === 0;
 }
@@ -1570,7 +3258,10 @@ function renderTeacherNotifications() {
     updateTeacherNotificationBadge();
     if (!teacherNotificationsList) return;
 
-    const requests = getStudentRequests().sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
+    const classroomCode = getCurrentTeacherClassroomCode();
+    const requests = getStudentRequests()
+        .filter(request => request.classroomCode === classroomCode)
+        .sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
     teacherNotificationsList.innerHTML = "";
 
     if (!requests.length) {
@@ -1638,11 +3329,38 @@ if (teacherNotificationsCloseBtn) {
 }
 
 window.addEventListener("storage", event => {
-    if (event.key !== STUDENT_REQUESTS_KEY) return;
-    updateTeacherNotificationBadge();
-    if (teacherNotificationsModal && !teacherNotificationsModal.hidden) {
-        renderTeacherNotifications();
+    if (event.key === STUDENT_REQUESTS_KEY) {
+        syncProfileApproval();
     }
+
+    if (event.key === getNamespacedKey("studentRecords")) {
+        handleRemovedCurrentStudent();
+    }
+
+    if (event.key === STUDENT_SIGNED_OUT_KEY && event.newValue) {
+        try {
+            const signedOut = JSON.parse(event.newValue);
+            if (signedOut.name === localStorage.getItem("studentName")) {
+                clearStudentSession();
+                showScreen(profileScreen);
+                showNotification("You were signed out. Please log in again.");
+            }
+        } catch (error) {
+            console.warn("Student sign-out notice could not be read.", error);
+        }
+    }
+});
+
+window.setInterval(syncProfileApproval, 1000);
+window.setInterval(() => {
+    syncStudentPresence();
+}, 5000);
+document.addEventListener("visibilitychange", syncStudentPresence);
+window.addEventListener("beforeunload", () => {
+    const name = localStorage.getItem("studentName");
+    const presence = getStudentPresence();
+    if (name) delete presence[name];
+    localStorage.setItem(STUDENT_PRESENCE_KEY, JSON.stringify(presence));
 });
 
 // ======================================================
@@ -1651,31 +3369,43 @@ window.addEventListener("storage", event => {
 
 continueBtn.addEventListener("click", () => {
 
-    const nameParts = [
-        studentFirstName ? studentFirstName.value.trim() : "",
-        studentNoMiddleName && studentNoMiddleName.checked
-            ? ""
-            : studentMiddleName
-                ? studentMiddleName.value.trim()
-                : "",
-        studentLastName ? studentLastName.value.trim() : ""
-    ].filter(Boolean);
-    const name = nameParts.join(" ") || studentName.value.trim();
+    const name = getStudentFullName();
+    const previousName = localStorage.getItem("studentName") || "";
+    const previousClassroomCode = localStorage.getItem("studentClassroomCode") || "";
+
+    const classroomCode = studentClassroomCode ? studentClassroomCode.value.trim() : "";
+    if (!/^\d{6}$/.test(classroomCode)) {
+        const msg = "Please enter the 6-digit classroom code from your teacher.";
+        showNotification(msg);
+        speakText(msg);
+        studentClassroomCode?.focus();
+        return;
+    }
+    if (!isValidClassroomCode(classroomCode)) {
+        const msg = "That classroom code is invalid. Please ask your teacher for the correct code.";
+        showNotification(msg, 5000);
+        speakText(msg);
+        studentClassroomCode?.focus();
+        return;
+    }
 
     if (name === "") {
 
-        const msg = "Please enter your name.";
+        const msg = "Please enter your first and last name.";
         showNotification(msg);
         speakText(msg);
 
-        if (studentFirstName) {
-            studentFirstName.focus();
-        } else {
-            studentName.focus();
-        }
+        studentFirstName.focus();
 
         return;
 
+    }
+    if (!studentFirstName.value.trim() || !studentLastName.value.trim()) {
+        const msg = "Please enter your first and last name.";
+        showNotification(msg);
+        speakText(msg);
+        (!studentFirstName.value.trim() ? studentFirstName : studentLastName).focus();
+        return;
     }
 
     const gender = studentGender.value;
@@ -1688,9 +3418,9 @@ continueBtn.addEventListener("click", () => {
     }
 
     localStorage.setItem("studentName", name);
+    localStorage.setItem("studentClassroomCode", classroomCode);
     localStorage.setItem("studentGender", gender);
-    if (studentAge) localStorage.setItem("studentAge", studentAge.value.trim());
-
+    studentProfileEditing = false;
     if (selectedAvatar === null) {
 
         const msg = "Please select an avatar.";
@@ -1704,20 +3434,29 @@ continueBtn.addEventListener("click", () => {
 
     const existingRequest = getStudentRequest(name);
     if (!existingRequest) {
-        const requests = getStudentRequests().filter(request => request.name !== name);
+        const requests = getStudentRequests().filter(request => {
+            const isCurrentRequest = request.name === name && request.classroomCode === classroomCode;
+            const isEditedPreviousRequest = request.name === previousName
+                && request.classroomCode === previousClassroomCode
+                && previousName !== name;
+            return !isCurrentRequest && !isEditedPreviousRequest;
+        });
         requests.push({
             name,
+            classroomCode,
             avatar: Number(selectedAvatar) || 1,
-            age: studentAge ? studentAge.value.trim() : "",
             gender,
             status: "pending",
             createdAt: Date.now()
         });
         saveStudentRequests(requests);
+        markStudentProfileSubmitted(name, classroomCode);
+        setProfileCompletionState(true);
         showNotification("Your request was sent to the teacher for approval.", 5000);
         return;
     }
 
+    markStudentProfileSubmitted(name, classroomCode);
     if (existingRequest.status !== "accepted") {
         const message = existingRequest.status === "rejected"
             ? "Your request was rejected. Please ask the teacher to review it."
@@ -1726,18 +3465,7 @@ continueBtn.addEventListener("click", () => {
         return;
     }
 
-    updateCurrentStudentRecord();
-
-    showScreen(menuScreen);
-
-    setTimeout(() => {
-
-        const msg = `Welcome, ${name}! Let's start learning!`;
-        showNotification(msg);
-        speakText(msg);
-
-    }, 300);
-
+    openApprovedStudentMenu(name);
 
 });
 
@@ -1746,9 +3474,7 @@ continueBtn.addEventListener("click", () => {
 // ======================================================
 
 backHome.addEventListener("click", () => {
-
-    showScreen(homeScreen);
-
+    openLessonHomeConfirmation(backHome);
 });
 
 // ======================================================
@@ -1767,6 +3493,9 @@ function updateVolumeLabel(input, label) {
 function openSettingsModal() {
     updateVolumeLabel(bgMusicVolume, bgMusicVolumeValue);
     updateVolumeLabel(sfxVolume, sfxVolumeValue);
+    if (tutorialToggle) {
+        tutorialToggle.checked = localStorage.getItem("quizlandTutorialEnabled") !== "false";
+    }
     if (settingsModal) settingsModal.style.display = "flex";
 }
 
@@ -1876,6 +3605,7 @@ function applyVoiceNarrationSetting(enabled) {
     localStorage.setItem("voiceNarrationEnabled", enabled ? "true" : "false");
     if (!enabled) {
         speechSynthesis.cancel();
+        stopUploadedAudio();
     }
 }
 
@@ -1972,7 +3702,7 @@ if (window.speechSynthesis) {
 
 function speakText(text, options = {}) {
     return new Promise(resolve => {
-        if (!text || !isVoiceNarrationEnabled()) {
+        if (!text || !isVoiceNarrationEnabled() || !window.speechSynthesis) {
             resolve();
             return;
         }
@@ -1984,8 +3714,15 @@ function speakText(text, options = {}) {
             volume: options.volume ?? KID_VOICE_DEFAULTS.volume,
             lang: options.lang
         });
-        speech.onend = resolve;
-        speech.onerror = resolve;
+        let settled = false;
+        const finish = () => {
+            if (settled) return;
+            settled = true;
+            resolve();
+        };
+        speech.onend = finish;
+        speech.onerror = finish;
+        window.setTimeout(finish, options.timeout || 1200);
         speechSynthesis.speak(speech);
     });
 }
@@ -2138,7 +3875,7 @@ function speakQuizQuestion() {
         ? `Tanong ${currentQuizIndex + 1}. `
         : `Question ${currentQuizIndex + 1}. `;
     const text = prefix + quizQuestions[currentQuizIndex].prompt;
-    speakText(text);
+    return speakText(text);
 }
 
 function speakQuizFeedback(isCorrect, correctAnswer) {
@@ -2163,7 +3900,7 @@ function playPopSound() {
 function updateBgMusic() {
     if (!bgAudio) return;
     const enabled = bgMusicToggle ? bgMusicToggle.checked : false;
-    const volume = bgMusicVolume ? Number(bgMusicVolume.value) / 100 : 0.6;
+    const volume = bgMusicVolume ? Number(bgMusicVolume.value) / 100 : 0.1;
 
     bgAudio.volume = volume;
 
@@ -2175,6 +3912,15 @@ function updateBgMusic() {
     bgAudio.play().catch(() => {
         // autoplay may be blocked until user interacts with the page
     });
+}
+
+function startMusicAfterInteraction() {
+    updateBgMusic();
+    if (bgAudio && !bgAudio.paused) {
+        document.removeEventListener("pointerdown", startMusicAfterInteraction);
+        document.removeEventListener("keydown", startMusicAfterInteraction);
+        document.removeEventListener("touchstart", startMusicAfterInteraction);
+    }
 }
 
 if (bgMusicToggle) {
@@ -2324,6 +4070,7 @@ if (notificationBox) {
 avatars.forEach((avatar, index) => {
 
     avatar.addEventListener("click", () => {
+        markProfileEditing();
 
         avatars.forEach(a => {
 
@@ -2347,11 +4094,14 @@ avatars.forEach((avatar, index) => {
 
 window.onload = () => {
 
+    if (bgMusicVolume) bgMusicVolume.value = "10";
+    if (sfxVolume) sfxVolume.value = "10";
+
     const savedName = localStorage.getItem("studentName");
 
     if (savedName) {
 
-        studentName.value = savedName;
+        setStudentNameFields(savedName);
 
     }
 
@@ -2369,16 +4119,18 @@ window.onload = () => {
 
     const savedVoiceNarration = localStorage.getItem("voiceNarrationEnabled");
     applyVoiceNarrationSetting(savedVoiceNarration === null ? true : savedVoiceNarration === "true");
+    if (tutorialToggle) {
+        tutorialToggle.checked = localStorage.getItem("quizlandTutorialEnabled") !== "false";
+    }
 
     updateBgMusic();
     updateSfxVolume();
     updateVolumeLabel(bgMusicVolume, bgMusicVolumeValue);
     updateVolumeLabel(sfxVolume, sfxVolumeValue);
     updateStudentHud();
-    document.addEventListener("click", () => {
-        updateBgMusic();
-        playPopSound();
-    }, { once: true });
+    document.addEventListener("pointerdown", startMusicAfterInteraction);
+    document.addEventListener("keydown", startMusicAfterInteraction);
+    document.addEventListener("touchstart", startMusicAfterInteraction);
 };
 
 // ======================================================
@@ -2513,7 +4265,8 @@ function syncCustomLessons() {
             title: `${customLesson.name} Lesson`,
             letter: "",
             word: item.name,
-            image: item.image
+            image: item.image,
+            audio: item.audio || ""
         }));
         customLessonMetadata[category] = customLesson;
     });
@@ -2528,21 +4281,63 @@ function renderCustomLessonGrid() {
         .forEach(([category, customLesson]) => {
         const card = document.createElement("div");
         card.className = "lesson-card custom-lesson-card";
+        card.dataset.lessonCategory = category;
+        card.tabIndex = 0;
+        card.setAttribute("role", "button");
+        card.setAttribute("aria-label", `Select ${customLesson.name} lesson`);
         card.innerHTML = `
             <img alt="">
             <h3></h3>
-            <button class="lesson-btn" type="button">Start</button>
             <button class="quiz-menu-btn" data-quiz-category="${category}" type="button" disabled>Quiz 🔒</button>`;
         card.querySelector("img").src = customLesson.cover;
         card.querySelector("img").alt = `${customLesson.name} lesson cover`;
         card.querySelector("h3").textContent = customLesson.name;
-        card.querySelector(".lesson-btn").addEventListener("click", () => openLesson(category));
-        card.querySelector(".quiz-menu-btn").addEventListener("click", () => openCategoryQuiz(category));
+        bindLessonCard(card);
         customLessonGrid.appendChild(card);
         });
 }
 
 syncCustomLessons();
+
+function bindLessonCard(card) {
+    const category = card.dataset.lessonCategory;
+    if (!category) return;
+    const select = () => selectLesson(category, card);
+    card.addEventListener("click", event => {
+        if (event.target.closest(".quiz-menu-btn")) return;
+        select();
+    });
+    card.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            select();
+        }
+    });
+    card.querySelector(".quiz-menu-btn")?.addEventListener("click", event => {
+        event.stopPropagation();
+        openCategoryQuiz(category);
+    });
+}
+
+function selectLesson(category, card) {
+    selectedLessonCategory = category;
+    document.querySelectorAll(".lesson-card[data-lesson-category]").forEach(entry => {
+        const isSelected = entry === card || entry.dataset.lessonCategory === category;
+        entry.classList.toggle("selected", isSelected);
+        entry.setAttribute("aria-pressed", String(isSelected));
+    });
+    if (menuStartBtn) {
+        menuStartBtn.disabled = false;
+        menuStartBtn.textContent = `Start ${translateLessonTitle(category)}`;
+    }
+}
+
+document.querySelectorAll(".lesson-card[data-lesson-category]").forEach(bindLessonCard);
+if (menuStartBtn) {
+    menuStartBtn.addEventListener("click", () => {
+        if (selectedLessonCategory) openLesson(selectedLessonCategory);
+    });
+}
 
 const translationMap = {
     One: "Isa",
@@ -2599,10 +4394,18 @@ function translateWord(word) {
 }
 
 function translateLessonTitle(category) {
+    const customLesson = customLessonMetadata[category];
+    if (customLesson?.name) {
+        return customLesson.name;
+    }
     if (selectedLanguage === 'tl') {
         return titleTranslations[category] || lessons[category][0].title;
     }
     return lessons[category][0].title;
+}
+
+function getActivityLessonName(category) {
+    return translateLessonTitle(category).replace(/\s+lesson$/i, "");
 }
 
 function translateLessonProgress(count, total) {
@@ -2816,28 +4619,28 @@ const VOICE_ANSWER_ALIASES = {
     Ten: ["ten", "10", "tin", "sampu", "diyis", "diez", "dies"],
 
     // Colors
-    Red: ["red", "read", "rad", "pula", "pulang", "rojo"],
-    Blue: ["blue", "blu", "bloo", "asul", "azul", "bughaw"],
-    Yellow: ["yellow", "yelo", "yellow", "dilaw", "dilaw", "amarillo"],
-    Green: ["green", "grin", "berde", "verde", "lunti"],
+    Red: ["red", "read", "rid", "ed", "pula", "wed"],
+    Blue: ["blue", "blu", "bloo", "asul", "azul", "bughaw", "mlue"],
+    Yellow: ["yellow", "yelo", "yello", "dilaw", "elow", "yillow"],
+    Green: ["green", "grin", "berde", "verde", "gin","jin"],
     // Orange already listed above
-    Purple: ["purple", "purpl", "purpel", "ube", "lila", "violet", "morado"],
-    Black: ["black", "blak", "itim", "negro", "dark"],
-    White: ["white", "wite", "puti", "blanco", "blanc"],
-    Brown: ["brown", "braun", "kayumanggi", "kayumangi", "tsokolate", "chocolate"],
-    Pink: ["pink", "pinck", "rosas", "rosa", "pinkish"],
+    Purple: ["purple", "purpl", "purpel", "ube", "lila", "violet", "puple"],
+    Black: ["black", "blak", "itim", "bla", "back"],
+    White: ["white", "wite", "puti", "way", "wayt"],
+    Brown: ["brown", "braun", "bawn", "brow", "ban", "bron"],
+    Pink: ["pink", "pinck", "pik", "pin", "ink"],
 
     // Shapes
     Circle: ["circle", "sirkel", "circl", "bilog", "round", "circulo"],
     Square: ["square", "skwer", "parisukat", "kwadrado", "cuadro"],
-    Triangle: ["triangle", "trayangle", "triangel", "tatsulok", "triangulo"],
-    Rectangle: ["rectangle", "rektangle", "parihaba", "rektanggulo", "rectangulo"],
-    Star: ["star", "ster", "bituin", "bituing", "estrella"],
-    Heart: ["heart", "hart", "puso", "corazon"],
-    Pentagon: ["pentagon", "pentagono", "5 sides", "five sides"],
-    Hexagon: ["hexagon", "heksagon", "hexagono", "6 sides", "six sides"],
-    Diamond: ["diamond", "daymond", "diyamante", "rhombus", "diamante"],
-    Oval: ["oval", "ovel", "obalo", "ellipse", "egg shape", "egg"]
+    Triangle: ["triangle", "trayangle", "triangel", "tatsulok", "tayanggel"],
+    Rectangle: ["rectangle", "rektangle", "tangle", "rektanggle", "rec angle"],
+    Star: ["star", "ster", "satar", "istar", "stars"],
+    Heart: ["heart", "hart", "puso", "hat"],
+    Pentagon: ["pentagon", "pentagon", "entagon", "pen agon"],
+    Hexagon: ["hexagon", "heksagon", "hexagono", "hesagon", "exagon"],
+    Diamond: ["diamond", "daymond", "diyamante", "aimon", "dayamon"],
+    Oval: ["oval", "ovel", "obalo", "obal", "bal", "ubal"]
 };
 
 function normalizeSpokenText(text) {
@@ -3103,6 +4906,7 @@ async function startLessonVoiceListening() {
     }
 
     speechSynthesis.cancel();
+    stopUploadedAudio();
     stopLessonVoiceListening(false);
 
     const recognition = new SpeechRecognitionAPI();
@@ -3216,6 +5020,7 @@ async function startLessonVoiceListening() {
 
 function speakLessonText() {
     speechSynthesis.cancel();
+    stopUploadedAudio();
     stopLessonVoiceListening();
 
     const speechText = getLessonSpeechText();
@@ -3228,11 +5033,17 @@ function speakLessonText() {
 
 function loadLesson() {
 
+    stopUploadedAudio();
     const lesson = lessons[currentCategory][currentLesson];
     const localizedWord = translateWord(lesson.word);
 
     lessonTitle.textContent = translateLessonTitle(currentCategory);
     lessonImage.src = lesson.image;
+    if (lessonAudioBtn) {
+        lessonAudioBtn.hidden = !lesson.audio;
+        lessonAudioBtn.disabled = !lesson.audio;
+        lessonAudioBtn.title = lesson.audio ? `Play ${lesson.word} audio` : "No audio added for this item";
+    }
     lessonLetter.classList.remove("lesson-prompt-text", "lesson-color-name", "lesson-shape-name");
 
     if (currentCategory === "alphabet") {
@@ -3275,8 +5086,6 @@ let selectedLanguage = 'en';
 function openLesson(category){
     currentCategory = category;
     currentLesson = 0;
-    const lessonTitle = translateLessonTitle(category);
-    recordStudentActivity(`Opened ${lessonTitle}`);
     openLessonContinue(category);
 }
 
@@ -3313,15 +5122,10 @@ function openCategoryQuiz(category) {
     if (!getCompletedLessonCategories()[category]) return;
     currentCategory = category;
     quizCategory = category;
-    recordStudentActivity(`Started ${translateLessonTitle(category)} quiz`);
+    recordStudentActivity(`Opened ${getActivityLessonName(category)} quiz`);
     showScreen(quizScreen);
     initializeQuiz();
 }
-
-lessonButtons[0].onclick = () => openLesson("alphabet");
-lessonButtons[1].onclick = () => openLesson("numbers");
-lessonButtons[2].onclick = () => openLesson("colors");
-lessonButtons[3].onclick = () => openLesson("shapes");
 
 quizMenuButtons.forEach(button => {
     button.addEventListener("click", () => openCategoryQuiz(button.dataset.quizCategory));
@@ -3371,16 +5175,59 @@ previousLesson.onclick = () => {
 };
 
 // -------------------------------
-// BACK TO MENU
+// BACK TO LESSON MENU
 // -------------------------------
 
 lessonHomeBtn.onclick = () => {
-
     speechSynthesis.cancel();
     stopLessonVoiceListening();
+    stopUploadedAudio();
     showScreen(menuScreen);
-
 };
+
+function openLessonHomeConfirmation(triggerButton, options = {}) {
+    if (!lessonHomeConfirmModal) {
+        console.error("Home confirmation dialog is not available.");
+        showNotification("Unable to open the Home confirmation. Please refresh the page.");
+        return;
+    }
+    lessonHomeConfirmationTrigger = triggerButton;
+    lessonHomeConfirmationAction = options.action || (() => {
+        speechSynthesis.cancel();
+        stopLessonVoiceListening();
+        showScreen(homeScreen);
+    });
+    if (lessonHomeConfirmTitle) lessonHomeConfirmTitle.textContent = options.title || "Are you sure?";
+    if (lessonHomeConfirmMessage) {
+        lessonHomeConfirmMessage.textContent = options.message || "Do you want to leave the lesson menu and go back to Home?";
+    }
+    if (lessonHomeCancelBtn) lessonHomeCancelBtn.textContent = options.cancelText || "Stay Here";
+    if (lessonHomeConfirmBtn) lessonHomeConfirmBtn.textContent = options.confirmText || "Yes, Go Home";
+    lessonHomeConfirmModal.hidden = false;
+    lessonHomeCancelBtn?.focus();
+}
+
+function closeLessonHomeConfirmation(restoreFocus = true) {
+    if (lessonHomeConfirmModal) lessonHomeConfirmModal.hidden = true;
+    if (restoreFocus) lessonHomeConfirmationTrigger?.focus();
+    lessonHomeConfirmationTrigger = null;
+    lessonHomeConfirmationAction = null;
+}
+
+lessonHomeCancelBtn?.addEventListener("click", closeLessonHomeConfirmation);
+lessonHomeConfirmModal?.addEventListener("click", event => {
+    if (event.target === lessonHomeConfirmModal) closeLessonHomeConfirmation();
+});
+lessonHomeConfirmBtn?.addEventListener("click", () => {
+    const action = lessonHomeConfirmationAction;
+    closeLessonHomeConfirmation(false);
+    action?.();
+});
+document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && lessonHomeConfirmModal && !lessonHomeConfirmModal.hidden) {
+        closeLessonHomeConfirmation();
+    }
+});
 
 // ======================================================
 // PART 2D-1
@@ -3421,6 +5268,12 @@ loadLesson = function () {
 
     lessonContainerAnimation();
 
+    const lessonItem = lessons[currentCategory]?.[currentLesson];
+    recordStudentActivity(`Opened ${getActivityLessonName(currentCategory)} lesson`, {
+        kind: "lesson",
+        category: currentCategory,
+        item: lessonItem?.word || ""
+    });
     originalLoadLesson();
 
     updateLessonButtons();
@@ -3462,6 +5315,19 @@ lessonImage.onerror = function () {
 voiceBtn.onclick = () => {
     speakLessonText();
 };
+
+if (lessonAudioBtn) {
+    lessonAudioBtn.addEventListener("click", () => {
+        const lesson = lessons[currentCategory]?.[currentLesson];
+        if (!lesson?.audio) return;
+        stopLessonVoiceListening();
+        speechSynthesis.cancel();
+        playUploadedAudio(lesson.audio).catch(error => {
+            console.error("Unable to play lesson audio.", error);
+            setLessonVoiceStatus("This audio could not be played. Try another audio file.", "wrong");
+        });
+    });
+}
 
 if (lessonSpeakBtn) {
     lessonSpeakBtn.addEventListener("click", () => {
@@ -3581,6 +5447,8 @@ const questionNumberEl = document.getElementById("questionNumber");
 const quizQuestionEl = document.getElementById("quizQuestion");
 const quizProgressFillEl = document.getElementById("quizProgressFill");
 const quizVoiceBtn = document.getElementById("quizVoiceBtn");
+const quizVoiceInteractionBtn = document.getElementById("quizVoiceInteractionBtn");
+const quizVoiceStatusEl = document.getElementById("quizVoiceStatus");
 const quizUnlockRuleEl = document.getElementById("quizUnlockRule");
 const quizUnlockProgressEl = document.getElementById("quizUnlockProgress");
 const answerButtons = document.querySelectorAll(".answer-card");
@@ -3658,12 +5526,304 @@ difficultyButtons.forEach(btn => {
 let quizCategory = "";
 let quizLessonIndex = 0; // Track which lesson the quiz is for (for adaptive learning)
 let quizQuestions = [];
+let currentQuizAttemptId = "";
 let currentQuizIndex = 0;
 let quizScore = 0;
 let quizAnswered = false;
 let quizComplete = false;
 let selectedQuizChoice = null;
 let quizStageState = null;
+let quizStageTransitioning = false;
+let quizVoiceModeEnabled = false;
+let quizVoiceSession = 0;
+let quizVoiceRecognition = null;
+let quizVoiceTriedChoices = new Set();
+
+const QUIZ_YES_DATASET = ["yes", "ye", "yis", "is", "hes", "yup", "oo", "opo"];
+const QUIZ_NO_DATASET = ["no", "noh", "nu", "nuh", "nah", "nope", "hindi", "indi"];
+const QUIZ_CLEAR_YES_WORDS = new Set(["yes", "yup", "oo", "opo"]);
+const QUIZ_CLEAR_NO_WORDS = new Set(["no", "nope", "hindi", "indi"]);
+
+function setQuizVoiceStatus(message) {
+    if (quizVoiceStatusEl) quizVoiceStatusEl.textContent = message;
+}
+
+function setQuizVoiceButtonState(isListening = false) {
+    if (!quizVoiceInteractionBtn) return;
+    quizVoiceInteractionBtn.classList.toggle("is-listening", isListening);
+    quizVoiceInteractionBtn.setAttribute("aria-pressed", String(quizVoiceModeEnabled));
+    quizVoiceInteractionBtn.textContent = quizVoiceModeEnabled
+        ? (isListening ? "🎤 Listening..." : "🛑 Stop Voice")
+        : "🎤 Answer by Voice";
+}
+
+function stopQuizVoiceRecognition() {
+    if (!quizVoiceRecognition) return;
+    const recognition = quizVoiceRecognition;
+    quizVoiceRecognition = null;
+    recognition.onresult = null;
+    recognition.onerror = null;
+    recognition.onend = null;
+    try {
+        recognition.stop();
+    } catch (error) {
+        if (error?.name !== "InvalidStateError") throw error;
+    }
+}
+
+function stopQuizVoiceInteraction(cancelSpeech = true) {
+    quizVoiceModeEnabled = false;
+    quizVoiceSession += 1;
+    stopQuizVoiceRecognition();
+    quizVoiceTriedChoices.clear();
+    selectedQuizChoice = null;
+    answerButtons.forEach(button => button.classList.remove("selected"));
+    if (cancelSpeech && window.speechSynthesis) speechSynthesis.cancel();
+    setQuizVoiceButtonState(false);
+    if (quizVoiceStatusEl) quizVoiceStatusEl.textContent = "";
+}
+
+function classifyQuizVoiceResponse(transcripts) {
+    let heardYes = false;
+    let heardNo = false;
+    const yesWords = new Set(QUIZ_YES_DATASET);
+    const noWords = new Set(QUIZ_NO_DATASET);
+
+    for (const transcript of transcripts) {
+        const normalized = normalizeSpokenText(transcript);
+        if (!normalized) continue;
+
+        const tokens = normalized.split(" ");
+        if (yesWords.has(normalized) || tokens.some(token => QUIZ_CLEAR_YES_WORDS.has(token))) {
+            heardYes = true;
+        }
+        if (noWords.has(normalized) || tokens.some(token => QUIZ_CLEAR_NO_WORDS.has(token))) {
+            heardNo = true;
+        }
+    }
+
+    if (heardYes === heardNo) return null;
+    return heardYes ? "yes" : "no";
+}
+
+function getQuizVoiceCandidatePrompt(choice) {
+    const word = selectedLanguage === "tl" ? translateWord(choice) : choice;
+    if (selectedLanguage === "tl") {
+        if (quizCategory === "colors") return `Ito ba ang kulay na ${word}?`;
+        if (quizCategory === "shapes") return `Ito ba ang hugis na ${word}?`;
+        if (quizCategory === "numbers") return `Ito ba ang numerong ${word}?`;
+        return `Ito ba ang sagot na ${word}?`;
+    }
+    if (quizCategory === "colors") return `Is this color ${word}?`;
+    if (quizCategory === "shapes") return `Is this shape ${word}?`;
+    if (quizCategory === "numbers") return `Is this number ${word}?`;
+    return `Is ${word} the answer?`;
+}
+
+function isQuizAnswerCorrect(selected, correct) {
+    const normalizeAnswer = value => String(value ?? "").trim().toLowerCase();
+    const selectedNumber = Number(normalizeAnswer(selected));
+    const correctNumber = Number(normalizeAnswer(correct));
+    const isNumericMatch = Number.isFinite(selectedNumber)
+        && Number.isFinite(correctNumber)
+        && selectedNumber === correctNumber;
+    return normalizeAnswer(selected) === normalizeAnswer(correct) || isNumericMatch;
+}
+
+function askNextQuizVoiceChoice(session) {
+    if (session !== quizVoiceSession || !quizVoiceModeEnabled || quizAnswered || quizComplete) return;
+
+    const choices = [...answerButtons].filter(button =>
+        !button.hidden && !button.disabled && !button.classList.contains("unused") && button.dataset.choice
+    );
+    if (!choices.length) {
+        stopQuizVoiceInteraction();
+        showNotification("No answer choices are available for voice interaction.", 3500);
+        return;
+    }
+
+    let button = choices.find(choice => !quizVoiceTriedChoices.has(choice.dataset.choice));
+    if (!button) {
+        quizVoiceTriedChoices.clear();
+        const repeatMessage = selectedLanguage === "tl"
+            ? "Subukan natin ulit ang mga pagpipilian."
+            : "Let's try the choices again.";
+        setQuizVoiceStatus(repeatMessage);
+        speakText(repeatMessage).then(() => askNextQuizVoiceChoice(session));
+        return;
+    }
+
+    selectedQuizChoice = button.dataset.choice;
+    answerButtons.forEach(choice => choice.classList.toggle("selected", choice === button));
+    const prompt = getQuizVoiceCandidatePrompt(selectedQuizChoice);
+    setQuizVoiceButtonState(false);
+    stopUploadedAudio();
+    if (quizVoiceStatusEl) {
+        quizVoiceStatusEl.textContent = selectedLanguage === "tl"
+            ? `Makinig at sumagot ng oo o hindi: ${prompt}`
+            : `Listen and say yes or no: ${prompt}`;
+    }
+
+    speakText(prompt, { timeout: 8000 }).then(() => {
+        if (session === quizVoiceSession && quizVoiceModeEnabled) {
+            listenForQuizVoiceResponse(session, button);
+        }
+    });
+}
+
+function retryQuizVoiceResponse(session, button, repeatPrompt = false) {
+    if (session !== quizVoiceSession || !quizVoiceModeEnabled) return;
+    const prompt = selectedLanguage === "tl"
+        ? "Sabihin ang oo o hindi."
+        : "Please say yes or no.";
+    const listen = () => {
+        if (session === quizVoiceSession && quizVoiceModeEnabled) {
+            listenForQuizVoiceResponse(session, button);
+        }
+    };
+    if (repeatPrompt) {
+        setQuizVoiceStatus(prompt);
+        speakText(prompt).then(listen);
+    } else {
+        listen();
+    }
+}
+
+function listenForQuizVoiceResponse(session, button) {
+    if (session !== quizVoiceSession || !quizVoiceModeEnabled) return;
+    if (!SpeechRecognitionAPI) {
+        stopQuizVoiceInteraction();
+        showNotification(getMicrophoneBlockedMessage(), 5000);
+        return;
+    }
+
+    const recognition = new SpeechRecognitionAPI();
+    quizVoiceRecognition = recognition;
+    recognition.lang = selectedLanguage === "tl" ? "fil-PH" : "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 5;
+    recognition.continuous = false;
+    let resultHandled = false;
+    let errorHandled = false;
+
+    setQuizVoiceButtonState(true);
+    if (quizVoiceStatusEl) {
+        quizVoiceStatusEl.textContent = selectedLanguage === "tl"
+            ? "Nakikinig... sabihin ang oo o hindi."
+            : "Listening... say yes or no.";
+    }
+
+    recognition.onresult = event => {
+        if (session !== quizVoiceSession || recognition !== quizVoiceRecognition) return;
+        resultHandled = true;
+        const transcripts = [];
+        for (let index = event.resultIndex; index < event.results.length; index++) {
+            for (let alternative = 0; alternative < event.results[index].length; alternative++) {
+                transcripts.push(event.results[index][alternative].transcript);
+            }
+        }
+        const response = classifyQuizVoiceResponse(transcripts);
+        stopQuizVoiceRecognition();
+        setQuizVoiceButtonState(false);
+
+        if (!response) {
+            retryQuizVoiceResponse(session, button, true);
+            return;
+        }
+
+        quizVoiceTriedChoices.add(button.dataset.choice);
+        if (response === "yes" && isQuizAnswerCorrect(
+            button.dataset.choice,
+            quizQuestions[currentQuizIndex]?.correct
+        )) {
+            selectQuizAnswer(button);
+            return;
+        }
+
+        selectedQuizChoice = null;
+        button.classList.remove("selected");
+        if (response === "yes") {
+            const message = selectedLanguage === "tl"
+                ? "Subukan natin ang ibang sagot."
+                : "Let's try another answer.";
+            setQuizVoiceStatus(message);
+            speakText(message).then(() => askNextQuizVoiceChoice(session));
+        } else {
+            askNextQuizVoiceChoice(session);
+        }
+    };
+
+    recognition.onerror = event => {
+        if (session !== quizVoiceSession || recognition !== quizVoiceRecognition) return;
+        errorHandled = true;
+        if (event.error === "no-speech" || event.error === "aborted") return;
+
+        stopQuizVoiceRecognition();
+        stopQuizVoiceInteraction();
+        const message = getSpeechRecognitionErrorMessage(event.error);
+        if (quizVoiceStatusEl) quizVoiceStatusEl.textContent = message;
+        showNotification(message, event.error === "not-allowed" ? 5000 : 3500);
+    };
+
+    recognition.onend = () => {
+        if (session !== quizVoiceSession || recognition !== quizVoiceRecognition) return;
+        quizVoiceRecognition = null;
+        if (resultHandled || !quizVoiceModeEnabled) return;
+        if (errorHandled) {
+            retryQuizVoiceResponse(session, button, true);
+        } else {
+            retryQuizVoiceResponse(session, button, false);
+        }
+    };
+
+    try {
+        recognition.start();
+    } catch (error) {
+        stopQuizVoiceInteraction();
+        const message = getSpeechRecognitionErrorMessage(error?.name === "InvalidStateError" ? "aborted" : "unknown");
+        if (quizVoiceStatusEl) quizVoiceStatusEl.textContent = message;
+        showNotification(message, 3500);
+    }
+}
+
+async function startQuizVoiceInteraction() {
+    if (quizVoiceModeEnabled) {
+        stopQuizVoiceInteraction();
+        return;
+    }
+    if (!isMicrophoneEnabled()) {
+        const message = selectedLanguage === "tl"
+            ? "Naka-off ang mikropono. Buksan ito sa Settings."
+            : "Microphone is off. Turn it on in Settings.";
+        showNotification(message, 3500);
+        return;
+    }
+    if (!canUseVoiceFeatures()) {
+        showNotification(getMicrophoneBlockedMessage(), 5000);
+        return;
+    }
+
+    quizVoiceModeEnabled = true;
+    quizVoiceTriedChoices.clear();
+    const session = ++quizVoiceSession;
+    setQuizVoiceButtonState(false);
+    if (quizVoiceStatusEl) {
+        quizVoiceStatusEl.textContent = selectedLanguage === "tl"
+            ? "Inihahanda ang mikropono..."
+            : "Preparing the microphone...";
+    }
+    const microphoneReady = await ensureMicrophoneAccess({ silent: false, notifySuccess: false });
+    if (session !== quizVoiceSession || !quizVoiceModeEnabled) return;
+    if (!microphoneReady) {
+        stopQuizVoiceInteraction();
+        const message = getMicrophoneBlockedMessage();
+        if (quizVoiceStatusEl) quizVoiceStatusEl.textContent = message;
+        return;
+    }
+    askNextQuizVoiceChoice(session);
+}
+
+quizVoiceInteractionBtn?.addEventListener("click", startQuizVoiceInteraction);
 
 function updateQuizStarDisplay(animate = false, gained = 0) {
     if (quizStarCountEl) {
@@ -3789,6 +5949,7 @@ function finishLesson() {
 
     setTimeout(() => {
 
+        recordStudentActivity(`Finished ${getActivityLessonName(quizCategory)} lesson and opened its quiz`);
         showScreen(quizScreen);
 
         initializeQuiz();
@@ -3825,6 +5986,7 @@ function initializeQuiz(){
 
     // Always start at Easy for a new quiz session
     quizDifficulty = 'easy';
+    currentQuizAttemptId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     applyQuizDifficultyUI();
 
@@ -3837,13 +5999,14 @@ function initializeQuiz(){
     quizAnswered = false;
     quizComplete = false;
     selectedQuizChoice = null;
+    quizStageTransitioning = false;
     quizProgressFillEl.style.width = "0%";
     updateQuizStarDisplay(false);
 
     quizTitle.textContent =
         selectedLanguage === 'tl'
-            ? quizTitleTranslations[quizCategory] || (quizCategory.charAt(0).toUpperCase() + quizCategory.slice(1) + " Quiz")
-            : (quizCategory.charAt(0).toUpperCase() + quizCategory.slice(1) + " Quiz");
+            ? (quizTitleTranslations[quizCategory] || `${translateLessonTitle(quizCategory)} Quiz`)
+            : `${translateLessonTitle(quizCategory)} Quiz`;
 
     // Sequential stage progression: Easy (5) -> Normal (10) -> Hard (15)
     // Must get every answer correct in a stage to unlock the next.
@@ -4025,21 +6188,18 @@ function generateQuizQuestions(category, difficulty, overrideCount){
     const cfg = QUIZ_DIFFICULTY[difficulty] || QUIZ_DIFFICULTY.easy;
     const questionCount = Math.max(1, overrideCount || cfg.questionCount);
 
-    // Shuffle, then reuse the pool if the category has fewer items than needed
-    // (e.g. numbers/colors/shapes have 10 items but Hard needs 15 questions).
-    const shuffledPool = () => pool
-        .map(item => ({item, sort: Math.random()}))
-        .sort((a, b) => a.sort - b.sort)
-        .map(entry => entry.item);
-
+    // Shuffle each pass and reuse items when a lesson has fewer items than
+    // the required stage count (for example, 10 items for 15 Hard questions).
     const selected = customItems.slice(0, questionCount);
-    while (selected.length < questionCount) {
-        const batch = shuffledPool();
-        for (const item of batch) {
-            if (selected.length >= questionCount) break;
-            if (!selected.includes(item)) selected.push(item);
+    if (pool.length) {
+        while (selected.length < questionCount) {
+            const batch = pool
+                .map(item => ({ item, sort: Math.random() }))
+                .sort((a, b) => a.sort - b.sort)
+                .map(entry => entry.item);
+            const remaining = questionCount - selected.length;
+            selected.push(...batch.slice(0, remaining));
         }
-        if (!batch.length) break;
     }
 
     return selected.map((item, idx) => {
@@ -4048,7 +6208,8 @@ function generateQuizQuestions(category, difficulty, overrideCount){
                 prompt: selectedLanguage === "tl" ? item.promptTL : item.promptEN,
                 correct: item.word,
                 choices: buildCustomQuizChoices(item, category, difficulty),
-                choiceImages: item.choiceImages || {}
+                choiceImages: item.choiceImages || {},
+                audio: item.audio || ""
             };
         }
 
@@ -4117,7 +6278,7 @@ function generateQuizQuestions(category, difficulty, overrideCount){
 }
 
 function buildCustomQuizChoices(item, category, difficulty) {
-    const targetCount = { easy: 3, medium: 6, hard: 10 }[difficulty] || 3;
+    const targetCount = 3;
     const choices = [...new Set(item.choices || [])];
     const fallbackChoices = (lessons[category] || [])
         .map(lesson => lesson.word)
@@ -4125,6 +6286,14 @@ function buildCustomQuizChoices(item, category, difficulty) {
 
     while (choices.length < targetCount && fallbackChoices.length) {
         choices.push(fallbackChoices.shift());
+    }
+
+    if (choices.length < targetCount) {
+        Object.values(lessons).flat().forEach(lesson => {
+            if (choices.length < targetCount && lesson.word && !choices.includes(lesson.word)) {
+                choices.push(lesson.word);
+            }
+        });
     }
 
     return choices.slice(0, targetCount).sort(() => Math.random() - 0.5);
@@ -4135,15 +6304,7 @@ function buildQuizChoices(correctWord, items, difficulty){
     const allWords = items.map(item => item.word);
     const distractorsAll = allWords.filter(word => word !== correctWord);
 
-    // Required choice counts per difficulty:
-    // easy => 3, medium => 6, hard => 10
-    const choiceTargetByDifficulty = {
-        easy: 3,
-        medium: 6,
-        hard: 10
-    };
-
-    const requiredChoiceCount = choiceTargetByDifficulty[difficulty] || choiceTargetByDifficulty.easy;
+    const requiredChoiceCount = 3;
 
     // Use a larger distractor sample on harder difficulties
     const fraction = difficulty === 'easy' ? 0.55 : (difficulty === 'medium' ? 0.75 : 1);
@@ -4187,9 +6348,15 @@ function buildQuizChoices(correctWord, items, difficulty){
 
 function loadQuizQuestion(){
 
+    quizVoiceSession += 1;
+    stopQuizVoiceRecognition();
+    quizVoiceTriedChoices.clear();
+    stopUploadedAudio();
     const question = quizQuestions[currentQuizIndex];
 
     quizQuestionEl.textContent = question.prompt;
+    quizVoiceBtn.textContent = question.audio ? "🔊 Play Audio" : "🔊 Read Question";
+    quizVoiceBtn.title = question.audio ? "Play the teacher's recorded audio" : "Read the question aloud";
 
     const displayIndex = currentQuizIndex + 1;
     const totalQuestions = quizQuestions.length;
@@ -4209,16 +6376,7 @@ function loadQuizQuestion(){
     }
 
     // Enable only the required number of choice buttons per difficulty
-    const requiredChoiceCountByDifficulty = {
-        easy: 3,
-        medium: 6,
-        hard: 10
-    };
-
-    const requiredChoiceCount = Math.min(
-        requiredChoiceCountByDifficulty[quizDifficulty] || requiredChoiceCountByDifficulty.easy,
-        question.choices.length
-    );
+    const requiredChoiceCount = Math.min(3, question.choices.length);
 
     answerButtons.forEach((button, index) => {
         const isUsed = index < requiredChoiceCount;
@@ -4252,8 +6410,11 @@ function loadQuizQuestion(){
     });
 
     selectedQuizChoice = null;
-
-    speakQuizQuestion();
+    if (quizVoiceModeEnabled) {
+        askNextQuizVoiceChoice(quizVoiceSession);
+    } else {
+        speakQuizQuestion();
+    }
 }
 
 function selectQuizAnswer(button){
@@ -4261,6 +6422,11 @@ function selectQuizAnswer(button){
     if (quizAnswered || quizComplete) return;
     if (button.hidden || button.classList.contains("unused") || !button.dataset.choice) return;
 
+    if (quizVoiceModeEnabled) {
+        quizVoiceSession += 1;
+        stopQuizVoiceRecognition();
+        if (window.speechSynthesis) speechSynthesis.cancel();
+    }
     selectedQuizChoice = button.dataset.choice;
 
     answerButtons.forEach(btn => {
@@ -4274,15 +6440,22 @@ function confirmQuizAnswer(){
     if (quizAnswered || quizComplete || !selectedQuizChoice) return;
 
     quizAnswered = true;
+    stopUploadedAudio();
     const selected = selectedQuizChoice;
     const correct = quizQuestions[currentQuizIndex].correct;
-    const normalizeAnswer = value => String(value ?? "").trim().toLowerCase();
-    const selectedNumber = Number(normalizeAnswer(selected));
-    const correctNumber = Number(normalizeAnswer(correct));
-    const isNumericMatch = Number.isFinite(selectedNumber)
-        && Number.isFinite(correctNumber)
-        && selectedNumber === correctNumber;
-    const isCorrect = normalizeAnswer(selected) === normalizeAnswer(correct) || isNumericMatch;
+    const isCorrect = isQuizAnswerCorrect(selected, correct);
+    if (!isCorrect) {
+        const question = quizQuestions[currentQuizIndex];
+        recordStudentActivity(`Incorrect answer in ${getActivityLessonName(quizCategory || currentCategory)} quiz`, {
+            kind: "quiz-mistake",
+            attemptId: currentQuizAttemptId,
+            questionIndex: currentQuizIndex,
+            category: quizCategory || currentCategory,
+            item: String(correct ?? ""),
+            selected: String(selected ?? ""),
+            prompt: String(question.prompt || question.promptEN || question.promptTL || "")
+        });
+    }
 
     // Alternate correct feedback prompts so it feels more interactive
     if (typeof quizCorrectFeedbackToggle === 'undefined') {
@@ -4386,7 +6559,13 @@ function getNextDifficultyAfterCompletion(currentDifficulty, stageScore, questio
 const ADAPTIVE_LEARNING_THRESHOLD = 80;
 
 function getNextLessonCategory(currentCategory) {
-    const categoryOrder = ['alphabet', 'numbers', 'colors', 'shapes'];
+    const categoryOrder = [
+        'alphabet',
+        'numbers',
+        'colors',
+        'shapes',
+        ...Object.keys(customLessonMetadata)
+    ];
     const currentIndex = categoryOrder.indexOf(currentCategory);
     
     if (currentIndex === -1 || currentIndex >= categoryOrder.length - 1) {
@@ -4408,23 +6587,22 @@ function getNextLessonPath(category, lessonIndex) {
         return { category: nextCategory, lessonIndex: 0 };
     }
     
-    return null; // Completed all lessons
+    return { category: "alphabet", lessonIndex: 0 };
 }
 
 function getAdaptiveLessonPath(category, lessonIndex, accuracy) {
-    if (accuracy < ADAPTIVE_LEARNING_THRESHOLD) {
-        const nextCategory = getNextLessonCategory(category);
-        return nextCategory ? { category: nextCategory, lessonIndex: 0 } : null;
+    if (accuracy >= ADAPTIVE_LEARNING_THRESHOLD) {
+        return { category, lessonIndex };
     }
 
     return getNextLessonPath(category, lessonIndex);
 }
 
 function calculateQuizAccuracy(score, total) {
-    return total > 0 ? Math.round((score / total) * 100) : 0;
+    return total > 0 ? (score / total) * 100 : 0;
 }
 
-function shouldMoveToNextCategory(accuracy) {
+function shouldAdvanceToNextLesson(accuracy) {
     return accuracy < ADAPTIVE_LEARNING_THRESHOLD;
 }
 
@@ -4442,29 +6620,22 @@ function autoProgressToNextLesson(currentCat, currentLessonIdx, accuracy) {
 }
 
 function finishQuiz(){
+    if (quizStageTransitioning || quizComplete) return;
 
     const stageScore = quizStageState ? (quizStageState.stageScore || 0) : quizScore;
+    const currentStageIndex = quizStageState ? quizStageState.stageIndex : -1;
     const stageTotal = quizStageState
-        ? quizStageState.stageConfig[quizStageState.stageIndex].questionCount
+        ? quizStageState.stageConfig[currentStageIndex].questionCount
         : quizQuestions.length;
-    const nextDifficulty = getNextDifficultyAfterCompletion(quizDifficulty, stageScore, stageTotal);
-    const difficultyStageIndex = {
-        easy: 0,
-        medium: 1,
-        hard: 2
-    };
-    const currentStageIndex = difficultyStageIndex[quizDifficulty];
-    const nextStageIndex = Number.isInteger(currentStageIndex)
-        ? currentStageIndex + 1
-        : -1;
+    const nextStageIndex = currentStageIndex + 1;
     const canAdvance =
-        nextDifficulty !== 'end' &&
         quizStageState &&
-        nextStageIndex >= 0 &&
+        stageScore >= stageTotal &&
         nextStageIndex < quizStageState.stageConfig.length;
 
     // Perfect stage score required to unlock Normal or Hard.
     if (canAdvance) {
+        quizStageTransitioning = true;
 
         quizStageState.stageIndex = nextStageIndex;
         quizStageState.stageScore = 0;
@@ -4486,21 +6657,30 @@ function finishQuiz(){
             quizStageState.stageConfig[quizStageState.stageIndex].questionCount
         );
 
+        if (!quizQuestions.length) {
+            stopQuizVoiceInteraction();
+            quizStageTransitioning = false;
+            quizComplete = true;
+            quizQuestionEl.textContent = "No questions available for this level.";
+            return;
+        }
+
         const totalQuestions = quizQuestions.length;
         questionNumberEl.textContent = selectedLanguage === 'tl'
             ? `Tanong 1 ng ${totalQuestions}`
             : `Question 1 of ${totalQuestions}`;
 
         const unlockMessage = selectedLanguage === 'tl'
-            ? (nextDifficulty === 'medium'
+            ? (nextStageIndex === 1
                 ? "Perpekto! Susunod: Normal level!"
                 : "Perpekto! Susunod: Hard level!")
-            : (nextDifficulty === 'medium'
+            : (nextStageIndex === 1
                 ? "Perfect! Next up: Normal level!"
                 : "Perfect! Next up: Hard level!");
         showNotification(unlockMessage);
 
         loadQuizQuestion();
+        quizStageTransitioning = false;
         return;
 
     }
@@ -4512,6 +6692,7 @@ function finishQuiz(){
             .reduce((sum, stage) => sum + stage.questionCount, 0)
         : stageTotal;
 
+    stopQuizVoiceInteraction();
     quizComplete = true;
     quizProgressFillEl.style.width = "100%";
     quizQuestionEl.textContent = selectedLanguage === 'tl' ? "Tapos na ang Pagsusulit!" : "Quiz Complete!";
@@ -4521,7 +6702,7 @@ function finishQuiz(){
 
     // Calculate accuracy for adaptive learning
     const accuracy = calculateQuizAccuracy(quizScore, sessionTotal);
-    const shouldMoveToNextCategoryAfterQuiz = shouldMoveToNextCategory(accuracy);
+    const shouldAdvanceToNextLessonAfterQuiz = shouldAdvanceToNextLesson(accuracy);
 
     let finishMessage;
     const didNotAdvance = stageScore < stageTotal && quizDifficulty !== 'hard';
@@ -4530,25 +6711,25 @@ function finishQuiz(){
         finishMessage = selectedLanguage === 'tl'
             ? `Kailangan mong makuha ang lahat ng tama (${stageScore}/${stageTotal}) para makapunta sa susunod na level.`
             : `You need a perfect score (${stageScore}/${stageTotal}) to unlock the next level.`;
-    } else if (shouldMoveToNextCategoryAfterQuiz) {
-        // Scores below 80% move the student to the next category.
+    } else if (shouldAdvanceToNextLessonAfterQuiz) {
+        // Scores below 80% move the student to the next lesson.
         finishMessage = selectedLanguage === 'tl'
-            ? `${accuracy}% accuracy. Pupunta tayo sa susunod na kategorya...`
-            : `${accuracy}% accuracy. Moving to the next category...`;
+            ? `${Math.round(accuracy)}% accuracy. Pupunta tayo sa susunod na aralin...`
+            : `${Math.round(accuracy)}% accuracy. Moving to the next lesson...`;
     } else {
         finishMessage = selectedLanguage === 'tl'
-            ? `${accuracy}% accuracy. Magpapatuloy tayo sa kasalukuyang kategorya.`
-            : `${accuracy}% accuracy. Continuing in the current category.`;
+            ? `${Math.round(accuracy)}% accuracy. Mananatili tayo sa araling ito.`
+            : `${Math.round(accuracy)}% accuracy. Staying in this lesson.`;
     }
 
     const noticeDuration = didNotAdvance ? 10000 : 2800;
     showNotification(finishMessage, noticeDuration);
     if (didNotAdvance) {
         speakText(finishMessage);
-    } else if (shouldMoveToNextCategoryAfterQuiz) {
+    } else if (shouldAdvanceToNextLessonAfterQuiz) {
         speakText(selectedLanguage === 'tl' 
-            ? `Magandang gawa! Pupunta tayo sa susunod na kategorya.` 
-            : `Moving to the next category.`);
+            ? `Pupunta tayo sa susunod na aralin.` 
+            : `Moving to the next lesson.`);
     }
 
     currentScoreEl.textContent = String(quizScore);
@@ -4567,9 +6748,7 @@ function finishQuiz(){
     setTimeout(() => {
         if (autoProgressToNextLesson(quizCategory, quizLessonIndex, accuracy)) {
             // Successfully progressed to next lesson
-            const nextLessonTitle = selectedLanguage === 'tl'
-                ? titleTranslations[currentCategory] || currentCategory
-                : (currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1));
+            const nextLessonTitle = translateLessonTitle(currentCategory);
             
             const progressMessage = selectedLanguage === 'tl'
                 ? `Abot-kamay na ang bagong aralin: ${nextLessonTitle}!`
@@ -4602,6 +6781,7 @@ function saveQuizSummary(sessionTotal) {
 
     appendQuizHistoryEntry(student, {
         date: Date.now(),
+        attemptId: currentQuizAttemptId,
         category: quizCategory || currentCategory || "quiz",
         levelStopped: quizDifficulty,
         score: quizScore,
@@ -4616,7 +6796,27 @@ function saveQuizSummary(sessionTotal) {
 
 
 quizVoiceBtn.onclick = () => {
-    speakQuizQuestion();
+    const question = quizQuestions[currentQuizIndex];
+    const resumeVoiceMode = quizVoiceModeEnabled;
+    const session = ++quizVoiceSession;
+    stopQuizVoiceRecognition();
+    if (window.speechSynthesis) speechSynthesis.cancel();
+    if (question?.audio) {
+        playUploadedAudio(question.audio).catch(error => {
+            console.error("Unable to play quiz audio.", error);
+            showNotification("This quiz audio could not be played. Try another audio file.", 4000);
+        }).finally(() => {
+            if (resumeVoiceMode && session === quizVoiceSession) {
+                askNextQuizVoiceChoice(session);
+            }
+        });
+        return;
+    }
+    speakQuizQuestion()?.then(() => {
+        if (resumeVoiceMode && session === quizVoiceSession) {
+            askNextQuizVoiceChoice(session);
+        }
+    });
 };
 
 
@@ -4684,7 +6884,7 @@ showProgress();
 function completedCategories(){
 
     const progress =
-        JSON.parse(
+        JSON.parse(     
             localStorage.getItem(getCurrentStudentProgressKey("lessonProgress"))
         ) || {};
 
@@ -4697,6 +6897,8 @@ function completedCategories(){
 // -------------------------------
 
 window.addEventListener("load",()=>{
+
+    resumeStudentSession();
 
     const total = completedCategories();
 
@@ -4711,14 +6913,7 @@ window.addEventListener("load",()=>{
 
 });
 
-// ======================================================
-// END OF PART 2
-// ======================================================
 
 
-// line 88 html
-// <label for="studentGender">Select Gender</label>
-// 4422 
-// 4538
-
-// with approval 4724
+// 6766 defense full force
+// 6919 anaytics
